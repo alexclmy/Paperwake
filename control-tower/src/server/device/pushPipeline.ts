@@ -1266,6 +1266,49 @@ export async function recheck(
 }
 
 /**
+ * `recheck`, done by the tower itself from a status read it already has.
+ *
+ * A manual push that goes `uncertain` blocks every automatic refresh until it
+ * is resolved — and on a battery panel that is the ordinary case: the frame
+ * lands, the panel sleeps before confirming, and the next wake's refresh is
+ * refused because of it. The evidence that settles it arrives with that very
+ * wake: the device says which frame it is displaying. So when a status read
+ * shows the uncertain push's own digest on the glass, it is recorded as
+ * verified exactly as a person pressing Recheck would record it. Anything else
+ * — a different frame, or only a stored one — leaves it uncertain for a
+ * person, as before. Never a guess; only the device's own word.
+ */
+export function confirmUncertainFromStatus(status: DeviceStatus): boolean {
+  const record = blockingPush();
+  if (!record || record.state !== "uncertain") return false;
+  if (!status.displayed.sha256 || status.displayed.sha256 !== record.first.sha256) {
+    // Once per wake at most (the probe runs while the panel answers): enough to
+    // see why an uncertain push was left for a person.
+    console.info(
+      `[uncertain] ${record.pushId} not settled: wants ${record.first.sha256.slice(0, 8)}, ` +
+        `displayed ${status.displayed.sha256?.slice(0, 8) ?? "none"} (seq ${status.displayed.seq ?? "?"}), ` +
+        `stored ${status.stored.sha256?.slice(0, 8) ?? "none"} (seq ${status.stored.seq ?? "?"})`,
+    );
+    return false;
+  }
+  appendLedger(
+    lineFor(record, {
+      state: "verified_displayed",
+      seq: status.displayed.seq,
+      detail: "Confirmed by the device at its next wake (displayed digest matches)",
+    }),
+  );
+  appendAudit({
+    action: "device.push.recheck",
+    target: record.pushId,
+    outcome: "ok",
+    deviceConfirmed: true,
+    detail: "Displayed digest matches — confirmed automatically at the next wake",
+  });
+  return true;
+}
+
+/**
  * Accept that a push will never be resolved and unblock the queue. This is a
  * deliberate human act, recorded as one: the tower never quietly decides an
  * unknown outcome was fine.

@@ -1060,6 +1060,74 @@ static void test_nothing_stored_and_nothing_displayed_match_nothing() {
     CHECK(!dashboard::DisplayedFrameIsStoredFrame(true, 0, nullptr, true, 0, "aa"));
 }
 
+
+// --------------------------------------------------------- DisplayedMemo --
+// Observed on hardware 2026-09-25: after every timer wake the status route
+// said "displayed: none" (seq 0) while the panel showed seq 153, so the tower
+// could never settle an unconfirmed push. The memo carries the answer across.
+
+static void test_memo_round_trips_what_was_displayed() {
+    uint8_t a[kShaBytes], out[kShaBytes] = {};
+    ShaOf(7, a);
+    DisplayedMemo memo;
+    SealDisplayedMemo(&memo, a, 153);
+    uint32_t seq = 0;
+    CHECK(OpenDisplayedMemo(memo, out, &seq));
+    CHECK(seq == 153);
+    CHECK(std::memcmp(out, a, kShaBytes) == 0);
+}
+
+static void test_memo_refuses_memory_nobody_sealed() {
+    DisplayedMemo zero;  // a cold power-on
+    CHECK(!OpenDisplayedMemo(zero, nullptr, nullptr));
+
+    uint8_t a[kShaBytes];
+    ShaOf(7, a);
+    DisplayedMemo memo;
+    SealDisplayedMemo(&memo, a, 153);
+    memo.seq = 154;  // one flipped field: not trusted
+    CHECK(!OpenDisplayedMemo(memo, nullptr, nullptr));
+    SealDisplayedMemo(&memo, a, 153);
+    memo.sha[0] ^= 0x01;
+    CHECK(!OpenDisplayedMemo(memo, nullptr, nullptr));
+}
+
+static void test_memo_cleared_by_a_null_frame() {
+    uint8_t a[kShaBytes];
+    ShaOf(7, a);
+    DisplayedMemo memo;
+    SealDisplayedMemo(&memo, a, 153);
+    SealDisplayedMemo(&memo, nullptr, 0);
+    CHECK(!OpenDisplayedMemo(memo, nullptr, nullptr));
+}
+
+static void test_coordinator_restores_displayed_after_sleep() {
+    RefreshCoordinator rc;
+    uint8_t a[kShaBytes];
+    ShaOf(7, a);
+    CHECK(rc.displayed_sha() == nullptr);
+    CHECK(rc.RestoreDisplayed(a, 153));
+    CHECK(rc.has_displayed());
+    CHECK(rc.displayed_seq() == 153);
+    CHECK(std::memcmp(rc.displayed_sha(), a, kShaBytes) == 0);
+    // And the saving that comes with knowing: the same frame is not redrawn.
+    CHECK(rc.Request(a, 153, false) == RenderDisposition::kSkipped);
+}
+
+static void test_coordinator_restore_never_overrides_this_boot() {
+    RefreshCoordinator rc;
+    uint8_t a[kShaBytes], b[kShaBytes];
+    ShaOf(7, a); ShaOf(8, b);
+    // Mid-render: refused.
+    CHECK(rc.Request(b, 154, false) == RenderDisposition::kStarted);
+    CHECK(!rc.RestoreDisplayed(a, 153));
+    rc.CompleteRender(b, 154, RenderOutcome::kDrawn);
+    // Something drawn this boot is the better witness: refused.
+    CHECK(!rc.RestoreDisplayed(a, 153));
+    CHECK(rc.displayed_seq() == 154);
+    CHECK(!rc.RestoreDisplayed(nullptr, 1));
+}
+
 int main() {
     std::printf("dashboard_service host tests (real firmware translation units)\n\n");
 
@@ -1121,6 +1189,11 @@ int main() {
 
     RUN(test_burst_of_pushes_lands_on_newest_frame);
     RUN(test_repeated_pushes_keep_storage_bounded);
+    RUN(test_memo_round_trips_what_was_displayed);
+    RUN(test_memo_refuses_memory_nobody_sealed);
+    RUN(test_memo_cleared_by_a_null_frame);
+    RUN(test_coordinator_restores_displayed_after_sleep);
+    RUN(test_coordinator_restore_never_overrides_this_boot);
 
     std::printf("\n%d checks, %d failures\n", g_checks, g_failures);
     return g_failures == 0 ? 0 : 1;

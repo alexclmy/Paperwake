@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { WeatherValue } from "@/core/render/data";
+import { sunDay, sunPosition } from "@/core/render/astronomy";
 import { formatHourLabel } from "@/core/render/time";
 import type { ModuleData } from "@/core/render/types";
 import { weatherLocation } from "@/server/config";
@@ -207,6 +208,7 @@ export function normalizeWeather(rows: HourlyRow[], now: Date): WeatherValue {
   });
 
   const temperatures = entries.map((entry) => entry.temperature);
+  const location = weatherLocation();
 
   return {
     slots: [slots[0], slots[1], slots[2], slots[3]] as WeatherValue["slots"],
@@ -214,9 +216,12 @@ export function normalizeWeather(rows: HourlyRow[], now: Date): WeatherValue {
     high: Math.round(Math.max(...temperatures)),
     hours: entries.length,
     unit: "°C",
-    locationLabel: `${weatherLocation()?.label ?? "unknown location"} · Open-Meteo`,
+    locationLabel: `${location?.label ?? "unknown location"} · Open-Meteo`,
     locationWarning: false,
     condition: slots[0]?.condition ?? "unknown",
+    ...(location
+      ? { isDay: sunPosition(now, sunDay(now, location.latitude, location.longitude)).up }
+      : {}),
   };
 }
 

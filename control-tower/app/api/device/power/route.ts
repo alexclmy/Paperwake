@@ -194,7 +194,7 @@ export const POST = guarded(
           detail: result.replay
             ? "That request had already been served; the device scheduled nothing new."
             : result.scheduled
-              ? "The device acknowledged and is entering deep sleep. Only its own wake timer, or the button on the device, brings it back."
+              ? "The device acknowledged and is entering deep sleep. Only its own wake timer, or the round BOOT button on the device, brings it back."
               : "The device accepted the request but scheduled no sleep. Something outranks it — a panel refresh in flight, the provisioning portal, or a running slideshow — so it stays awake for now.",
         });
       } catch (error) {

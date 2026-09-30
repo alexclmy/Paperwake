@@ -34,6 +34,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { chromium, type Page } from "@playwright/test";
+import { TEMPLATES } from "@/core/templates";
 import {
   SCREENSHOT_DIST_DIR,
   preserveGeneratedFiles,
@@ -213,6 +214,9 @@ async function main(): Promise<void> {
     for (const viewport of VIEWPORTS) {
       const context = await browser.newContext({
         viewport: { width: viewport.width, height: viewport.height },
+        // The same zone the server is given above: the browser preview reads
+        // the clock too, and would otherwise print the host machine's zone.
+        timezoneId: "UTC",
         deviceScaleFactor: 2,
       });
       const page = await context.newPage();
@@ -274,12 +278,26 @@ async function main(): Promise<void> {
         // no title-and-Create form any more: a new composition starts from the
         // template picker, and driving a dialog to seed a screenshot would be
         // photographing the seeding rather than the product.
+        // The "Weather & agenda" starting composition, written the way the
+        // template picker writes it: a blank v1, the layout as v2.
+        const template = TEMPLATES.find((t) => t.key === "weatherAgenda");
+        if (!template) throw new Error("The weatherAgenda template is gone");
         const created = await page.request.post(`${BASE}/api/dashboards`, {
           headers: { "content-type": "application/json", "x-csrf-token": token },
-          data: { title: "Kitchen panel", starter: true },
+          data: { title: template.name, starter: false },
         });
         const body = (await created.json()) as { record: { doc: { id: string } } };
         dashboardId = body.record.doc.id;
+        const doc = { ...template.build(new Date()), id: dashboardId, title: template.name };
+        const saved = await page.request.put(`${BASE}/api/dashboards/${dashboardId}`, {
+          headers: { "content-type": "application/json", "x-csrf-token": token },
+          data: { doc },
+        });
+        const savedBody = (await saved.json()) as { record: { doc: unknown } };
+        await page.request.post(`${BASE}/api/dashboards/${dashboardId}/versions`, {
+          headers: { "content-type": "application/json", "x-csrf-token": token },
+          data: { doc: savedBody.record.doc, note: "Started from the Weather & agenda template" },
+        });
         // Selected, so Overview has something to talk about.
         await page.request.patch(`${BASE}/api/dashboards/${dashboardId}`, {
           headers: { "content-type": "application/json", "x-csrf-token": token },

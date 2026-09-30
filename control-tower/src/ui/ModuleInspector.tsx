@@ -1362,6 +1362,7 @@ export function ModuleInspector({
     variantEntry && sources && now
       ? renderVariantPicker({
           field: describe(variantEntry[1]) as { kind: "layout-variant"; values: string[] },
+          optionKey: variantEntry[0],
           module,
           definition,
           value: String(options[variantEntry[0]] ?? ""),
@@ -1491,6 +1492,18 @@ const VARIANT_LABEL: Record<string, string> = {
   arc: "Arc",
   horizon: "Horizon",
   duo: "Sun & moon",
+  auto: "Live",
+  clear: "Clear",
+  partly: "Partly cloudy",
+  cloudy: "Cloudy",
+  rain: "Rain",
+  pouring: "Downpour",
+  storm: "Storm",
+  snow: "Snow",
+  sleet: "Sleet",
+  hail: "Hail",
+  fog: "Fog",
+  wind: "Wind",
 };
 
 const VARIANT_HINT: Record<string, string> = {
@@ -1501,10 +1514,17 @@ const VARIANT_HINT: Record<string, string> = {
   arc: "The sun on its arc over a graded sky.",
   horizon: "A low sky band with the readings large below.",
   duo: "The sun on the left, the moon on the right.",
+  auto: "Follows the weather right now, by day and by night.",
+};
+
+/** What the thumbnail row is called, per option: layouts by default. */
+const VARIANT_LEGEND: Record<string, string> = {
+  scene: "Sky",
 };
 
 function renderVariantPicker({
   field,
+  optionKey,
   module,
   definition,
   value,
@@ -1514,6 +1534,7 @@ function renderVariantPicker({
   onChange,
 }: {
   field: { kind: "layout-variant"; values: string[] };
+  optionKey: string;
   module: ModuleInstance;
   definition: ReturnType<typeof moduleDefinition>;
   value: string;
@@ -1533,7 +1554,7 @@ function renderVariantPicker({
     doc: thumbnailDoc(
       {
         ...module,
-        options: { ...(module.options as Record<string, unknown>), variant: variantValue },
+        options: { ...(module.options as Record<string, unknown>), [optionKey]: variantValue },
       },
       { x: 0, y: 0, w, h },
       theme,
@@ -1541,7 +1562,7 @@ function renderVariantPicker({
   }));
   return (
     <VisualPicker
-      legend="Disposition"
+      legend={VARIANT_LEGEND[optionKey] ?? "Disposition"}
       value={value}
       options={options}
       sources={sources}

@@ -41,6 +41,14 @@ after a flash, or the board cuts its rail. See
 > ⚠️ Flashing replaces the running firmware. Back up the full 16 MiB flash first
 > (`esptool read-flash 0 0x1000000 backup.bin`) so you can roll back.
 
+**Getting esptool to connect.** The board powers itself through a latch the
+firmware holds, and its USB port only exists while the chip is awake. What
+works reliably: start esptool (or a loop that retries until the port appears),
+then **hold the power button and press RESET with a pin**, and keep holding
+power until the write is verified. After flashing, press RESET again — still
+holding power — to boot the new image. Use a USB cable that carries data; a
+charge-only cable shows no port at all.
+
 ## Host tests
 
 The device logic is written to be testable off-target: the pure logic carries no

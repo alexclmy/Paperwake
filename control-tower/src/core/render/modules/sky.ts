@@ -500,13 +500,16 @@ function renderHorizon(
   drawArc(fb, skyRect, 12, a.marker.arc, a.marker.up, a.pal, a.style);
 
   // Readouts on paper below.
+  // `label` takes the TOP of the text. These used to add a line height, which
+  // set the day length on top of the times row below it.
   let y = skyRect.y + skyRect.h + 3;
-  label(fb, box.x, y + reservedHeight({ text: "0", visible: true, style: bigStyle }) - 4, a.lengthText, bigStyle, BLACK, "left");
+  label(fb, box.x, y, a.lengthText, bigStyle, BLACK, "left");
   if (a.deltaText) {
     label(fb, box.x + box.w, y + 2, a.deltaText, noteStyle, BLACK, "right");
   }
   y += reservedHeight({ text: "0", visible: true, style: bigStyle }) + 2;
-  label(fb, box.x, y + reservedHeight({ text: "0", visible: true, style: timeStyle }) - 3, `${a.sunriseText} → ${a.sunsetText}`, timeStyle, BLACK, "left");
+  // ASCII: the panel font has no arrow glyph, and drew a box where "→" was.
+  label(fb, box.x, y, `${a.sunriseText} - ${a.sunsetText}`, timeStyle, BLACK, "left");
   if (a.options.showMoon) {
     const r = 11;
     drawMoon(fb, box.x + box.w - r - 2, y + r, r, a.moon.phase, a.moon.illumination, a.moon.waxing, a.style);

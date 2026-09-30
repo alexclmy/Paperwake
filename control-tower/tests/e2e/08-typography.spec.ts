@@ -119,7 +119,7 @@ test("every font family is offered and every size on the ladder", async ({
     .evaluateAll((options) => options.map((o) => (o as HTMLOptionElement).value));
   // Exactly the sizes with a committed atlas. No free-text size box can
   // promise a size the renderer would then throw on.
-  expect(sizes).toEqual(["11", "13", "15", "18", "22", "27", "34"]);
+  expect(sizes).toEqual(["11", "13", "15", "18", "22", "27", "34", "48", "64"]);
 
   // A specimen of each family at a small and a large size, for the QA sheet.
   for (const family of families) {

@@ -319,6 +319,16 @@ public:
     /// Drop any pending request without rendering (shutdown, sleep).
     void ClearPending() { pending_ = false; }
 
+    /**
+     * @brief Re-learn which frame is on the glass after a deep sleep.
+     *
+     * E-paper keeps its image with the power off; this object does not keep
+     * its memory. The caller hands back what it sealed before sleeping (see
+     * DisplayedMemo). Refused unless idle, nothing pending and nothing drawn
+     * yet this boot: a render this boot is always the better witness.
+     */
+    bool RestoreDisplayed(const uint8_t* sha, uint32_t seq);
+
     void Reset();
 
 private:
@@ -455,6 +465,36 @@ bool DisplayedFrameIsStoredFrame(bool has_stored, uint32_t stored_seq,
                                  const char* stored_sha_hex, bool has_displayed,
                                  uint32_t displayed_seq,
                                  const char* displayed_sha_hex);
+
+// --------------------------------------------------------- DisplayedMemo --
+
+/**
+ * @brief Which frame was on the glass, sealed so it can outlive a deep sleep.
+ *
+ * Kept by the caller in RTC memory (RTC_DATA_ATTR), which survives deep sleep
+ * but not a power cut. Without it the status route answered "displayed: none"
+ * after every timer wake while the panel plainly showed the last frame — and
+ * the tower, which settles an unconfirmed push only on the device's own word
+ * that the frame is displayed, could never settle one after a sleep.
+ *
+ * Sealed with a magic and a checksum so memory that was never written (a cold
+ * power-on) or was written by another firmware image is refused, not trusted.
+ */
+struct DisplayedMemo {
+    uint32_t magic = 0;
+    uint32_t seq = 0;
+    uint8_t sha[kShaBytes] = {};
+    uint32_t check = 0;
+};
+
+/// Record @p sha / @p seq as the frame on the glass.
+void SealDisplayedMemo(DisplayedMemo* memo, const uint8_t* sha, uint32_t seq);
+
+/// Forget it (nothing known to be on the glass).
+void ClearDisplayedMemo(DisplayedMemo* memo);
+
+/// True and fills the outputs only for an intact, sealed memo.
+bool OpenDisplayedMemo(const DisplayedMemo& memo, uint8_t* sha_out, uint32_t* seq_out);
 
 // ---------------------------------------------------------- MutationGate --
 

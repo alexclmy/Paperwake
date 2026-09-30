@@ -188,6 +188,39 @@ describe("intent to patch", () => {
   });
 });
 
+describe("a Balanced or Deep saver request while somebody holds a window", () => {
+  // The "switching to Balanced disconnects the device" report: writing
+  // power.mode closed the window a BOOT press had just opened, and the panel
+  // slept in front of the person, often before answering the write.
+  const open = power({ mode: "interactive", interactive_remaining_s: 890, wake_interval_min: 60 });
+
+  it("writes the interval only, so the window is not cut short", () => {
+    expect(intentToPatch(intent({ mode: "auto_saver", wakeIntervalMinutes: 120 }), open)).toEqual({
+      "power.wake_interval_min": 120,
+    });
+  });
+
+  it("still writes the mode when no window is open", () => {
+    expect(
+      intentToPatch(intent({ mode: "auto_saver", wakeIntervalMinutes: 120 }), power({ mode: "always_on" })),
+    ).toEqual({ "power.mode": "auto_saver", "power.wake_interval_min": 120 });
+  });
+
+  it("counts as done once the interval matches, window or not", () => {
+    expect(intentIsSatisfied(intent({ mode: "auto_saver", wakeIntervalMinutes: 120 }), open)).toBe(false);
+    expect(
+      intentIsSatisfied(
+        intent({ mode: "auto_saver", wakeIntervalMinutes: 120 }),
+        power({ mode: "interactive", interactive_remaining_s: 890, wake_interval_min: 120 }),
+      ),
+    ).toBe(true);
+  });
+
+  it("never spares a window from Always ready: that is a different base mode", () => {
+    expect(intentToPatch(intent({ mode: "always_on" }), open)).toEqual({ "power.mode": "always_on" });
+  });
+});
+
 describe("intentIsSatisfied", () => {
   it("is satisfied when the device is already in a durable mode", () => {
     expect(intentIsSatisfied(intent({ mode: "auto_saver" }), power({ mode: "auto_saver" }))).toBe(true);

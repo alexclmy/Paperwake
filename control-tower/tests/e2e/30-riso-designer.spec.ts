@@ -58,6 +58,30 @@ test("the Sky module renders sun, arc and moon and folds its coordinates away", 
   await shot(page, "riso-sky-inspector", info.project.name);
 });
 
+test("the Weather hero's sky is chosen by thumbnail, storm to night", async ({ page }, info) => {
+  await openEmptyDesigner(page, `Weather hero ${info.project.name}`);
+  await page.getByTestId("add-weatherHero").click();
+  await expect(page.getByTestId("module-weatherHero")).toBeVisible();
+
+  // One real render per scene, the live one first.
+  await expect(page.getByTestId("variant-picker")).toBeVisible();
+  await expect(page.getByTestId("variant-picker-auto-canvas")).toBeVisible();
+  await expect(page.getByTestId("variant-picker-storm-canvas")).toBeVisible();
+  await expect(page.getByTestId("variant-picker-snow-canvas")).toBeVisible();
+  await shot(page, "riso-weather-hero-scenes", info.project.name);
+
+  const before = await stablePixels(page);
+  await page.getByTestId("variant-picker-storm").click();
+  await page.waitForTimeout(250);
+  const storm = await stablePixels(page);
+  expect(storm).not.toBe(before);
+
+  await page.getByTestId("opt-timeOfDay").selectOption("night");
+  await page.waitForTimeout(250);
+  expect(await stablePixels(page)).not.toBe(storm);
+  await shot(page, "riso-weather-hero-storm-night", info.project.name);
+});
+
 test("the Appearance controls re-skin the whole panel", async ({ page }, info) => {
   await openEmptyDesigner(page, `Appearance ${info.project.name}`);
   await page.getByTestId("add-headline").click();

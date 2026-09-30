@@ -105,7 +105,7 @@ export default function SetupPage() {
       setAddressNote(
         status.reachable
           ? `${address.trim()} answered.`
-          : `${address.trim()} did not answer. That is what a sleeping device looks like too, so it is not proof the address is wrong — press the button on the device and check again if you want certainty. ${status.detail ?? ""}`,
+          : `${address.trim()} did not answer. That is what a sleeping device looks like too, so it is not proof the address is wrong — press the round BOOT button on the device and check again if you want certainty. ${status.detail ?? ""}`,
       );
       await load();
     } catch (caught) {

@@ -153,6 +153,22 @@ describe("weather coverage validation", () => {
     expect(value.high).toBeLessThan(99);
   });
 
+  it("says whether the sun is up at the configured place, from the sunrise equation", () => {
+    vi.stubEnv("NOTE4C_WEATHER_LATITUDE", "48.85");
+    vi.stubEnv("NOTE4C_WEATHER_LONGITUDE", "2.35");
+    // 05:00Z in mid-September is 07:00 in Paris, before sunrise: night.
+    expect(normalizeWeather(hourlyRows(40), NOW).isDay).toBe(false);
+    // Twelve hours later it is 19:00 there, before sunset: day.
+    const noon = new Date(NOW.getTime() + 12 * 3_600_000);
+    expect(normalizeWeather(hourlyRows(40), noon).isDay).toBe(true);
+  });
+
+  it("leaves day or night unsaid when no place is configured", () => {
+    vi.stubEnv("NOTE4C_WEATHER_LATITUDE", "");
+    vi.stubEnv("NOTE4C_WEATHER_LONGITUDE", "");
+    expect(normalizeWeather(hourlyRows(24), NOW).isDay).toBeUndefined();
+  });
+
   it("drops non-finite temperatures rather than rendering them", () => {
     const rows = hourlyRows(24);
     (rows[5] as HourlyRow).temperature = Number.NaN;

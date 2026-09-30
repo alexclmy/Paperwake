@@ -8,8 +8,8 @@ touches it.
 Requires Node 20 or newer.
 
 ```bash
-git clone <this repository>
-cd note4c-control-tower
+git clone https://github.com/alexclmy/Paperwake.git
+cd Paperwake/control-tower
 npm install
 npm run dev
 ```
@@ -38,11 +38,11 @@ the simulated device. Every device-derived reading on the screen carries a
 
 ## 3. Make a composition (2 minutes)
 
-Go to **Compositions** and press **+ New composition**. Five templates come up,
-and each thumbnail is the real renderer running over the layout that button
-would create, at the panel's four pigments — so what you pick is what you get.
-Take **Morning info board**: six tiles on an 8×6 grid of 50-pixel cells,
-already saved.
+Go to **Compositions** and press **+ New composition**. Seven starting
+compositions come up, and each thumbnail is the real renderer running over the
+layout that button would create, at the panel's four pigments — so what you
+pick is what you get. Take **Weather & agenda**: a weather hero beside the next
+events, on an 8×6 grid of 50-pixel cells, already saved.
 
 You land straight in the editor:
 
@@ -97,8 +97,8 @@ cp .env.example .env.local
 The most likely first one is the weather, which needs a coarse location:
 
 ```bash
-NOTE4C_WEATHER_LATITUDE=45.50
-NOTE4C_WEATHER_LONGITUDE=-73.57
+NOTE4C_WEATHER_LATITUDE=48.86
+NOTE4C_WEATHER_LONGITUDE=2.35
 NOTE4C_WEATHER_LABEL="City centre approx."
 ```
 

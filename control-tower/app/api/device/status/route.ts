@@ -18,6 +18,9 @@ import {
 import { readLastKnownDevice } from "@/server/device/lastKnown";
 import { blockingPush, readPushes, resolveSha } from "@/server/device/ledger";
 import { describeIntent } from "@/server/device/powerIntent";
+import { readPresence, recordPresence } from "@/server/device/presence";
+import { deviceTokenIsSet } from "@/server/device/token";
+import type { DeviceStatus } from "@/server/device/client";
 import { readState } from "@/server/store/state";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +76,13 @@ export const GET = guarded({}, async ({ request }) => {
     return NextResponse.json(readLastKnownDevice(), { headers: NO_STORE });
   }
 
+  // What the scheduler's presence watch last saw, opening no socket. A fresh
+  // answer is served as the read it was; no watch yet, or a stale one, falls
+  // back to the tower's record, which says "not asked".
+  if (params.get("observe") === "presence") {
+    return NextResponse.json(presenceBody(), { headers: NO_STORE });
+  }
+
   const { client, state, simulated, tokenConfigured } = await deviceContext();
   const manual = params.get("force") === "1";
 
@@ -89,54 +99,17 @@ export const GET = guarded({}, async ({ request }) => {
     // mutation of anything durable. It is what lets the *next* failed read say
     // something true instead of guessing at "asleep".
     recordConfirmedReading(readingFromStatus(status, readingAt));
-    const displayedMatch = resolveSha(status.displayed.sha256);
-    const storedMatch = resolveSha(status.stored.sha256);
-
-    // Described, not delivered. Reading the page is not a reason to write to
-    // the device; see the note on this route above.
-    const described = describeIntent(status, { reachable: true });
-    const power = status.power ?? null;
-    // The device is demonstrably up right now, but recording that is a write,
-    // so the last-seen timestamp is left to the reconcile path. Until it has
-    // run once the estimate falls back to the device's own armed timer, which
-    // is the better source anyway.
-    const lastSeen = readState().deviceLastSeenAt;
-    const nextWake = estimateNextWake(power, lastSeen ? new Date(lastSeen) : null);
-
+    recordPresence({ at: readingAt.toISOString(), reachable: true, status });
     return NextResponse.json(
-      {
-        observed: true,
-        reachable: true,
-        power,
-        powerSupported: deviceSupportsPower(status.capabilities),
-        powerIntent: described.intent,
-        powerIntentDisposition: described.disposition.kind,
-        powerIntentDetail: described.detail,
-        deviceLastSeenAt: lastSeen,
-        batteryUnavailableReason: power ? batteryUnavailableReason(power) : null,
-        reachabilityNote: describeReachability(true, power),
-        noRemoteWake: NO_REMOTE_WAKE_NOTE,
-        nextWake: nextWake
-          ? { at: nextWake.at.toISOString(), estimated: nextWake.estimated }
-          : null,
+      reachableBody(status, readingAt, {
         simulated,
         tokenConfigured,
         deviceMode: state.deviceMode,
         deviceAddress: simulated ? client.origin : state.deviceAddress,
-        readAt: new Date().toISOString(),
-        status,
-        displayedMatch,
-        storedMatch,
-        storedEqualsDisplayed:
-          status.stored.present &&
-          status.stored.sha256 === status.displayed.sha256,
         blocking,
         lastPush,
         manual,
-        // Returned on the success path too, so the interface never has to hold
-        // two shapes: here it simply *is* the reading, taken just now.
-        lastConfirmed: readingFromStatus(status, readingAt),
-      },
+      }),
       { headers: NO_STORE },
     );
   } catch (error) {
@@ -197,3 +170,97 @@ export const GET = guarded({}, async ({ request }) => {
     );
   }
 });
+
+/** How old a presence answer may be and still be shown as the present. */
+const PRESENCE_FRESH_MS = 20_000;
+
+function presenceBody() {
+  const presence = readPresence();
+  const state = readState();
+  const age = presence ? Date.now() - Date.parse(presence.at) : Infinity;
+  if (!presence || state.deviceMode !== "real") {
+    return readLastKnownDevice();
+  }
+  // A positive answer only counts while it is fresh. A stale one means the
+  // watch has not been able to confirm the device lately, which is silence —
+  // and silence must replace an old "Awake" rather than leave it standing.
+  if (presence.reachable && presence.status && age <= PRESENCE_FRESH_MS) {
+    return reachableBody(presence.status, new Date(presence.at), {
+      simulated: false,
+      tokenConfigured: deviceTokenIsSet(),
+      deviceMode: state.deviceMode,
+      deviceAddress: state.deviceAddress,
+      blocking: blockingPush(),
+      lastPush: readPushes()[0] ?? null,
+      manual: false,
+    });
+  }
+  // The watch asked and nobody answered: a read that found silence, so a stale
+  // "Awake" on the badge is replaced. The words come from what the device last
+  // said — asleep until its next wake, usually — never from the silence.
+  const lastSeen = state.deviceLastSeenAt;
+  const lastConfirmed = readLastConfirmed();
+  const nextWake = estimateNextWake(
+    lastConfirmed?.power ?? null,
+    lastSeen ? new Date(lastSeen) : null,
+  );
+  return {
+    ...readLastKnownDevice(),
+    observed: true,
+    reachable: false,
+    lastConfirmed,
+    nextWake: nextWake ? { at: nextWake.at.toISOString(), estimated: nextWake.estimated } : null,
+    readAt: presence.reachable ? new Date().toISOString() : presence.at,
+  };
+}
+
+function reachableBody(
+  status: DeviceStatus,
+  readingAt: Date,
+  ctx: {
+    simulated: boolean;
+    tokenConfigured: boolean;
+    deviceMode: "mock" | "real";
+    deviceAddress: string | null;
+    blocking: ReturnType<typeof blockingPush>;
+    lastPush: ReturnType<typeof readPushes>[number] | null;
+    manual: boolean;
+  },
+) {
+  // Described, not delivered: reading is not a reason to write to the device.
+  const described = describeIntent(status, { reachable: true });
+  const power = status.power ?? null;
+  const recorded = readState().deviceLastSeenAt;
+  // The newer of the durable record and this answer.
+  const lastSeen =
+    recorded && Date.parse(recorded) > readingAt.getTime() ? recorded : readingAt.toISOString();
+  const nextWake = estimateNextWake(power, new Date(lastSeen));
+  return {
+    observed: true,
+    reachable: true,
+    power,
+    powerSupported: deviceSupportsPower(status.capabilities),
+    powerIntent: described.intent,
+    powerIntentDisposition: described.disposition.kind,
+    powerIntentDetail: described.detail,
+    deviceLastSeenAt: lastSeen,
+    batteryUnavailableReason: power ? batteryUnavailableReason(power) : null,
+    reachabilityNote: describeReachability(true, power),
+    noRemoteWake: NO_REMOTE_WAKE_NOTE,
+    nextWake: nextWake ? { at: nextWake.at.toISOString(), estimated: nextWake.estimated } : null,
+    simulated: ctx.simulated,
+    tokenConfigured: ctx.tokenConfigured,
+    deviceMode: ctx.deviceMode,
+    deviceAddress: ctx.deviceAddress,
+    readAt: readingAt.toISOString(),
+    status,
+    displayedMatch: resolveSha(status.displayed.sha256),
+    storedMatch: resolveSha(status.stored.sha256),
+    storedEqualsDisplayed:
+      status.stored.present && status.stored.sha256 === status.displayed.sha256,
+    blocking: ctx.blocking,
+    lastPush: ctx.lastPush,
+    manual: ctx.manual,
+    lastConfirmed: readingFromStatus(status, readingAt),
+  };
+}

@@ -41,6 +41,12 @@ export const WeatherValueSchema = z.object({
    * explicit unavailable state rather than inventing them.
    */
   days: z.array(DayForecastSchema).optional(),
+  /**
+   * Whether the sun is up at the forecast's location right now, computed on
+   * the Mac from the configured coordinates (sunrise equation, no network).
+   * Optional: when it is absent the hero draws a day sky, never a guessed night.
+   */
+  isDay: z.boolean().optional(),
 });
 export type WeatherValue = z.infer<typeof WeatherValueSchema>;
 

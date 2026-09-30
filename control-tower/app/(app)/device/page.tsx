@@ -20,7 +20,7 @@ import { StateStrip } from "@/ui/StateStrip";
 import { StickyActions } from "@/ui/StickyActions";
 import { PowerPanel } from "@/ui/PowerPanel";
 import { RealDeviceCard } from "@/ui/RealDeviceCard";
-import { publishDeviceStatus, toDeviceReading } from "@/ui/useDeviceState";
+import { publishDeviceStatus, toDeviceReading, useDeviceState } from "@/ui/useDeviceState";
 import { useIsNarrow } from "@/ui/useMediaQuery";
 import { MODE_COPY, type DevicePower, type PowerIntent, type PowerMode } from "@/core/power";
 import {
@@ -325,6 +325,21 @@ export default function DevicePage() {
     };
   }, [load]);
 
+  /*
+   * Follow the presence watch. The header learns within seconds that somebody
+   * pressed BOOT (or that the panel went back to sleep); when that disagrees
+   * with what this page last read, read again so the page says it too.
+   */
+  const shared = useDeviceState();
+  const sharedObserved = shared.observed === true;
+  const sharedReachable = shared.input?.reachable === true;
+  const pageReachable = data?.reachable === true;
+  useEffect(() => {
+    if (!sharedObserved || checking) return;
+    if (sharedReachable !== pageReachable) void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharedObserved, sharedReachable, pageReachable]);
+
   const device: DeviceCapabilities = useMemo(
     () => negotiate(data?.status ?? { api: 1 }),
     [data],
@@ -570,7 +585,27 @@ export default function DevicePage() {
   }
 
   const configSupported = config?.supported === true;
-  const reading = data ? toDeviceReading(data) : null;
+  /*
+   * One state on screen. The header badge follows the presence watch, which
+   * can be newer than this page's own read; when it is, the Now card shows the
+   * same reading, so the badge and the headline never disagree.
+   */
+  const pageReading = data ? toDeviceReading(data) : null;
+  const sharedIsNewer =
+    shared.input !== null &&
+    shared.observed === true &&
+    shared.readAt != null &&
+    (pageReading?.readAt == null || Date.parse(shared.readAt) > Date.parse(pageReading.readAt));
+  const reading =
+    sharedIsNewer && pageReading
+      ? {
+          ...pageReading,
+          input: shared.input!,
+          observed: true,
+          readAt: shared.readAt ?? null,
+          nextWakeLabel: shared.nextWakeLabel ?? pageReading.nextWakeLabel,
+        }
+      : pageReading;
 
   /** Restart and deep sleep, rendered inside the power panel's danger zone. */
   const dangerActions = SETTINGS_REGISTRY.filter(
@@ -637,56 +672,53 @@ export default function DevicePage() {
         </Banner>
       )}
 
+      {reading && (
+        <StateStrip
+          input={reading.input}
+          address={reading.address}
+          nextWakeLabel={reading.nextWakeLabel}
+          batteryLine={batteryLine}
+          onReadAgain={() => void load(true)}
+          checking={checking}
+          onInteractive={(minutes) =>
+            void sendPower(
+              { action: "set-mode", mode: "interactive", minutes },
+              `Interactive for ${minutes} minutes`,
+            )
+          }
+          busy={busy}
+        />
+      )}
+
       {/*
-        Two columns, and the split is by question rather than by subsystem.
-        The left is "what is it doing and how much of the time is it awake" —
-        the things a person changes. The right is "what is it connected to and
-        what else exists" — the things a person checks once and then leaves
-        alone, including the two corners of this product that are not part of
-        the daily loop at all.
+        What the last read actually established, and nothing more.
+
+        The badge is chosen from the failure rather than hard-coded, because
+        the two cases underneath it are not the same fact and were being
+        drawn identically. A read this machine refused out of its own
+        routing table — `heldLocally`, and the reason this page is being
+        corrected — never reached the network: it does not show that the
+        panel is unreachable, only that the tower could not ask. Calling
+        that UNREACHABLE beside a badge reading "Asleep" is how one failed
+        read came to be rendered as two contradictory claims about a device
+        that was, at that moment, answering other clients on the same LAN.
       */}
-      <div className="grid-2">
+      {data && data.observed !== false && !data.reachable && (
+        <Banner tone="attention" testId="device-unreachable">
+          <Badge kind={data.failure?.heldLocally ? "uncertain" : "unreachable"} />
+          <span data-testid="device-unreachable-detail">
+            {data.detail ?? "The device could not be reached"}
+          </span>
+        </Banner>
+      )}
+
+      {/*
+        Two columns, split by question. Left: how much of the time it is
+        awake — the thing a person changes. Right: what it is connected to,
+        the rare hardware actions, and the corners outside the daily loop.
+      */}
+      <div className="grid-2 device-grid">
         <section className="stack">
-          {reading && (
-            <StateStrip
-              input={reading.input}
-              address={reading.address}
-              nextWakeLabel={reading.nextWakeLabel}
-              batteryLine={batteryLine}
-              onReadAgain={() => void load(true)}
-              checking={checking}
-              onInteractive={(minutes) =>
-                void sendPower(
-                  { action: "set-mode", mode: "interactive", minutes },
-                  `Interactive for ${minutes} minutes`,
-                )
-              }
-              busy={busy}
-            />
-          )}
-
-          {/*
-            What the last read actually established, and nothing more.
-
-            The badge is chosen from the failure rather than hard-coded, because
-            the two cases underneath it are not the same fact and were being
-            drawn identically. A read this machine refused out of its own
-            routing table — `heldLocally`, and the reason this page is being
-            corrected — never reached the network: it does not show that the
-            panel is unreachable, only that the tower could not ask. Calling
-            that UNREACHABLE beside a badge reading "Asleep" is how one failed
-            read came to be rendered as two contradictory claims about a device
-            that was, at that moment, answering other clients on the same LAN.
-          */}
-          {data && data.observed !== false && !data.reachable && (
-            <Banner tone="attention" testId="device-unreachable">
-              <Badge kind={data.failure?.heldLocally ? "uncertain" : "unreachable"} />
-              <span data-testid="device-unreachable-detail">
-                {data.detail ?? "The device could not be reached"}
-              </span>
-            </Banner>
-          )}
-
           {reading && (
             <PowerPanel
               reachable={data?.reachable ?? false}
@@ -702,7 +734,6 @@ export default function DevicePage() {
               nextWake={data?.nextWake ?? null}
               deviceLastSeenAt={data?.deviceLastSeenAt ?? null}
               busy={busy}
-              dangerActions={dangerActions}
               onSetMode={(mode: PowerMode, options) =>
                 sendPower(
                   {
@@ -728,27 +759,28 @@ export default function DevicePage() {
         <section className="stack">
           <RealDeviceCard />
 
-          {/*
-            Voice, described honestly and linked rather than hidden.
-            Dashed and on the canvas, which is this product's way of saying
-            "provisional": the feature exists, configures nothing by default,
-            and has never been validated on hardware. That is exactly why it is
-            not one of the four navigation entries.
-          */}
+          {dangerActions.length > 0 && (
+            <Card title="Maintenance" variant="plain" testId="maintenance-card">
+              <div className="danger-zone" data-testid="power-danger-zone">
+                <h3>Actions with consequences</h3>
+                <div className="danger-actions">{dangerActions}</div>
+              </div>
+            </Card>
+          )}
+
+          {/* Voice: provisional, so dashed and linked rather than hidden. */}
           <Card
             title="Voice"
             variant="quiet"
             meta={<span className="badge badge-neutral">experimental</span>}
             testId="voice-card"
           >
-            <p style={{ color: "var(--ink-soft)", lineHeight: 1.6, margin: 0 }}>
-              Push-to-talk on the device can send a voice request to a hub you
-              configure. Nothing is configured by default, the microphone stays
-              muted, and this has not been validated on hardware.
+            <p style={{ color: "var(--ink-soft)", lineHeight: 1.55, margin: 0 }}>
+              Push-to-talk to a hub you configure. Off by default, mic muted.
             </p>
             <div className="card-actions" style={{ marginTop: "var(--pad-2)" }}>
               <Link className="btn" href="/voice">
-                Open voice settings →
+                Voice settings →
               </Link>
             </div>
           </Card>
@@ -759,11 +791,21 @@ export default function DevicePage() {
         </section>
       </div>
 
+      <div className="section-head">
+        <h2>Settings</h2>
+        {configSupported && (
+          <p className="mono-note">
+            revision <span className="num" data-testid="config-revision">{config?.revision ?? "unknown"}</span>
+            {" · "}
+            <span className="num" data-testid="pending-count">{pending.length}</span> pending
+          </p>
+        )}
+      </div>
+
       {configSupported ? (
         <Banner tone="info" testId="config-supported">
-          This firmware reports api {device.api} with {device.capabilities.length}{" "}
-          capabilities, including a typed configuration API. Editable rows below are
-          live; every other row says exactly why it is not.
+          Firmware api {device.api} · {device.capabilities.length} capabilities. Editable
+          rows apply live; the others say why not.
         </Banner>
       ) : config === null ? (
         /*
@@ -812,27 +854,7 @@ export default function DevicePage() {
         </Card>
       )}
 
-      {configSupported && (
-        <Card title="Configuration">
-          <Row
-            label="Config revision"
-            hint="Sent back with every write. The device refuses the write if anything changed since this number was read, including a change somebody made by pressing buttons on it."
-          >
-            <span className="num" data-testid="config-revision">
-              {config?.revision ?? "unknown"}
-            </span>
-          </Row>
-          <Row
-            label="Pending changes"
-            hint="Edits made here that the device has not been told about yet. Applying sends all of them in one request."
-          >
-            <span className="num" data-testid="pending-count">
-              {pending.length}
-            </span>
-          </Row>
-        </Card>
-      )}
-
+      <div className="settings-grid">
       {SECTIONS.map((section) => {
         const entries = SETTINGS_REGISTRY.filter(
           (entry) =>
@@ -886,6 +908,7 @@ export default function DevicePage() {
           </Card>
         );
       })}
+      </div>
 
       <AboutAndStorage data={data} narrow={narrow} />
 
@@ -1077,8 +1100,13 @@ function AboutAndStorage({
 
   return (
     <>
-      <Card title="About">{about}</Card>
-      <Card title="Storage">{storage}</Card>
+      <div className="section-head">
+        <h2>Hardware</h2>
+      </div>
+      <div className="settings-grid">
+        <Card title="About">{about}</Card>
+        <Card title="Storage">{storage}</Card>
+      </div>
     </>
   );
 }

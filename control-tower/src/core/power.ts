@@ -382,8 +382,34 @@ export function intentIsStale(intent: PowerIntent, now: Date): boolean {
   return intentExpiryReason(intent, now) !== null;
 }
 
-/** The config fields a given intent would write. Mirrors the firmware table. */
-export function intentToPatch(intent: PowerIntent): Record<string, string | number> {
+/**
+ * Somebody woke the panel: an interactive window is open, and underneath it the
+ * firmware's base mode is already automatic saving (a window always sits over
+ * `auto_saver`; see PowerState::Request).
+ */
+export function windowOpenOverSaver(power: DevicePower): boolean {
+  return power.mode === "interactive" && power.interactive_remaining_s > 0;
+}
+
+/**
+ * The config fields a given intent would write. Mirrors the firmware table.
+ *
+ * With a window open, an automatic-saving intent writes the interval ONLY.
+ * Writing `power.mode` would close the window on the spot — the firmware reads
+ * it as "back to saving now" — and the panel a person has just woken with BOOT
+ * would go to sleep in front of them, often before answering the write. That
+ * was the "switching to Balanced disconnects the device" report. The base is
+ * already automatic saving, so the window simply runs out into the new setting.
+ */
+export function intentToPatch(
+  intent: PowerIntent,
+  power: DevicePower | null = null,
+): Record<string, string | number> {
+  if (intent.mode === "auto_saver" && power !== null && windowOpenOverSaver(power)) {
+    return intent.wakeIntervalMinutes !== null
+      ? { "power.wake_interval_min": intent.wakeIntervalMinutes }
+      : {};
+  }
   const set: Record<string, string | number> = { "power.mode": intent.mode };
   if (intent.mode === "interactive" && intent.interactiveMinutes !== null) {
     set["power.interactive_min"] = intent.interactiveMinutes;
@@ -407,7 +433,11 @@ export function intentToPatch(intent: PowerIntent): Record<string, string | numb
  */
 export function intentIsSatisfied(intent: PowerIntent, power: DevicePower): boolean {
   if (intent.mode === "interactive") return false;
-  if (power.mode !== intent.mode) return false;
+  // A window over automatic saving already has the asked-for base mode; only
+  // the interval can still differ. See intentToPatch.
+  if (!(intent.mode === "auto_saver" && windowOpenOverSaver(power)) && power.mode !== intent.mode) {
+    return false;
+  }
   if (
     intent.wakeIntervalMinutes !== null &&
     power.wake_interval_min !== intent.wakeIntervalMinutes
@@ -464,7 +494,7 @@ export function planIntent(input: PlanIntentInput): IntentDisposition {
     return {
       kind: "waiting",
       reason:
-        "The device is not answering, which is what a sleeping device looks like. Nothing on the network can wake it: this will be applied the next time it wakes on its own, or immediately if you press the button on the device.",
+        "The device is not answering, which is what a sleeping device looks like. Nothing on the network can wake it: this will be applied the next time it wakes on its own, or immediately if you press the round BOOT button on the device.",
     };
   }
 
@@ -513,7 +543,7 @@ export function planIntent(input: PlanIntentInput): IntentDisposition {
     };
   }
 
-  return { kind: "apply", set: intentToPatch(intent) };
+  return { kind: "apply", set: intentToPatch(intent, power) };
 }
 
 // ------------------------------------------------------------ next wake --
@@ -642,7 +672,7 @@ export function sleepIdempotencyKey(
  * "wake now" control. There is no such control, and this says why.
  */
 export const NO_REMOTE_WAKE_NOTE =
-  "A sleeping device has its Wi-Fi radio powered down, so no command from here can wake it. The button on the device wakes it immediately; anything set here is applied the next time it wakes.";
+  "A sleeping device has its Wi-Fi radio powered down, so no command from here can wake it. Only the round BOOT button wakes it on demand (the other buttons do nothing while it sleeps); anything set here is applied the next time it wakes.";
 
 /**
  * What the one-click "Interactive 15 min" request actually promises.
@@ -799,7 +829,7 @@ export const DEVICE_ACTION_COPY: Record<DeviceState, string> = {
   awake:
     "Send a composition now — the panel will refresh in about 25 seconds.",
   asleep:
-    "Prepare and queue anything you like. It will be applied at the next wake. Wi-Fi cannot wake it — only the button on the device can.",
+    "Prepare and queue anything you like. It will be applied at the next wake. Wi-Fi cannot wake it — only the round BOOT button on the device can.",
   pending:
     "Nothing to do. The change the tower is holding goes out the moment the device is there to take it.",
   uncertain:

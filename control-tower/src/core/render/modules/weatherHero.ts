@@ -1,12 +1,9 @@
 import { z } from "zod";
-import { BLACK, RED, WHITE, YELLOW } from "@/core/palette";
+import type { FrameBuffer } from "@/core/frame";
+import { BLACK, RED, WHITE } from "@/core/palette";
 import { DEFAULT_EXPRESSION } from "@/core/theme";
-import {
-  fillBandDither,
-  fillDiscDither,
-  scrubIsolatedAccents,
-  type DitherStyle,
-} from "../dither";
+import { moonPhase } from "../astronomy";
+import { scrubIsolatedAccents, type DitherStyle } from "../dither";
 import {
   atlasFor,
   drawText,
@@ -15,9 +12,14 @@ import {
   textElementSchema,
   textStyleSchema,
 } from "../text";
-import { ellipseInclusive } from "../draw";
 import type { WeatherValue } from "../data";
-import type { ModuleDefinition } from "../types";
+import { LAYOUT_VARIANT_TAG, type ModuleDefinition } from "../types";
+import {
+  WEATHER_SCENES,
+  drawWeatherScene,
+  inkWithHalo,
+  sceneForCondition,
+} from "../weatherScenes";
 import {
   clearModule,
   inner,
@@ -42,11 +44,24 @@ import {
  * holds — which is also why the type is ink, never a thin red glyph the panel
  * would drop.
  *
+ * SCENES. The sky is illustrated from the condition now — sun, broken cloud,
+ * overcast, rain, downpour, storm, snow, sleet, hail, fog, wind — and drawn by
+ * night (ink sky, the moon at its real phase, stars) when the source says the
+ * sun is down. Both can be pinned by the owner; "auto" follows the data. An
+ * unknown condition gets a neutral sky and no picture rather than a guess.
+ *
  * DATA. The big number is the +0 h slot (the reading for now) and the range is
  * the window's low/high; the condition is the current one. Nothing here is
  * invented — an unavailable source renders an explicit unavailable state.
  */
+export const WEATHER_HERO_SCENES = ["auto", ...WEATHER_SCENES] as const;
+export const WEATHER_HERO_TIMES = ["auto", "day", "night"] as const;
+
 export const WeatherHeroOptions = z.object({
+  /** Which sky to draw. "auto" follows the condition; the rest pin a scene. Chosen by thumbnail. */
+  scene: z.enum(WEATHER_HERO_SCENES).default("auto").describe(LAYOUT_VARIANT_TAG),
+  /** Day or night sky. "auto" follows the source's sunrise and sunset. */
+  timeOfDay: z.enum(WEATHER_HERO_TIMES).default("auto"),
   /** A place name the owner chooses, off by default (the source never asserts one). */
   location: textElementSchema({
     text: "",
@@ -96,7 +111,9 @@ const CONDITION_LABELS: Record<string, string> = {
   exceptional: "Extreme",
 };
 
-function humaniseCondition(code: string): string {
+function humaniseCondition(code: string, night: boolean): string {
+  // "Sunny" after dark is wrong on its face; the sky is clear.
+  if (night && code === "sunny") return "Clear";
   const known = CONDITION_LABELS[code];
   if (known) return known;
   const spaced = code.replace(/[-_]+/g, " ").trim();
@@ -139,61 +156,51 @@ export const weatherHero: ModuleDefinition<WeatherHeroOptions, WeatherValue> = {
       texture: expression.pixelTexture,
     };
 
-    // The graded sky, dense across the top and fading all the way to bare paper
-    // well before the foot — the `to` runs negative on purpose so the ramp hits
-    // zero coverage around two thirds down, leaving the big number sitting on
-    // paper the way the poster does, not on a busy field.
-    const fieldPigment = bw ? BLACK : YELLOW;
-    fillBandDither(fb, rect, fieldPigment, {
-      from: expressive ? 0.62 : 0.46,
-      to: expressive ? -0.35 : -0.28,
-      axis: "y",
+    const night =
+      options.timeOfDay === "night" ||
+      (options.timeOfDay === "auto" && weather.isDay === false);
+    const scene =
+      options.scene === "auto" ? sceneForCondition(weather.condition) : options.scene;
+    drawWeatherScene(fb, rect, {
+      scene,
+      night,
+      colourUse: expression.colourUse,
       style: skyStyle,
-      background: WHITE,
+      moon: moonPhase(ctx.now),
     });
-
-    // The sun, top-right, a nearly solid disc with a thin ink rim — the poster's
-    // flat sun, not a faint stipple. A hair of edge softness keeps the rim from
-    // aliasing without turning the disc into a cloud.
-    const sunR = Math.max(9, Math.min(Math.round(rect.h * 0.22), 30));
-    const sunCx = rect.x + rect.w - sunR - Math.round(rect.w * 0.06);
-    const sunCy = rect.y + sunR + Math.round(rect.h * 0.1);
-    const sunPigment = bw ? BLACK : expressive ? RED : YELLOW;
-    fillDiscDither(fb, sunCx, sunCy, sunR, sunPigment, expressive ? 1 : 0.8, skyStyle, {
-      background: WHITE,
-      edgeSoftness: expressive ? 0 : 0.2,
-    });
-    ellipseInclusive(
-      fb,
-      Math.round(sunCx - sunR),
-      Math.round(sunCy - sunR),
-      Math.round(sunCx + sunR),
-      Math.round(sunCy + sunR),
-      undefined,
-      BLACK,
-    );
+    // Ink type on a warm sunny field is the approved poster look; on any
+    // darker or busier sky the type gets a paper halo so it always reads.
+    const halo = !(scene === "clear" && !night && !bw);
+    const ink = (draw: (target: FrameBuffer) => number): number =>
+      halo ? inkWithHalo(fb, rect, draw) : draw(fb);
 
     // Type, all ink, over the field.
     const box = inner(rect);
     let topY = box.y;
-    topY = drawText(fb, { ...box, y: topY, h: box.h - (topY - box.y) }, options.location, BLACK, "location", report).nextY;
+    topY = ink((t) => drawText(t, { ...box, y: topY, h: box.h - (topY - box.y) }, options.location, BLACK, "location", report).nextY);
     if (weather.locationLabel && options.showProvenance) {
-      topY = renderProvenance(
-        fb,
-        { ...box, y: topY, h: box.h - (topY - box.y) },
-        options,
-        weather.locationLabel,
-        weather.locationWarning ? RED : BLACK,
-        reporter,
+      const at = topY;
+      topY = ink((t) =>
+        renderProvenance(
+          t,
+          { ...box, y: at, h: box.h - (at - box.y) },
+          options,
+          weather.locationLabel,
+          weather.locationWarning ? RED : BLACK,
+          reporter,
+        ),
       );
     }
-    drawText(
-      fb,
-      { ...box, y: topY, h: box.h - (topY - box.y) },
-      filled(options.conditionLine, { condition: humaniseCondition(weather.condition) }),
-      BLACK,
-      "conditionLine",
-      report,
+    const conditionY = topY;
+    ink((t) =>
+      drawText(
+        t,
+        { ...box, y: conditionY, h: box.h - (conditionY - box.y) },
+        filled(options.conditionLine, { condition: humaniseCondition(weather.condition, night) }),
+        BLACK,
+        "conditionLine",
+        report,
+      ).nextY,
     );
 
     // The hero number and the range, anchored to the foot.
@@ -206,11 +213,15 @@ export const weatherHero: ModuleDefinition<WeatherHeroOptions, WeatherValue> = {
     const tempAtlas = atlasFor(options.tempStyle);
     const tempH = tempAtlas.lineHeight;
     const tempY = Math.max(topY, box.y + box.h - rangeH - tempH);
-    fb.drawText(tempAtlas, box.x, tempY, tempText, BLACK);
+    ink((t) => {
+      t.drawText(tempAtlas, box.x, tempY, tempText, BLACK);
+      return tempY;
+    });
 
     if (options.rangeLine.visible) {
-      drawText(
-        fb,
+      ink((t) =>
+        drawText(
+        t,
         { x: box.x, y: tempY + tempH, w: box.w, h: rangeH },
         filled(options.rangeLine, {
           high: weather.high,
@@ -220,22 +231,19 @@ export const weatherHero: ModuleDefinition<WeatherHeroOptions, WeatherValue> = {
         BLACK,
         "rangeLine",
         report,
+        ).nextY,
       );
     }
 
     if (data.state === "stale") {
-      drawText(
-        fb,
-        { ...box, y: box.y, h: box.h },
-        options.staleLabel,
-        BLACK,
-        "staleLabel",
-        report,
+      ink((t) =>
+        drawText(t, { ...box, y: box.y, h: box.h }, options.staleLabel, BLACK, "staleLabel", report).nextY,
       );
     }
 
-    // The second half of the 2 px guarantee: any accent sliver an ink glyph or
-    // the sun's rim cut from the field is removed here.
+    // The second half of the 2 px guarantee: any accent sliver an ink glyph,
+    // a halo or an outline cut from the field is removed here.
     scrubIsolatedAccents(fb, rect, WHITE);
   },
 };
+

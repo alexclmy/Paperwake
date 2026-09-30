@@ -170,26 +170,32 @@ export function RealDeviceCard() {
       {notice && <p className="field-hint">{notice}</p>}
       <ErrorNote>{error}</ErrorNote>
 
-      <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-        Pairing happens on the device: it issues its own token during a window
-        opened from its settings menu, and nothing on the network can open that
-        window. The tower copies in the token the device already issued rather
-        than asking for a new one, because re-pairing would invalidate the
-        credential anything else on this machine is using.
-      </p>
-
       <div className="card-actions" style={{ marginTop: "var(--pad-2)" }}>
         <Link className="btn" href="/device/setup" data-testid="open-setup">
           Pairing &amp; setup steps →
         </Link>
       </div>
 
-      <p className="field-hint" style={{ marginTop: "var(--pad-2)" }}>
-        Switching to the real panel performs one read-only status read first. If
-        the device does not answer, the tower stays on the mock rather than
-        claiming a connection it does not have. The single-send procedure is in
-        QUICKSTART.md.
-      </p>
+      {/* How pairing works and what switching does: read once, then folded. */}
+      <details className="fold">
+        <summary>How pairing and switching work</summary>
+        <div className="fold-body">
+          <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
+            Pairing happens on the device: it issues its own token during a window
+            opened from its settings menu, and nothing on the network can open that
+            window. The tower copies in the token the device already issued rather
+            than asking for a new one, because re-pairing would invalidate the
+            credential anything else on this machine is using.
+          </p>
+
+          <p className="field-hint" style={{ marginTop: "var(--pad-2)" }}>
+            Switching to the real panel performs one read-only status read first. If
+            the device does not answer, the tower stays on the mock rather than
+            claiming a connection it does not have. The single-send procedure is in
+            QUICKSTART.md.
+          </p>
+        </div>
+      </details>
 
       <ConfirmDialog
         open={dialog === "import"}

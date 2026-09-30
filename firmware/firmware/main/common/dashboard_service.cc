@@ -248,6 +248,61 @@ bool RefreshCoordinator::CompleteRender(const uint8_t* sha, uint32_t seq,
     return false;
 }
 
+bool RefreshCoordinator::RestoreDisplayed(const uint8_t* sha, uint32_t seq) {
+    if (sha == nullptr) return false;
+    if (state_ != RefreshState::kIdle || pending_ || has_displayed_) return false;
+    memcpy(displayed_sha_, sha, kShaBytes);
+    displayed_seq_ = seq;
+    has_displayed_ = true;
+    return true;
+}
+
+// --------------------------------------------------------- DisplayedMemo --
+
+namespace {
+constexpr uint32_t kMemoMagic = 0x4E344453u;  // "N4DS"
+
+uint32_t MemoCheck(const DisplayedMemo& m) {
+    // FNV-1a over everything but the check itself. Not a security measure —
+    // a guard against trusting RTC memory nobody sealed.
+    uint32_t h = 2166136261u;
+    auto mix = [&h](const uint8_t* p, size_t n) {
+        for (size_t i = 0; i < n; ++i) {
+            h ^= p[i];
+            h *= 16777619u;
+        }
+    };
+    mix(reinterpret_cast<const uint8_t*>(&m.magic), sizeof(m.magic));
+    mix(reinterpret_cast<const uint8_t*>(&m.seq), sizeof(m.seq));
+    mix(m.sha, kShaBytes);
+    return h;
+}
+}  // namespace
+
+void SealDisplayedMemo(DisplayedMemo* memo, const uint8_t* sha, uint32_t seq) {
+    if (memo == nullptr) return;
+    if (sha == nullptr) {
+        ClearDisplayedMemo(memo);
+        return;
+    }
+    memo->magic = kMemoMagic;
+    memo->seq = seq;
+    memcpy(memo->sha, sha, kShaBytes);
+    memo->check = MemoCheck(*memo);
+}
+
+void ClearDisplayedMemo(DisplayedMemo* memo) {
+    if (memo == nullptr) return;
+    *memo = DisplayedMemo{};
+}
+
+bool OpenDisplayedMemo(const DisplayedMemo& memo, uint8_t* sha_out, uint32_t* seq_out) {
+    if (memo.magic != kMemoMagic || memo.check != MemoCheck(memo)) return false;
+    if (sha_out != nullptr) memcpy(sha_out, memo.sha, kShaBytes);
+    if (seq_out != nullptr) *seq_out = memo.seq;
+    return true;
+}
+
 void RefreshCoordinator::Reset() {
     state_ = RefreshState::kIdle;
     pending_ = false;

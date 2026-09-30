@@ -12,7 +12,7 @@ import {
   type PowerIntent,
   type PowerMode,
 } from "@/core/power";
-import { Badge, Banner, Button, Card, MonoLabel } from "@/ui/components";
+import { Badge, Banner, Button, Card } from "@/ui/components";
 import { ConfirmDialog } from "@/ui/Dialog";
 
 
@@ -190,8 +190,7 @@ export function PowerPanel(props: PowerPanelProps) {
   return (
     <Card title="Energy" id="power" variant="plain">
       <p className="field-hint" style={{ marginBottom: "var(--pad-3)" }}>
-        More sleep means more battery — and longer waits before a change reaches
-        the panel.
+        More sleep, more battery — and longer waits before a change lands.
       </p>
 
       {/* A request the device has not heard yet. Not an error. */}
@@ -218,7 +217,7 @@ export function PowerPanel(props: PowerPanelProps) {
             onClick={() => void onReconcile()}
             disabled={busy}
             testId="power-reconcile"
-            title="Ask the tower to try delivering this now. It only works if the device is awake — press the button on the device first."
+            title="Ask the tower to try delivering this now. It only works if the device is awake — press the round BOOT button on the device first."
           >
             Try now
           </Button>
@@ -248,9 +247,10 @@ export function PowerPanel(props: PowerPanelProps) {
               <span aria-hidden="true">{choice === mode.id ? "●" : "○"}</span>
             </span>
             <span className="mode-card-desc">{mode.desc}</span>
-            {mode.danger && MODE_COPY.always_on.warning && (
+            {/* The cost, in place and short; the dialog carries the full warning. */}
+            {mode.danger && (
               <span className="mode-card-warning">
-                {MODE_COPY.always_on.warning}
+                Expect battery life measured in hours — keep it on USB.
               </span>
             )}
           </button>
@@ -258,62 +258,27 @@ export function PowerPanel(props: PowerPanelProps) {
       </div>
 
       {/*
-        The wake interval, as chips.
-        Shown whatever the selected card is, because it is the number the
-        device is actually running with and reading it should not require
-        changing anything. Pressing one writes `auto_saver` with that interval,
-        which is what "wake every N" means to the firmware.
+        The wake interval, as a segmented row. Shown whatever the selected card
+        is, because it is the number the device is actually running with.
+        Pressing one writes `auto_saver` with that interval.
       */}
-      <div style={{ marginTop: "var(--pad-3)" }}>
-        <MonoLabel>Wakes every</MonoLabel>
-        <div className="chip-row" style={{ marginTop: 8 }}>
+      <div className="inline-setting">
+        <span className="inline-setting-label">Wakes every</span>
+        <div className="segmented" role="group" aria-label="Wake interval">
           {WAKE_INTERVAL_PRESETS.map((option) => (
-            <Button
+            <button
+              type="button"
               key={option}
-              ariaPressed={power !== null && interval === option}
+              aria-pressed={power !== null && interval === option}
               disabled={busy}
-              onClick={() =>
-                void onSetMode("auto_saver", { wakeIntervalMinutes: option })
-              }
-              testId={`power-wake-${option}`}
+              onClick={() => void onSetMode("auto_saver", { wakeIntervalMinutes: option })}
+              data-testid={`power-wake-${option}`}
             >
               {wakeLabel(option)}
-            </Button>
+            </button>
           ))}
         </div>
-        <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-          {power === null
-            ? "The device has not been read since it was last awake, so the tower cannot say which interval it is running."
-            : `The device reports it is waking every ${wakeLabel(interval)}.`}{" "}
-          Real battery life is still being measured — no promises in days yet.
-        </p>
       </div>
-
-      {/* Battery, with the reason rather than a made-up number. */}
-      <p className="mono-note" style={{ marginTop: "var(--pad-3)" }}>
-        {power?.battery.percent !== null && power?.battery.percent !== undefined ? (
-          <span data-testid="power-battery">
-            battery {power.battery.percent}%
-            {power.battery.mv !== null ? ` · ${power.battery.mv} mV` : ""}
-            {power.charge.charging ? " · charging" : ""} · charger{" "}
-            {power.charge.state.replace(/_/g, " ")}
-          </span>
-        ) : (
-          <span data-testid="power-battery-unavailable">
-            Battery not reported.{" "}
-            {batteryUnavailableReason ??
-              "The device has not been read since it was last awake."}
-          </span>
-        )}
-      </p>
-
-      {power && power.last_outcome === null ? (
-        <p className="mono-note" data-testid="power-no-outcome">
-          No update cycle has finished yet, so the device has nothing to report
-          about its last one. This is what a device that has just booted looks
-          like.
-        </p>
-      ) : null}
 
       {power && power.consecutive_failures > 0 ? (
         <Banner tone="attention" testId="power-failures">
@@ -333,58 +298,80 @@ export function PowerPanel(props: PowerPanelProps) {
         </Banner>
       ) : null}
 
-      {nextWake?.estimated && (
-        <p className="mono-note">
-          The next wake shown on this page is the tower&rsquo;s own arithmetic
-          from the last time it saw the device, not the device&rsquo;s answer.
-          It is wrong whenever the device backed off after a failed cycle.
-        </p>
-      )}
-
-      {/*
-        Where a "wake device" button would go, if one could exist. It cannot,
-        and saying so here is the whole point: the alternative is a user who
-        keeps looking for the control.
-      */}
+      {/* Where a "wake device" button would go, if one could exist. */}
       <p className="mono-note" data-testid="power-no-remote-wake">
         {NO_REMOTE_WAKE_NOTE}
       </p>
 
+      {/*
+        Everything else is evidence rather than a decision, so it folds away:
+        what the device reports, the battery with its reason, and how far to
+        trust the next-wake figure.
+      */}
+      <details className="fold" data-testid="power-details">
+        <summary>Details</summary>
+        <div className="fold-body">
+          <p className="mono-note">
+            {power === null
+              ? "The device has not been read since it was last awake, so the tower cannot say which interval it is running."
+              : `The device reports it is waking every ${wakeLabel(interval)}.`}{" "}
+            Real battery life is still being measured — no promises in days yet.
+          </p>
+          <p className="mono-note">
+            {power?.battery.percent !== null && power?.battery.percent !== undefined ? (
+              <span data-testid="power-battery">
+                battery {power.battery.percent}%
+                {power.battery.mv !== null ? ` · ${power.battery.mv} mV` : ""}
+                {power.charge.charging ? " · charging" : ""} · charger{" "}
+                {power.charge.state.replace(/_/g, " ")}
+              </span>
+            ) : (
+              <span data-testid="power-battery-unavailable">
+                Battery not reported.{" "}
+                {batteryUnavailableReason ??
+                  "The device has not been read since it was last awake."}
+              </span>
+            )}
+          </p>
+          {power && power.last_outcome === null ? (
+            <p className="mono-note" data-testid="power-no-outcome">
+              No update cycle has finished yet — what a device that has just
+              booted looks like.
+            </p>
+          ) : null}
+          {nextWake?.estimated && (
+            <p className="mono-note">
+              The next wake is the tower&rsquo;s own arithmetic from the last
+              time it saw the device, not the device&rsquo;s answer. It is wrong
+              whenever the device backed off after a failed cycle.
+            </p>
+          )}
+          {!reachable && (
+            <p className="mono-note">
+              {observed ? (
+                <>
+                  <Badge kind="asleep" /> Not answering: a change made here is
+                  recorded and applied the next time the device is there to
+                  receive it. The tower never claims a change reached a device
+                  it could not reach.
+                </>
+              ) : (
+                <>
+                  <Badge kind="uncertain" /> Not read yet. A change made now is
+                  recorded either way, and applied the moment the device is
+                  there to receive it.
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      </details>
+
       {dangerActions && (
         <div className="danger-zone" data-testid="power-danger-zone">
           <h3>Actions with consequences</h3>
-          <p className="field-hint">
-            Each of these changes what the hardware is doing. None of them can
-            be undone from here.
-          </p>
           <div className="danger-actions">{dangerActions}</div>
         </div>
-      )}
-
-      {/*
-        What pressing anything above actually promises, when nobody is
-        listening. Written as a line rather than behind a disclosure toggle
-        because it is the answer to the first question a person has about a
-        control on a device that is asleep most of the time, and a lone "i"
-        glyph at the bottom of a card is not an invitation anybody accepts.
-      */}
-      {!reachable && (
-        <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-          {observed ? (
-            <>
-              <Badge kind="asleep" /> The device is not answering, so a change
-              made here is recorded and applied the next time it is actually
-              there to receive it. The tower never claims a change reached a
-              device it could not reach.
-            </>
-          ) : (
-            <>
-              <Badge kind="uncertain" /> The tower has not read the device yet.
-              A change made now is recorded either way, and applied the moment
-              the device is there to receive it.
-            </>
-          )}
-        </p>
       )}
 
       <ConfirmDialog

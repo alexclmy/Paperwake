@@ -2958,3 +2958,189 @@ pre.json {
     box-shadow: var(--shadow-btn);
   }
 }
+
+/* ------------------------------------------------------ device page, v2 --
+ *
+ * The Device page, re-set for scanning: the state as a headline across the
+ * full width, one sentence under it, actions beside it; then energy on the
+ * left and connection/maintenance on the right; then settings as a grid of
+ * short cards instead of a column of long ones. Evidence folds away.
+ */
+
+.now-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--pad-3) var(--pad-4);
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .now-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.now-main .now-line strong {
+  font-size: var(--size-24, 24px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.now-main .now-dot {
+  width: 16px;
+  height: 16px;
+}
+
+.now-reason {
+  margin: 10px 0 0;
+  font-size: var(--size-14);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+
+.now-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--pad-2);
+}
+
+.now-interactive {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wake-hint {
+  margin: var(--pad-3) 0 0;
+  padding: 12px var(--pad-2);
+  border: var(--border-2);
+  background: var(--accent-yellow);
+  font-size: var(--size-14);
+  line-height: 1.5;
+}
+
+/* A compact segmented control: one bordered strip, the chosen segment inked. */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: var(--border-2);
+  background: var(--paper);
+}
+
+.segmented button {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--size-12);
+  font-weight: 600;
+  min-height: var(--tap-target, 44px);
+  min-width: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-right: var(--border-2);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.segmented button:last-child {
+  border-right: 0;
+}
+
+.segmented button:hover:not(:disabled) {
+  background: var(--accent-yellow);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.segmented button:disabled {
+  cursor: not-allowed;
+  color: var(--ink-soft);
+}
+
+.inline-setting {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pad-2);
+  margin-top: var(--pad-3);
+}
+
+.inline-setting-label {
+  font-family: var(--font-mono);
+  font-size: var(--size-10);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+/* Three energy modes side by side when there is room, stacked when not. */
+.device-grid .mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.device-grid .mode-card-desc {
+  font-size: var(--size-12);
+}
+
+.fold {
+  margin-top: var(--pad-3);
+  border-top: 1px solid var(--rule, rgba(0, 0, 0, 0.15));
+  padding-top: var(--pad-2);
+}
+
+.fold > summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--size-12);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.fold-body > * + * {
+  margin-top: 8px;
+}
+
+.fold-body {
+  margin-top: var(--pad-2);
+}
+
+.device-grid .danger-zone {
+  margin-top: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pad-2);
+  margin: calc(var(--pad-4) * 1.5) 0 var(--pad-3);
+  padding-bottom: var(--pad-1);
+  border-bottom: var(--border-2);
+}
+
+.section-head h2 {
+  font-size: var(--size-17);
+  font-weight: 700;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--pad-4);
+  align-items: start;
+}
+
+.settings-grid > .card {
+  margin-bottom: 0;
+}
+
+.state-strip {
+  margin-bottom: var(--pad-4);
+}

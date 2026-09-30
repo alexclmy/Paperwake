@@ -3,6 +3,9 @@ import type { DashboardSources } from "@/core/render/data";
 import { deviceContext } from "./device/context";
 import { describeDeviceFailure, type DeviceFailure } from "./device/failure";
 import { blockingPush, queuedPush } from "./device/ledger";
+import { readingFromStatus, recordConfirmedReading } from "./device/lastConfirmed";
+import { recordPresence } from "./device/presence";
+import { confirmUncertainFromStatus } from "./device/pushPipeline";
 import {
   noteDeviceSeen,
   readIntent,
@@ -366,23 +369,61 @@ async function guardedWindowTick(): Promise<void> {
  * a waking one is caught within a few seconds and handed to the full window
  * tick, which delivers with its own normal (longer) budget.
  */
-export async function runFastCatchTick(): Promise<void> {
+export async function runFastCatchTick(nowMs: number = Date.now()): Promise<void> {
   if (windowBusy) return;
   const state = readState();
   if (state.deviceMode !== "real") return; // the mock is always reachable
   const intentWanted = readIntent() !== null;
   const hasQueued = queuedPush() !== null;
-  if (!intentWanted && !hasQueued) return;
+  const idle = !intentWanted && !hasQueued;
+  // Idle, the probe is only a presence watch, so it runs at its own slower
+  // pace; with work waiting it runs every pulse to catch a brief wake.
+  if (idle && nowMs - lastPresenceProbeMs < PRESENCE_INTERVAL_MS) return;
+  lastPresenceProbeMs = nowMs;
 
   try {
     const probe = await deviceContext({ timeoutMs: FAST_CATCH_PROBE_TIMEOUT_MS });
     if (probe.simulated) return;
-    await probe.client.status();
+    // No retry budget: a sleeping panel must be reported as silent within one
+    // probe, not after the kernel's hold-down has been waited out — a probe
+    // that lingers leaves the last "Awake" standing on every badge.
+    const status = await probe.client.status({ retryBudgetMs: 0 });
+    const at = new Date();
+    recordConfirmedReading(readingFromStatus(status, at));
+    recordPresence({ at: at.toISOString(), reachable: true, status });
+    // The wake is also when an uncertain push can be settled on evidence, so
+    // that the refresh it was blocking can go out in this same window.
+    if (confirmUncertainFromStatus(status)) {
+      // The refresh that push was blocking is overdue by definition: render
+      // and queue it now, then deliver, all inside this wake.
+      updateState({ lastAutoRefreshAt: null });
+      await runRefreshTick().catch(() => undefined);
+      await guardedWindowTick();
+      return;
+    }
   } catch {
-    return; // asleep or unreachable — the next fast pulse tries again
+    // Asleep or unreachable — the next pulse tries again.
+    recordPresence({ at: new Date().toISOString(), reachable: false, status: null });
+    return;
   }
+  if (idle) return;
   // Reachable this instant: deliver on the full path before the wake closes.
   await guardedWindowTick();
+}
+
+/**
+ * How often the presence watch looks when nothing is waiting. Short enough
+ * that pressing BOOT shows "Awake" in the header within a few seconds of the
+ * panel joining Wi-Fi; long enough to be a trickle of failed connects on the
+ * Mac while the panel sleeps. It costs the panel nothing either way.
+ */
+export const PRESENCE_INTERVAL_MS = 6_000;
+let lastPresenceProbeMs = 0;
+
+/** Test seam. */
+export function resetPresenceWatchForTests(): void {
+  lastPresenceProbeMs = 0;
+  windowBusy = false;
 }
 
 /** Start once per persistent Node process. The short pulse only checks due state. */

@@ -8,6 +8,7 @@
 
 #include "dashboard_manager.h"
 
+#include <esp_attr.h>
 #include <esp_heap_caps.h>
 #include <esp_log.h>
 #include <esp_random.h>
@@ -27,6 +28,11 @@ namespace dashboard {
 namespace {
 
 const char* kTag = "DashboardMgr";
+
+// Which frame is on the glass, kept across deep sleep. RTC slow memory survives
+// a timer or button wake and is lost on a power cut; the memo's own seal tells
+// the two apart. See DisplayedMemo in dashboard_service.h.
+RTC_DATA_ATTR DisplayedMemo s_displayed_memo;
 
 // Same SPIFFS mount photo_storage uses (the 8M "assets" partition). We add two
 // fixed files and never grow beyond them.
@@ -189,6 +195,18 @@ bool DashboardManager::Init() {
              static_cast<unsigned>(store_->active_seq()),
              store_->slot_status(0).valid ? 1 : 0,
              store_->slot_status(1).valid ? 1 : 0);
+
+    // Back from a deep sleep: the panel still shows what was last drawn, so
+    // say so rather than "nothing displayed". Nothing is redrawn to learn it.
+    {
+        uint8_t sha[kShaBytes] = {};
+        uint32_t seq = 0;
+        if (OpenDisplayedMemo(s_displayed_memo, sha, &seq) &&
+            coord_.RestoreDisplayed(sha, seq)) {
+            ESP_LOGI(kTag, "displayed frame restored across sleep: seq=%u",
+                     static_cast<unsigned>(seq));
+        }
+    }
 
     // Load the token. Deliberately never logged, not even its length.
     {
@@ -753,6 +771,10 @@ void DashboardManager::RenderLoop() {
             last_total_ms_ = total_ms;
             if (ok) ++render_count_;
             again = coord_.CompleteRender(ok ? sha : nullptr, seq, outcome);
+            // Keep the sleep-proof copy in step with what the coordinator now
+            // believes is on the glass.
+            SealDisplayedMemo(&s_displayed_memo, coord_.displayed_sha(),
+                              coord_.displayed_seq());
             xSemaphoreGive(lock_);
 
             ESP_LOGI(kTag,

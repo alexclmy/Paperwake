@@ -188,7 +188,16 @@ shadow, the paper convention for "this is the chosen object".
 ## Iteration 2
 
 - A **Weather-hero** module: the current conditions as a dithered sky + a big
-  temperature, the weather equivalent of the Headline.
+  temperature, the weather equivalent of the Headline. *Done* — and it now has
+  **weather scenes** (`src/core/render/weatherScenes.ts`): clear, partly cloudy,
+  cloudy, rain, downpour, storm, snow, sleet, hail, fog and wind, each by day
+  (warm or grey halftone sky, sun) and by night (ink sky, the moon at its real
+  phase, stars). "Live" follows the condition and the source's `isDay` (computed
+  on the Mac from the configured coordinates); the owner can pin a scene by
+  thumbnail and force day or night. On a dark sky, type and rain get a paper
+  knock-out halo. The full set, in every colour stance, is in
+  [`images/weather-hero/`](images/weather-hero/) — regenerate with
+  `npx tsx tools/weather-illustrations.ts` (byte-identical, fixture data only).
 - **Air quality** as a tonal band (green→red is not available, so a coverage
   ramp in a single accent).
 - Seed the Sky location from the server so a freshly added tile picks up the

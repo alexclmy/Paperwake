@@ -17,9 +17,12 @@ import { ApiError, apiGet, apiSend } from "./api";
  * never reads the device at all (Dashboards, Voice), and otherwise lives off
  * what the pages already know.
  *
- * Nothing here polls. Device contact is the scheduler's job; a browser tab
- * left open overnight must not become a source of traffic aimed at a device
- * that is trying to sleep.
+ * Nothing here polls the DEVICE. Device contact is the scheduler's job; a
+ * browser tab left open overnight must not become a source of traffic aimed at
+ * a device that is trying to sleep. What it does poll, while the tab is
+ * visible, is the tower's memory of the scheduler's presence watch
+ * (`?observe=presence`), which opens no socket — so pressing BOOT on the panel
+ * turns the badge to Awake within seconds without anyone clicking "Check now".
  */
 
 export interface DeviceReading {
@@ -146,6 +149,36 @@ export function resetDeviceReadingForTests(): void {
   current = null;
 }
 
+/** How often a visible tab asks the tower what its presence watch last saw. */
+export const PRESENCE_POLL_MS = 5_000;
+
+let pollers = 0;
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+async function pollPresence(): Promise<void> {
+  if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+  try {
+    publishDeviceStatus(await apiGet<DeviceStatusLike>("/api/device/status?observe=presence"));
+  } catch {
+    // The badge is not worth a banner; the next poll tries again.
+  }
+}
+
+/** One poller for the whole app, however many components use the hook. */
+function startPresencePoll(): () => void {
+  pollers += 1;
+  if (pollTimer === null) {
+    pollTimer = setInterval(() => void pollPresence(), PRESENCE_POLL_MS);
+  }
+  return () => {
+    pollers -= 1;
+    if (pollers === 0 && pollTimer !== null) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  };
+}
+
 export interface DeviceStateHook extends Omit<Partial<DeviceReading>, "input"> {
   input: DeviceStateInput | null;
   busy: boolean;
@@ -161,8 +194,10 @@ export function useDeviceState(): DeviceStateHook {
 
   useEffect(() => {
     listeners.add(setReading);
+    const stopPolling = startPresencePoll();
     return () => {
       listeners.delete(setReading);
+      stopPolling();
     };
   }, []);
 

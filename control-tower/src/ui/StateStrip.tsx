@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  DEVICE_ACTION_COPY,
   INTERACTIVE_MINUTES,
   INTERACTIVE_REQUEST_NOTE,
   deriveDeviceState,
@@ -9,7 +8,7 @@ import {
   type DeviceStateInput,
 } from "@/core/power";
 import { useState } from "react";
-import { Button, Card, MonoLabel } from "./components";
+import { Button, Card } from "./components";
 import { Disclosure } from "./Disclosure";
 import { useRegisterPageDeviceState } from "./pageDeviceState";
 
@@ -81,85 +80,84 @@ export function StateStrip({
   // chrome stacks a second copy of it. See src/ui/pageDeviceState.ts.
   useRegisterPageDeviceState();
 
+  const awake = reading.state === "awake";
+
   return (
-    <div data-testid={testId} data-device-state={reading.state} data-state={reading.state}>
+    <div className="state-strip" data-testid={testId} data-device-state={reading.state} data-state={reading.state}>
     <Card title="Now" variant="plain">
-      <div className="now-line" data-device-state={reading.state}>
-        <span className="chip-dot now-dot" aria-hidden="true" />
-        <strong data-testid={`${testId}-badge`}>{reading.label}</strong>
-      </div>
-
-      <p style={{ margin: "10px 0 0", fontSize: "var(--size-14)", lineHeight: 1.6 }}>
-        {reading.reason}
-      </p>
-      <p style={{ margin: "8px 0 0", fontSize: "var(--size-14)", lineHeight: 1.6 }}>
-        {DEVICE_ACTION_COPY[reading.state]}{" "}
-        {describeWhatHappensNext(reading.state, nextWakeLabel)}
-      </p>
-
-      {/*
-        The facts, in one mono row. Address included, and it is the tower's
-        configured address rather than anything the device announced — which is
-        why it sits beside a battery reading the device did report and is worded
-        as a plain value rather than as a claim about what answered.
-      */}
-      <div className="now-facts">
-        {batteryLine && <span>{batteryLine}</span>}
-        {nextWakeLabel && <span>next wake ~{nextWakeLabel}</span>}
-        {address && <span className="num">{address}</span>}
-      </div>
-
-      <div className="card-actions" style={{ marginTop: "var(--pad-3)" }}>
-        {onReadAgain && (
-          <Button
-            onClick={onReadAgain}
-            disabled={busy || checking}
-            testId="refresh"
-          >
-            {checking ? "Checking…" : "Check now"}
-          </Button>
-        )}
-        {onInteractive && (
-          <>
-            <Button
-              onClick={() => onInteractive(minutes)}
-              disabled={busy}
-              testId={`${testId}-interactive`}
-            >
-              Interactive {minutes} min
-            </Button>
-            {/*
-              The caveat, in a disclosure rather than a `title`. What this
-              button does and does not do — applied now if the device is awake,
-              held if it is not, and never a wake — is the product's own
-              contract, and a `title` publishes it to a hovering mouse and to
-              nobody else. See INTERACTIVE_REQUEST_NOTE in src/core/power.ts.
-            */}
-            <Disclosure
-              text={INTERACTIVE_REQUEST_NOTE}
-              label="What asking for interactive does"
-              testId={`${testId}-interactive-why`}
-            />
-          </>
-        )}
-      </div>
-
-      {onInteractive && (
-        <div style={{ marginTop: "var(--pad-2)" }}>
-          <MonoLabel>Interactive window</MonoLabel>
-          <div className="chip-row" style={{ marginTop: 8 }}>
-            {INTERACTIVE_MINUTES.map((option) => (
-              <Button
-                key={option}
-                ariaPressed={minutes === option}
-                onClick={() => setMinutes(option)}
-                testId={`power-window-${option}`}
-              >
-                {option} min
-              </Button>
-            ))}
+      <div className="now-grid">
+        <div className="now-main">
+          <div className="now-line" data-device-state={reading.state}>
+            <span className="chip-dot now-dot" aria-hidden="true" />
+            <strong data-testid={`${testId}-badge`}>{reading.label}</strong>
+          </div>
+          <p className="now-reason">
+            {reading.reason} {describeWhatHappensNext(reading.state, nextWakeLabel)}
+          </p>
+          {/*
+            The facts, in one mono row. The address is the tower's configured
+            one, not anything the device announced.
+          */}
+          <div className="now-facts">
+            {batteryLine && <span>{batteryLine}</span>}
+            {nextWakeLabel && <span>next wake ~{nextWakeLabel}</span>}
+            {address && <span className="num">{address}</span>}
           </div>
         </div>
+
+        <div className="now-side">
+          {onReadAgain && (
+            <Button onClick={onReadAgain} disabled={busy || checking} testId="refresh">
+              {checking ? "Checking…" : "Check now"}
+            </Button>
+          )}
+          {onInteractive && (
+            <div className="now-interactive">
+              <div className="card-actions">
+                <Button
+                  onClick={() => onInteractive(minutes)}
+                  disabled={busy}
+                  testId={`${testId}-interactive`}
+                >
+                  Interactive {minutes} min
+                </Button>
+                {/* What this does and does not do: applied now if awake, held if not, never a wake. */}
+                <Disclosure
+                  text={INTERACTIVE_REQUEST_NOTE}
+                  label="What asking for interactive does"
+                  testId={`${testId}-interactive-why`}
+                />
+              </div>
+              <div className="segmented" role="group" aria-label="Interactive window">
+                {INTERACTIVE_MINUTES.map((option) => (
+                  <button
+                    type="button"
+                    key={option}
+                    aria-pressed={minutes === option}
+                    onClick={() => setMinutes(option)}
+                    data-testid={`power-window-${option}`}
+                  >
+                    {option}′
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/*
+        The one physical fact a person needs when the panel is not answering,
+        said plainly: which button. Only BOOT wakes it from deep sleep; the
+        other buttons do nothing until it is awake. The header notices a wake
+        within a few seconds (the tower's presence watch), so there is no need
+        to press Check now afterwards.
+      */}
+      {!awake && (
+        <p className="wake-hint" data-testid={`${testId}-wake-hint`}>
+          <strong>To wake it now:</strong> press the round <strong>BOOT</strong> button on
+          the panel. This page shows <em>Awake</em> within a few seconds.
+        </p>
       )}
     </Card>
     </div>
