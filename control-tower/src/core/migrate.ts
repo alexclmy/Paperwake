@@ -1,5 +1,12 @@
 import { MODULES, isKnownModuleType } from "./render/modules";
 import { DEFAULT_EXPRESSION, DEFAULT_THEME } from "./theme";
+import {
+  GRID_COLS,
+  GRID_ROWS,
+  GRID_SCALE,
+  LEGACY_GRID_COLS,
+  LEGACY_GRID_ROWS,
+} from "./render/types";
 
 /**
  * Dashboard document migrations.
@@ -141,6 +148,45 @@ export function migrateDashboardDocV4toV5(raw: unknown): unknown {
 }
 
 /**
+ * Lift one v5 document to v6: the 8x6 grid becomes 16x12.
+ *
+ * Every coordinate and span doubles. That is lossless and, more strongly,
+ * pixel-identical: cellsToPixels floors `x * W / cols`, and
+ * floor(2x * W / 16) === floor(x * W / 8) for every integer, with or without
+ * content padding. So a migrated composition — and every saved version of it —
+ * paints the very same bytes it painted before. Nothing else changes; module
+ * options keep their stored values (an explicit variant stays explicit).
+ *
+ * A document that already claims the fine grid is left alone, so running this
+ * twice is safe.
+ */
+export function migrateDashboardDocV5toV6(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const doc = raw as { grid?: { cols?: unknown; rows?: unknown }; modules?: unknown };
+  const legacy =
+    !doc.grid ||
+    (doc.grid.cols === LEGACY_GRID_COLS && doc.grid.rows === LEGACY_GRID_ROWS);
+  if (!legacy) return { ...doc, schema_version: 6 };
+  const scale = (value: unknown): unknown =>
+    typeof value === "number" ? value * GRID_SCALE : value;
+  const modules = Array.isArray(doc.modules)
+    ? (doc.modules as Record<string, unknown>[]).map((module) => ({
+        ...module,
+        x: scale(module.x),
+        y: scale(module.y),
+        w: scale(module.w),
+        h: scale(module.h),
+      }))
+    : doc.modules;
+  return {
+    ...doc,
+    schema_version: 6,
+    grid: { cols: GRID_COLS, rows: GRID_ROWS },
+    modules,
+  };
+}
+
+/**
  * Migrate a dashboard document from whatever version it was written at to the
  * current one. Unknown or future versions are returned untouched so the
  * caller's schema can reject them with its own message.
@@ -151,17 +197,11 @@ export function migrateDashboardDocV4toV5(raw: unknown): unknown {
 export function migrateDashboardDoc(raw: unknown): unknown {
   if (typeof raw !== "object" || raw === null) return raw;
   const version = (raw as { schema_version?: unknown }).schema_version;
-  if (version === 1)
-    return migrateDashboardDocV4toV5(
-      migrateDashboardDocV3toV4(
-        migrateDashboardDocV2toV3(migrateDashboardDocV1toV2(raw)),
-      ),
-    );
-  if (version === 2)
-    return migrateDashboardDocV4toV5(
-      migrateDashboardDocV3toV4(migrateDashboardDocV2toV3(raw)),
-    );
-  if (version === 3) return migrateDashboardDocV4toV5(migrateDashboardDocV3toV4(raw));
-  if (version === 4) return migrateDashboardDocV4toV5(raw);
-  return raw;
+  if (typeof version !== "number" || version < 1 || version > 5) return raw;
+  let doc: unknown = raw;
+  if (version <= 1) doc = migrateDashboardDocV1toV2(doc);
+  if (version <= 2) doc = migrateDashboardDocV2toV3(doc);
+  if (version <= 3) doc = migrateDashboardDocV3toV4(doc);
+  if (version <= 4) doc = migrateDashboardDocV4toV5(doc);
+  return migrateDashboardDocV5toV6(doc);
 }

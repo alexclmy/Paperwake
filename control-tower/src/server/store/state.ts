@@ -3,6 +3,7 @@ import { DevicePowerSchema, PowerIntentSchema } from "@/core/power";
 import { defaultDeviceAddress } from "@/server/config";
 import { readDocument, writeDocument, type DocumentSpec } from "./atomicFile";
 import { ensureDataRoot, paths } from "./paths";
+import { DEFAULT_PANEL_LANG, PANEL_LANGS, type PanelLang } from "@/core/render/i18n";
 
 /**
  * The address a fresh tower starts with: none, unless NOTE4C_DEVICE_ADDRESS
@@ -83,8 +84,27 @@ export const TowerStateSchema = z.object({
     .nullish()
     .transform((value) => value ?? null)
     .catch(null),
+  /**
+   * Language of every word modules write on the panel. Optional and caught:
+   * absent or unreadable means French, the historical output; an older build
+   * strips the key and keeps working.
+   */
+  panelLang: z.enum(PANEL_LANGS).optional().catch(undefined),
 });
 export type TowerState = z.infer<typeof TowerStateSchema>;
+
+/**
+ * The panel language, read safely. Stored as an optional key (no schema bump,
+ * same reasoning as lastDeviceReading) and defaulting to French, so a tower
+ * that never chose one renders exactly what it rendered before.
+ */
+export function readPanelLang(): PanelLang {
+  try {
+    return readState().panelLang ?? DEFAULT_PANEL_LANG;
+  } catch {
+    return DEFAULT_PANEL_LANG;
+  }
+}
 
 export const STATE_SPEC: DocumentSpec<TowerState> = {
   schema: TowerStateSchema,

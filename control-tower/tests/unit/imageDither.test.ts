@@ -185,7 +185,7 @@ describe("the image module", () => {
   it("blits the stored tile and passes pack()'s gate", () => {
     const def = moduleDefinition("image");
     const fb = new FrameBuffer(WHITE);
-    const rect = cellsToPixels(0, 0, 3, 3);
+    const rect = cellsToPixels(0, 0, 6, 6);
     def.render(fb, rect, { state: "ok" }, withPhoto(3, 3), FIXTURE_CTX);
     // Some ink landed, and the whole frame still packs to 30000 bytes.
     let nonWhite = 0;
@@ -197,7 +197,7 @@ describe("the image module", () => {
   it("keeps the picture inside its own rectangle", () => {
     const def = moduleDefinition("image");
     const fb = new FrameBuffer(WHITE);
-    const rect = cellsToPixels(1, 1, 2, 2);
+    const rect = cellsToPixels(2, 2, 4, 4);
     def.render(fb, rect, { state: "ok" }, withPhoto(2, 2), FIXTURE_CTX);
     // Nothing painted outside the module's rectangle.
     for (let y = 0; y < fb.height; y += 1) {
@@ -212,7 +212,7 @@ describe("the image module", () => {
   it("renders an explicit empty state with no image chosen", () => {
     const def = moduleDefinition("image");
     const fb = new FrameBuffer(WHITE);
-    const rect = cellsToPixels(0, 0, 3, 3);
+    const rect = cellsToPixels(0, 0, 6, 6);
     def.render(fb, rect, { state: "ok" }, ImageOptions.parse({}), FIXTURE_CTX);
     let red = 0;
     for (const v of fb.pixels) if (v === RED) red += 1;

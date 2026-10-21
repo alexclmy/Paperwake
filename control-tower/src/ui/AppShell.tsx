@@ -1,5 +1,7 @@
 "use client";
 
+import { PanelLangProvider } from "./panelLang";
+import type { PanelLang } from "@/core/render/i18n";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -10,35 +12,83 @@ import { ToastProvider } from "./Toast";
 import { useDeviceState } from "./useDeviceState";
 
 /**
- * Four entries, and there are five routes.
- *
- * Voice is deliberately not one of them. It is an experiment that has never
- * been validated on hardware and configures nothing by default, so a permanent
- * quarter of the navigation is more than it has earned; it is reached from the
- * card that describes it, on Device, where the sentence explaining what it is
- * can sit next to the link. The route is unchanged and remains linkable.
- *
- * "Advanced" rather than "Diagnostics" because that is what it is from the
- * outside — a place you go when something is wrong — and it is drawn quieter
- * than its three siblings for the same reason.
+ * Primary places first, then a quieter secondary group. On a phone the tab
+ * bar carries the four primary ones; Voice stays reachable from the sidebar
+ * and from Device, and its route is unchanged.
  */
 const NAV = [
-  { href: "/overview", label: "Overview", quiet: false },
-  { href: "/dashboards", label: "Compositions", quiet: false },
-  { href: "/device", label: "Device", quiet: false },
-  { href: "/diagnostics", label: "Advanced", quiet: true },
+  { href: "/overview", label: "Home", icon: "home", quiet: false },
+  { href: "/dashboards", label: "Compositions", icon: "grid", quiet: false },
+  { href: "/device", label: "Device", icon: "device", quiet: false },
+  { href: "/diagnostics", label: "Advanced", icon: "gear", quiet: true },
 ] as const;
+
+const SECONDARY = [{ href: "/voice", label: "Voice", icon: "mic" }] as const;
+
+type IconName = "home" | "grid" | "device" | "gear" | "mic" | "logout" | "density";
+
+function NavIcon({ name }: { name: IconName }) {
+  const paths: Record<IconName, ReactNode> = {
+    home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+    grid: (
+      <>
+        <rect x="3" y="3" width="7.5" height="7.5" rx="2" />
+        <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" />
+        <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" />
+        <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" />
+      </>
+    ),
+    device: (
+      <>
+        <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+        <path d="M6 9h7M6 12.5h5M15.5 15h2.5" />
+      </>
+    ),
+    gear: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" />
+      </>
+    ),
+    mic: (
+      <>
+        <rect x="9" y="3" width="6" height="11" rx="3" />
+        <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+      </>
+    ),
+    logout: <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10" />,
+    density: <path d="M4 6h16M4 12h16M4 18h16" />,
+  };
+  return (
+    <svg
+      className="nav-icon"
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  )
+}
 
 export function AppShell({
   children,
   simulated,
   deviceLabel,
   density,
+  panelLang = "fr",
 }: {
   children: ReactNode;
   simulated: boolean;
   deviceLabel: string;
   density: "comfortable" | "compact";
+  panelLang?: PanelLang;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -123,20 +173,23 @@ export function AppShell({
   const utilities = (
     <>
       <button
-        className="btn btn-quiet"
+        className="side-link"
         onClick={() => void toggleDensity()}
         data-testid="density-toggle"
         aria-pressed={densityValue === "compact"}
       >
+        <NavIcon name="density" />
         {densityValue === "compact" ? "Comfortable spacing" : "Compact spacing"}
       </button>
-      <button className="btn btn-quiet" onClick={signOut} data-testid="sign-out">
+      <button className="side-link" onClick={signOut} data-testid="sign-out">
+        <NavIcon name="logout" />
         Sign out
       </button>
     </>
   );
 
   return (
+    <PanelLangProvider initial={panelLang}>
     <ToastProvider>
       <a className="skip-link" href="#main">
         Skip to content
@@ -148,7 +201,7 @@ export function AppShell({
           data-testid="simulated-banner"
           ref={bannerRef}
         >
-          <span className="banner-word">SIMULATED&nbsp;DEVICE</span>
+          <span className="banner-word">SIMULATED</span>
           {/*
             One sentence at every width, which it did not used to be: the old
             wording ran to three lines on a 375 px screen and pushed the thing
@@ -163,45 +216,14 @@ export function AppShell({
       )}
 
       <div className="shell" data-density={densityValue}>
-        <header className="app-header">
-          <div className="header-inner">
-            <Link className="brand" href="/overview">
-              <span className="brand-mark" aria-hidden="true" />
+        <aside className="sidebar">
+          <Link className="brand" href="/overview">
+            <span className="brand-mark" aria-hidden="true" />
+            <span className="brand-text">
               <span className="brand-name">NOTE4C</span>
-              <span className="brand-sub">CONTROL&nbsp;TOWER</span>
-            </Link>
-
-            {/*
-              The chip, and only the chip.
-              The header holds the two things that are true of every page: what
-              this is, and what the device is doing. Sign out and the density
-              toggle are neither — they are things you do once and on the way
-              out — so they live at the foot of the page, once, at every width.
-              The rail this replaces kept them at the top and then hid them
-              below 760 px, which meant the only way to sign out of the tower
-              on a phone was to make the window wider.
-            */}
-            {device.input && (
-              <DeviceChip
-                reading={{
-                  input: device.input,
-                  observed: device.observed ?? true,
-                  nextWakeLabel: device.nextWakeLabel ?? null,
-                  address: device.address ?? null,
-                  simulated: device.simulated ?? simulated,
-                }}
-              />
-            )}
-          </div>
-
-          {/*
-            The nav row. A `<nav aria-label="Main">` here and another on the tab
-            bar, and exactly one of the two is in the accessibility tree at any
-            width because the other is `display: none` — which getByRole and a
-            screen reader both honour. Labelling one container that is always
-            present would mean a landmark called "Main navigation" containing no
-            links on the width where the links are elsewhere.
-          */}
+              <span className="brand-sub">Control Tower</span>
+            </span>
+          </Link>
           <nav className="top-nav" aria-label="Main">
             {NAV.map((item) => (
               <Link
@@ -210,28 +232,54 @@ export function AppShell({
                 aria-current={current(item.href)}
                 data-quiet={item.quiet ? "true" : undefined}
               >
+                <NavIcon name={item.icon} />
+                {item.label}
+              </Link>
+            ))}
+            <span className="side-group-label">Labs</span>
+            {SECONDARY.map((item) => (
+              <Link key={item.href} href={item.href} aria-current={current(item.href)} data-quiet="true">
+                <NavIcon name={item.icon} />
                 {item.label}
               </Link>
             ))}
           </nav>
-        </header>
-
-        <main className="main" id="main">
-          <PageDeviceStateProvider value={pageState.register}>
-            {children}
-          </PageDeviceStateProvider>
-
-          {/*
-            One copy of each, at every width.
-            The address is a label rather than a control, and it is on Device
-            and in Advanced either way; it is here because the foot of a page
-            is where a person looks for "what is this thing pointed at".
-          */}
-          <div className="page-foot">
-            <span title="The address the tower would talk to">{deviceLabel}</span>
+          <div className="side-foot">
+            <span className="side-device" title="The address the tower would talk to">
+              {deviceLabel}
+            </span>
             {utilities}
           </div>
-        </main>
+        </aside>
+
+        <div className="shell-body">
+          <header className="app-header">
+            <div className="header-inner">
+              <Link className="brand brand-compact" href="/overview">
+                <span className="brand-mark" aria-hidden="true" />
+                <span className="brand-name">NOTE4C</span>
+              </Link>
+              <span className="header-spacer" />
+              {device.input && (
+                <DeviceChip
+                  reading={{
+                    input: device.input,
+                    observed: device.observed ?? true,
+                    nextWakeLabel: device.nextWakeLabel ?? null,
+                    address: device.address ?? null,
+                    simulated: device.simulated ?? simulated,
+                  }}
+                />
+              )}
+            </div>
+          </header>
+
+          <main className="main" id="main">
+            <PageDeviceStateProvider value={pageState.register}>
+              {children}
+            </PageDeviceStateProvider>
+          </main>
+        </div>
       </div>
 
       <nav className="tabs" aria-label="Main">
@@ -242,11 +290,12 @@ export function AppShell({
             aria-current={current(item.href)}
             data-quiet={item.quiet ? "true" : undefined}
           >
-            <span className="tab-dot" aria-hidden="true" />
+            <NavIcon name={item.icon} />
             {item.label}
           </Link>
         ))}
       </nav>
     </ToastProvider>
+    </PanelLangProvider>
   );
 }

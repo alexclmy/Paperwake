@@ -49,6 +49,23 @@ test("no page scrolls sideways", async ({ page }) => {
  * This asserts the vehicle, not just the words: the note is behind a control
  * that opens, and it is closed until someone opens it.
  */
+/**
+ * The gallery with long titles and several cards still fits.
+ *
+ * Root cause of the old flake: the card meta line was nowrap, so whether
+ * /dashboards scrolled sideways depended on how wide "edited just now" vs
+ * "edited 12 min ago" happened to be and on how many cards earlier specs left.
+ */
+test("the gallery fits with long titles and many cards", async ({ page }, info) => {
+  const width = page.viewportSize()?.width ?? 1440;
+  for (let k = 0; k < 3; k++) await createDashboard(page, `Long gallery title ${info.project.name} number ${k}`);
+  await createDashboard(page, "Unbrokenverylongcompositionnamewithoutanyspacesatall");
+  await page.goto("/dashboards");
+  await expect(page.getByTestId("dashboard-grid")).toBeVisible();
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(scrollWidth).toBeLessThanOrEqual(width + 1);
+});
+
 test("the interactive caveat can be opened rather than hovered", async ({ page }) => {
   await page.goto("/overview");
   await expect(page.getByTestId("state-strip-interactive")).toBeVisible();
@@ -83,7 +100,7 @@ test("the designer does not scroll sideways either", async ({ page }, info) => {
   await page.goto("/dashboards");
   const card = page.getByTestId(`dash-${id}`);
   await expect(card).toBeVisible();
-  await card.getByRole("link", { name: "Edit" }).click();
+  await page.getByTestId(`open-${id}`).click();
   await expect(page.getByTestId("designer-stage")).toBeVisible();
   await page.waitForTimeout(800);
 

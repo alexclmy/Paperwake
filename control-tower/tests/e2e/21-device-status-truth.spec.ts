@@ -70,10 +70,10 @@ function heldOffPayload(now: Date) {
     simulated: false,
     tokenConfigured: true,
     deviceMode: "real",
-    deviceAddress: "192.168.0.60",
+    deviceAddress: "192.168.7.60",
     readAt: now.toISOString(),
     detail:
-      "This machine refused the connection to 192.168.0.60:80 from its own routing table, in 0 ms (EHOSTUNREACH): it has no current address-resolution entry for it and will not try again for a few seconds. Nothing was sent, and nothing was learned about the panel.",
+      "This machine refused the connection to 192.168.7.60:80 from its own routing table, in 0 ms (EHOSTUNREACH): it has no current address-resolution entry for it and will not try again for a few seconds. Nothing was sent, and nothing was learned about the panel.",
     failure: {
       kind: "transport",
       code: "unreachable",
@@ -107,7 +107,7 @@ function awakePayload(now: Date) {
     simulated: false,
     tokenConfigured: true,
     deviceMode: "real",
-    deviceAddress: "192.168.0.60",
+    deviceAddress: "192.168.7.60",
     readAt: now.toISOString(),
     status: {
       firmware: "Marvin 0.2",

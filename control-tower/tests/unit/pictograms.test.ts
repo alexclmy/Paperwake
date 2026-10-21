@@ -165,7 +165,7 @@ describe("an emoji with no pictogram", () => {
     const fb = new FrameBuffer(WHITE);
     definition.render(
       fb,
-      cellsToPixels(0, 0, 6, 2),
+      cellsToPixels(0, 0, 12, 4),
       { state: "ok" } as ModuleData<never>,
       definition.schema.parse({ body: { text: "Fête 🦄 demain" } }),
       {

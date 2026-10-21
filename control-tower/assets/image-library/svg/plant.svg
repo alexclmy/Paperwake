@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Potted plant being watered. NOTE4C image library, CC0. -->
+  <!-- wall: light stipple, window frame -->
+  <rect x="0" y="0" width="400" height="300" fill="rgb(0,0,235)"/>
+  <rect x="24" y="18" width="128" height="150" fill="#fff" stroke="#000" stroke-width="6"/>
+  <path d="M88 18 V168 M24 92 H152" stroke="#000" stroke-width="5"/>
+  <path d="M34 30 L60 56 M34 46 L48 60 M98 30 L124 56 M98 104 L122 128" stroke="#000" stroke-width="2"/>
+  <!-- shelf/table -->
+  <rect x="0" y="252" width="400" height="48" fill="rgb(150,150,150)"/>
+  <path d="M0 252 H400" stroke="#000" stroke-width="6"/>
+  <path d="M0 266 H400" stroke="#000" stroke-width="2"/>
+  <!-- watering can (white tin, engraved shading) -->
+  <g stroke="#000" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M292 118 L214 92" stroke-width="12"/>
+    <path d="M292 118 L214 92" stroke="#fff" stroke-width="4"/>
+    <path d="M200 76 l24 6 l-8 24 l-24 -6 Z" fill="#000" stroke-width="3"/>
+    <path d="M200 76 l24 6" stroke="#fff" stroke-width="2"/>
+    <path d="M284 84 C284 70 372 70 372 84 L366 156 C366 166 290 166 290 156 Z" fill="#fff" stroke-width="6"/>
+    <path d="M344 84 C356 82 368 82 370 86 L364 154 C358 160 350 162 342 162 Z" fill="rgb(80,80,80)" stroke="none"/>
+    <path d="M318 84 L320 160" stroke-width="0" />
+    <path d="M296 96 C320 102 346 102 370 96" fill="none" stroke-width="3"/>
+    <path d="M292 142 C320 148 346 148 368 142" fill="none" stroke-width="3"/>
+    <path d="M302 106 L304 136" stroke="#000" stroke-width="2"/>
+    <path d="M310 52 C330 36 352 40 360 76" fill="none" stroke-width="10"/>
+    <path d="M370 96 C394 98 396 136 368 140" fill="none" stroke-width="9"/>
+    <ellipse cx="328" cy="82" rx="44" ry="8" fill="#fff" stroke-width="5"/>
+  </g>
+  <!-- water drops -->
+  <g fill="#fff" stroke="#000" stroke-width="3">
+    <path d="M190 116 c-6 10 -6 16 0 16 c6 0 6 -6 0 -16Z"/>
+    <path d="M176 140 c-6 10 -6 16 0 16 c6 0 6 -6 0 -16Z"/>
+    <path d="M200 146 c-6 10 -6 16 0 16 c6 0 6 -6 0 -16Z"/>
+    <path d="M186 168 c-5 8 -5 13 0 13 c5 0 5 -5 0 -13Z"/>
+  </g>
+  <g stroke="#000" stroke-width="2" stroke-linecap="round"><path d="M196 104 l-6 6 M206 108 l-4 8 M184 108 l-4 4"/></g>
+  <!-- leaves (behind pot) -->
+  <g stroke="#000" stroke-width="5" stroke-linejoin="round">
+    <path d="M140 196 C96 186 70 150 78 112 C112 120 138 150 140 196 Z" fill="rgb(110,110,110)"/>
+    <path d="M140 196 C108 168 96 140 80 114" fill="none" stroke-width="2"/>
+    <path d="M150 190 C130 140 140 96 170 70 C186 110 176 156 150 190 Z" fill="#fff"/>
+    <path d="M150 190 C156 150 160 110 170 72" fill="none" stroke-width="2"/>
+    <path d="M152 140 l-8 -12 M156 120 l-8 -10 M160 104 l-6 -10 M154 160 l-8 -10" stroke-width="2"/>
+    <path d="M162 198 C180 150 214 132 248 140 C236 176 202 196 162 198 Z" fill="rgb(150,150,150)"/>
+    <path d="M162 198 C190 176 214 156 246 142" fill="none" stroke-width="2"/>
+    <path d="M136 204 C102 206 76 196 56 174 C92 164 120 178 136 204 Z" fill="#fff"/>
+    <path d="M136 204 C110 192 84 182 58 176" fill="none" stroke-width="2"/>
+    <path d="M100 190 l4 -10 M82 184 l4 -10 M116 196 l4 -10" stroke-width="2"/>
+    <path d="M160 200 C190 196 222 204 238 222 C204 230 178 220 160 200 Z" fill="#fff"/>
+    <path d="M160 200 C186 206 210 214 236 222" fill="none" stroke-width="2"/>
+  </g>
+  <!-- pot -->
+  <path d="M96 200 H204 L190 262 H110 Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M170 212 H200 L188 260 H160 Z" fill="rgb(128,0,0)"/>
+  <rect x="88" y="196" width="124" height="22" fill="#fff" stroke="#000" stroke-width="6"/>
+  <path d="M96 207 H204" stroke="#000" stroke-width="2" stroke-dasharray="6 6"/>
+  <path d="M120 226 L124 252" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+</svg>

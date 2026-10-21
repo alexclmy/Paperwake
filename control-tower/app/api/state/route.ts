@@ -6,6 +6,7 @@ import { isRfc1918 } from "@/server/device/address";
 import { bridgeTokenPath } from "@/server/config";
 import { deviceTokenIsSet, bridgeTokenAvailable } from "@/server/device/token";
 import { readState, updateState } from "@/server/store/state";
+import { DEFAULT_PANEL_LANG, PANEL_LANGS } from "@/core/render/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ function publicState() {
     deviceAddress: state.deviceAddress,
     firstRunCompletedAt: state.firstRunCompletedAt,
     density: state.density,
+    panelLang: state.panelLang ?? DEFAULT_PANEL_LANG,
     lastAutoRefreshAt: state.lastAutoRefreshAt,
     lastAutoRefreshDashboardId: state.lastAutoRefreshDashboardId,
     lastAutoRefreshOutcome: state.lastAutoRefreshOutcome,
@@ -42,6 +44,7 @@ const PatchSchema = z.object({
   deviceAddress: z.string().max(45).optional(),
   density: z.enum(["comfortable", "compact"]).optional(),
   firstRunCompleted: z.literal(true).optional(),
+  panelLang: z.enum(PANEL_LANGS).optional(),
 });
 
 export const PATCH = guarded(
@@ -65,6 +68,7 @@ export const PATCH = guarded(
       patch.selectedDashboardId = body.selectedDashboardId;
     }
     if (body.density !== undefined) patch.density = body.density;
+    if (body.panelLang !== undefined) patch.panelLang = body.panelLang;
     if (body.firstRunCompleted) {
       patch.firstRunCompletedAt = new Date().toISOString();
     }

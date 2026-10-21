@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useMemo } from "react";
-import type { DashboardDoc, ModuleInstance } from "@/core/model";
+import { DASHBOARD_SCHEMA_VERSION, type DashboardDoc, type ModuleInstance } from "@/core/model";
+import { GRID_COLS, GRID_ROWS } from "@/core/render/types";
 import type { DashboardSources } from "@/core/render/data";
 import { DEFAULT_THEME, type DashboardTheme } from "@/core/theme";
 import { FramePreview } from "./FramePreview";
@@ -123,11 +124,11 @@ export function thumbnailDoc(
   theme: DashboardTheme = DEFAULT_THEME,
 ): DashboardDoc {
   return {
-    schema_version: 5,
+    schema_version: DASHBOARD_SCHEMA_VERSION,
     id: "thumb",
     title: "thumb",
     status: "active",
-    grid: { cols: 8, rows: 6 },
+    grid: { cols: GRID_COLS, rows: GRID_ROWS },
     theme,
     refreshIntervalMinutes: null,
     modules: [{ ...module, ...span, hidden: false }],

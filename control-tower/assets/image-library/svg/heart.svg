@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Red heart. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- radiating engraved burst -->
+  <g fill="rgb(0,0,200)">
+    <path d="M200 150 L0 0 H60Z M200 150 L120 0 H170Z M200 150 L230 0 H280Z M200 150 L340 0 H400Z M200 150 L400 80 V140Z M200 150 L400 200 V260Z M200 150 L330 300 H390Z M200 150 L170 300 H230Z M200 150 L10 300 H70Z M200 150 L0 180 V240Z M200 150 L0 60 V120Z"/>
+  </g>
+  <!-- heart shadow -->
+  <path d="M212 270 C140 220 76 176 76 116 C76 76 106 52 138 52 C170 52 196 72 212 100 C228 72 254 52 286 52 C318 52 348 76 348 116 C348 176 284 220 212 270Z" fill="#000"/>
+  <!-- heart -->
+  <path d="M200 258 C128 208 64 164 64 104 C64 64 94 40 126 40 C158 40 184 60 200 88 C216 60 242 40 274 40 C306 40 336 64 336 104 C336 164 272 208 200 258Z" fill="#ff0000" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+  <!-- shade on right lobe -->
+  <path d="M300 66 C324 80 330 110 320 140 C300 186 254 218 214 246 C266 200 312 160 312 112 C312 92 308 78 300 66Z" fill="rgb(128,0,0)"/>
+  <!-- highlights -->
+  <path d="M96 92 C100 72 118 62 134 64" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="92" cy="114" r="5" fill="#fff"/>
+  <!-- ribbon banner across -->
+  <path d="M40 150 L80 140 L80 186 L40 196 L54 172Z" fill="#000"/>
+  <path d="M360 150 L320 140 L320 186 L360 196 L346 172Z" fill="#000"/>
+  <path d="M70 138 C150 124 250 124 330 138 L330 184 C250 170 150 170 70 184Z" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M84 148 C150 136 250 136 316 148" fill="none" stroke="#000" stroke-width="2"/>
+  <path d="M84 174 C150 162 250 162 316 174" fill="none" stroke="#000" stroke-width="2"/>
+  <!-- small hearts motif on banner -->
+  <g fill="#ff0000" stroke="#000" stroke-width="2">
+    <path d="M140 162 c-8 -6 -12 -10 -12 -14 c0 -6 8 -8 12 -2 c4 -6 12 -4 12 2 c0 4 -4 8 -12 14z"/>
+    <path d="M200 160 c-8 -6 -12 -10 -12 -14 c0 -6 8 -8 12 -2 c4 -6 12 -4 12 2 c0 4 -4 8 -12 14z"/>
+    <path d="M260 162 c-8 -6 -12 -10 -12 -14 c0 -6 8 -8 12 -2 c4 -6 12 -4 12 2 c0 4 -4 8 -12 14z"/>
+  </g>
+  <!-- sparkles -->
+  <g fill="#000"><path d="M356 42 l4 12 l12 4 l-12 4 l-4 12 l-4 -12 l-12 -4 l12 -4z"/><path d="M44 236 l3 9 l9 3 l-9 3 l-3 9 l-3 -9 l-9 -3 l9 -3z"/></g>
+</svg>

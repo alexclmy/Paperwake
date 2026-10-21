@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Rain cloud and red umbrella. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- cloud -->
+  <path d="M70 110 C40 110 34 70 66 64 C66 30 116 22 132 46 C146 14 214 14 226 52 C262 36 300 60 288 92 C320 94 326 132 294 134 H76 C64 134 60 120 70 110Z" fill="rgb(90,90,90)" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M70 70 C76 50 104 44 120 60 M138 52 C152 30 196 30 210 60 M232 60 C254 52 276 66 272 88" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <path d="M76 134 H294 C300 128 302 122 300 118 H72 C68 124 70 130 76 134Z" fill="#000"/>
+  <!-- rain streaks -->
+  <g stroke="#000" stroke-width="4" stroke-linecap="round">
+    <path d="M80 150 l-8 20 M110 160 l-8 20 M60 196 l-8 20 M96 210 l-8 20 M40 246 l-8 20 M76 262 l-8 20 M130 140 l-6 14"/>
+    <path d="M290 150 l-8 20 M320 170 l-8 20 M340 216 l-8 20 M300 240 l-8 20 M360 262 l-8 20 M270 140 l-6 14 M250 150 l-6 14"/>
+  </g>
+  <g stroke="#000" stroke-width="2" stroke-linecap="round"><path d="M150 150 l-4 10 M234 146 l-4 10 M120 196 l-4 10 M28 180 l-4 10 M370 190 l-4 10"/></g>
+  <!-- umbrella canopy -->
+  <path d="M110 214 C110 150 152 128 200 128 C248 128 290 150 290 214 C278 202 260 202 250 214 C238 202 216 202 200 214 C184 202 162 202 150 214 C140 202 122 202 110 214Z" fill="#ff0000" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+  <!-- panel ribs and shading -->
+  <path d="M200 128 C186 150 184 186 200 214 M200 128 C226 150 240 180 250 214 M200 128 C174 150 160 180 150 214" fill="none" stroke="#000" stroke-width="4"/>
+  <path d="M200 128 C226 150 240 180 250 214 C260 202 278 202 290 214 C290 160 252 132 200 128Z" fill="rgb(128,0,0)"/>
+  <path d="M200 128 C226 150 240 180 250 214" fill="none" stroke="#000" stroke-width="4"/>
+  <path d="M128 186 C132 166 146 152 162 144" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <!-- tip -->
+  <path d="M200 128 V114" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+  <!-- shaft & handle -->
+  <path d="M200 214 V268 C200 286 176 286 176 268" fill="none" stroke="#000" stroke-width="9" stroke-linecap="round"/>
+  <!-- drops bouncing off canopy -->
+  <g fill="#fff" stroke="#000" stroke-width="3"><path d="M150 112 c-5 8 -5 13 0 13 c5 0 5 -5 0 -13Z"/><path d="M252 108 c-5 8 -5 13 0 13 c5 0 5 -5 0 -13Z"/></g>
+  <!-- puddle -->
+  <ellipse cx="200" cy="288" rx="120" ry="10" fill="rgb(0,120,0)" stroke="#000" stroke-width="4"/>
+  <ellipse cx="250" cy="288" rx="24" ry="4" fill="none" stroke="#000" stroke-width="2"/>
+</svg>

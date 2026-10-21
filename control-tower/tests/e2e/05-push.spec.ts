@@ -32,7 +32,7 @@ test("pushes to the mock device and reaches DISPLAYED", async ({ page }, info) =
   // is not "done" and not "failed".
   const done = page.getByTestId("send-done");
   await expect(done).toBeVisible({ timeout: 45_000 });
-  await expect(done).toContainText("confirmed it");
+  await expect(done).toContainText("Confirmed by the device");
   await page.getByTestId("send-close-done").click();
 
   // The device itself now reports the frame as displayed.

@@ -15,12 +15,23 @@ import type { PixelRect } from "../types";
 /** Breathing room inside every module box, so neighbours do not touch. */
 export const PAD = 4;
 
+/**
+ * Vertical breathing room on a one-row (25 px) tile. A 15 px line reserves
+ * 19 px, which the full PAD would squeeze to 17; two pixels keep it legible.
+ * Only tiles shorter than {@link SHORT_TILE_PX} use it, and the 8x6 grid could
+ * not make a tile that short, so no composition saved before the 16x12 grid
+ * renders any differently.
+ */
+export const SHORT_PAD = 2;
+export const SHORT_TILE_PX = 30;
+
 export function inner(rect: PixelRect): PixelRect {
+  const padY = rect.h < SHORT_TILE_PX ? SHORT_PAD : PAD;
   return {
     x: rect.x + PAD,
-    y: rect.y + PAD,
+    y: rect.y + padY,
     w: Math.max(0, rect.w - PAD * 2),
-    h: Math.max(0, rect.h - PAD * 2),
+    h: Math.max(0, rect.h - padY * 2),
   };
 }
 

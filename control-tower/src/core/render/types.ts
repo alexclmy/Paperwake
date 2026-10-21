@@ -3,10 +3,24 @@ import type { FrameBuffer } from "@/core/frame";
 import { FRAME_HEIGHT, FRAME_WIDTH } from "@/core/palette";
 import type { DashboardTheme } from "@/core/theme";
 
-/** 8 columns x 6 rows of 50 px cells across the 400x300 panel. */
-export const GRID_COLS = 8;
-export const GRID_ROWS = 6;
-export const CELL = 50;
+/**
+ * 16 columns x 12 rows of 25 px cells across the 400x300 panel.
+ *
+ * Schema 5 and earlier used an 8x6 grid of 50 px cells. Every legacy
+ * coordinate maps to exactly twice itself here, and because
+ * floor(2x * W / 16) === floor(x * W / 8) for every integer x and width W, a
+ * migrated composition lands on the identical pixels it always did.
+ */
+export const GRID_COLS = 16;
+export const GRID_ROWS = 12;
+export const CELL = 25;
+/** Nominal cell size in panel pixels, for converting a drag distance to cells. */
+export const PANEL_CELL_PX = CELL;
+/** The grid every composition saved at schema 5 or earlier was laid out on. */
+export const LEGACY_GRID_COLS = 8;
+export const LEGACY_GRID_ROWS = 6;
+/** Fine cells per legacy cell, on each axis. */
+export const GRID_SCALE = 2;
 
 export interface PixelRect {
   x: number;
@@ -171,6 +185,11 @@ export interface RenderContext {
    * ink whether or not a designer is open to read the warning.
    */
   report?: import("./text").ModuleReporter;
+  /**
+   * Panel language for every word a module writes. Absent means French, the
+   * historical output, so every stored composition renders byte-identically.
+   */
+  lang?: import("./i18n").PanelLang;
 }
 
 /** The clock for chrome that only says "now". See RenderContext.semantic. */
@@ -183,6 +202,7 @@ export type SourceKind =
   | "weather"
   | "calendar"
   | "haSensor"
+  | "homeSensors"
   | "reminders"
   | "none";
 

@@ -15,7 +15,7 @@
  *              answering, which is the designed state between refreshes", and,
  *              directly underneath, a red UNREACHABLE banner. Two contradictory
  *              claims from one failed read.
- *   15:16Z     `GET /api/v1/dashboard/status` at 192.168.0.60, from this same
+ *   15:16Z     `GET /api/v1/dashboard/status` at 192.168.7.60, from this same
  *              machine, answers HTTP 200 in 55 ms: `awake: true`, `mode:
  *              interactive`, `last_wake_reason: "button"`.
  *
@@ -103,7 +103,7 @@ function holdDownDiagnostics(): DeviceTransportDiagnostics {
     connected: false,
     answered: false,
     heldLocally: true,
-    endpoint: "192.168.0.60:80",
+    endpoint: "192.168.7.60:80",
     elapsedMs: 0,
   };
 }
@@ -133,7 +133,7 @@ describe("the sequence that put Asleep on an awake panel", () => {
     } satisfies ConfirmedReading,
     readAt: clicked.toISOString(),
     detail:
-      "This machine refused the connection to 192.168.0.60:80 from its own routing table, in 0 ms (EHOSTUNREACH)",
+      "This machine refused the connection to 192.168.7.60:80 from its own routing table, in 0 ms (EHOSTUNREACH)",
   };
 
   it("never says Asleep on the strength of a failed read", () => {
@@ -242,7 +242,7 @@ describe("the sequence that put Asleep on an awake panel", () => {
 
 describe("a connection this machine refused out of its own routing table", () => {
   it("is recognised by the timing no network failure can have", () => {
-    const held = new DeviceTransportError("connect EHOSTUNREACH 192.168.0.60:80", {
+    const held = new DeviceTransportError("connect EHOSTUNREACH 192.168.7.60:80", {
       phase: "connect",
       errno: "EHOSTUNREACH",
       syscall: "connect",

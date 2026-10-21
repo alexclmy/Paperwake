@@ -156,9 +156,9 @@ export const list: ModuleDefinition<ListOptions, never> = {
     "A list you write yourself: chores, shopping, reminders for the household. Bullets, numbers or checkboxes. The checkbox is a drawing only — the panel has no buttons, so nothing can be ticked from it.",
   schema: ListOptions,
   defaultOptions: ListOptions.parse({}),
-  defaultSpan: { w: 4, h: 3 },
-  minSpan: { w: 2, h: 1 },
-  maxSpan: { w: 8, h: 6 },
+  defaultSpan: { w: 8, h: 6 },
+  minSpan: { w: 4, h: 2 },
+  maxSpan: { w: 16, h: 12 },
   sourceBinding: "none",
 
   render(fb, rect, _data, options, ctx) {

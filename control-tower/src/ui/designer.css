@@ -265,6 +265,8 @@
 .grid-overlay {
   position: absolute;
   pointer-events: none;
+  opacity: 0.45;
+  transition: opacity 120ms ease;
   background-image:
     linear-gradient(to right, rgba(22, 21, 19, 0.14) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(22, 21, 19, 0.14) 1px, transparent 1px);
@@ -907,3 +909,113 @@
 .image-slider input[type="range"] {
   width: 100%;
 }
+
+/* The 16x12 grid shows itself fully only while a block is moved or resized. */
+.grid-overlay[data-active="true"] {
+  opacity: 1;
+  z-index: 2;
+  background-image:
+    linear-gradient(to right, rgba(22, 21, 19, 0.28) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 21, 19, 0.28) 1px, transparent 1px);
+}
+.stage[data-dragging="resize"] .module-box[data-selected="true"] {
+  cursor: nwse-resize;
+}
+.stage[data-dragging="move"] .module-box[data-selected="true"] {
+  cursor: grabbing;
+}
+
+.stage-no-room {
+  margin: 8px 0 0;
+}
+
+/* -------------------------------------------------------- image library --
+   The embedded picture library: tabs on the image inspector, and the grid
+   shared by the inspector and the designer's "Picture library" panel. */
+.image-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--line, #d8d4cc);
+}
+.image-tab {
+  border: 0;
+  background: none;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.65;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.image-tab[aria-selected="true"] {
+  opacity: 1;
+  font-weight: 600;
+  border-bottom-color: #e00000;
+}
+.library { display: grid; gap: 8px; }
+.library-search {
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  border: 1px solid var(--line, #d8d4cc);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: inherit;
+}
+.library-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.library-chip {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #d8d4cc);
+  background: var(--surface, #fff);
+  color: inherit;
+  cursor: pointer;
+}
+.library-chip[aria-pressed="true"] {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+}
+.library-item {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 6px;
+  border: 1px solid var(--line, #d8d4cc);
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.08s ease, border-color 0.08s ease;
+}
+.library-item:hover { transform: translateY(-1px); border-color: #111; }
+.library-item[aria-pressed="true"] { border-color: #e00000; box-shadow: 0 0 0 2px #e00000 inset; }
+.library-item:disabled { opacity: 0.5; cursor: progress; }
+.library-thumb {
+  width: 100%;
+  max-width: 100px;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+}
+.library-name {
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.library-credit { margin: 0; font-size: 11px; }
+.library-panel > summary { cursor: pointer; font-weight: 600; padding: 6px 0; }
+.library-panel > summary .field-hint { font-weight: 400; }

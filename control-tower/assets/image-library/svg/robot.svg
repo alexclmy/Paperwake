@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Friendly robot. NOTE4C image library, CC0. -->
+<!-- floor + engraved backdrop -->
+<rect x="0" y="0" width="400" height="300" fill="rgb(0,220,0)"/>
+<rect x="0" y="270" width="400" height="30" fill="rgb(150,150,150)"/><path d="M0 270 H400" stroke="#000" stroke-width="5"/>
+<!-- antenna -->
+<path d="M200 54 V26" stroke="#000" stroke-width="6"/><circle cx="200" cy="20" r="11" fill="#ff0000" stroke="#000" stroke-width="5"/>
+<g stroke="#000" stroke-width="3" stroke-linecap="round"><path d="M180 12 l-8 -6 M220 12 l8 -6 M178 26 h-10 M222 26 h10"/></g>
+<!-- ears -->
+<rect x="118" y="82" width="22" height="44" rx="6" fill="#ff0000" stroke="#000" stroke-width="5"/>
+<rect x="260" y="82" width="22" height="44" rx="6" fill="#ff0000" stroke="#000" stroke-width="5"/>
+<!-- head -->
+<rect x="134" y="52" width="132" height="102" rx="22" fill="#fff" stroke="#000" stroke-width="7"/>
+<path d="M240 58 C258 62 262 74 262 92 V128 C262 140 256 150 240 150Z" fill="rgb(140,140,140)"/>
+<!-- visor -->
+<rect x="150" y="74" width="100" height="52" rx="14" fill="#000"/>
+<circle cx="178" cy="100" r="12" fill="#fff"/><circle cx="222" cy="100" r="12" fill="#fff"/>
+<circle cx="181" cy="102" r="5" fill="#000"/><circle cx="225" cy="102" r="5" fill="#000"/>
+<path d="M186 136 C194 144 206 144 214 136" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+<!-- neck -->
+<rect x="186" y="154" width="28" height="12" fill="#000"/>
+<!-- body -->
+<rect x="140" y="166" width="120" height="86" rx="12" fill="#fff" stroke="#000" stroke-width="7"/>
+<path d="M234 170 h18 c4 0 6 2 6 6 v68 c0 4 -2 6 -6 6 h-18z" fill="rgb(140,140,140)"/>
+<!-- chest panel -->
+<rect x="158" y="180" width="64" height="40" rx="5" fill="#fff" stroke="#000" stroke-width="4"/>
+<path d="M166 200 l8 -8 l8 14 l8 -18 l8 18 l8 -6 h8" fill="none" stroke="#000" stroke-width="3"/>
+<path d="M190 240 c-10 -8 -14 -12 -14 -17 c0 -7 9 -9 14 -2 c5 -7 14 -5 14 2 c0 5 -4 9 -14 17z" fill="#ff0000" stroke="#000" stroke-width="3"/>
+<g fill="#000"><circle cx="236" cy="190" r="5"/><circle cx="236" cy="206" r="5"/></g>
+<!-- arms -->
+<path d="M140 184 C110 184 100 160 104 136" fill="none" stroke="#000" stroke-width="14" stroke-linecap="round"/>
+<path d="M140 184 C110 184 100 160 104 136" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+<path d="M92 128 a14 14 0 1 1 26 0" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"/>
+<path d="M260 184 C290 190 296 214 290 236" fill="none" stroke="#000" stroke-width="14" stroke-linecap="round"/>
+<path d="M260 184 C290 190 296 214 290 236" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+<circle cx="290" cy="244" r="10" fill="#000"/>
+<!-- legs & wheels-->
+<rect x="160" y="252" width="22" height="16" fill="#000"/><rect x="218" y="252" width="22" height="16" fill="#000"/>
+<rect x="144" y="262" width="52" height="16" rx="8" fill="#fff" stroke="#000" stroke-width="5"/>
+<rect x="204" y="262" width="52" height="16" rx="8" fill="#fff" stroke="#000" stroke-width="5"/>
+<!-- hello wave lines -->
+<g fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"><path d="M74 112 q-8 10 0 20"/><path d="M62 104 q-12 18 0 36"/></g>
+</svg>

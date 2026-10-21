@@ -5,6 +5,14 @@ import { framePng } from "@/server/png";
 import { collectSources } from "@/server/sources";
 import { emptySources } from "@/core/render/data";
 import { readRecord, readVersion } from "@/server/store/dashboards";
+import { readPanelLang } from "@/server/store/state";
+import { isPanelLang } from "@/core/render/i18n";
+
+/** ?lang= overrides for a one-off look; otherwise the tower's setting. */
+function langContext(requested: string | null) {
+  const lang = isPanelLang(requested) ? requested : readPanelLang();
+  return lang === "fr" ? {} : { lang };
+}
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +46,7 @@ export const GET = guarded({}, async ({ request }) => {
     params.get("live") === "1" ? await collectSources(doc, now) : emptySources();
 
   const png = framePng(
-    renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE }),
+    renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE, ...langContext(params.get("lang")) }),
   );
 
   return new NextResponse(new Uint8Array(png), {

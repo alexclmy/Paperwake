@@ -838,6 +838,7 @@ describe("source bindings", () => {
       weather: false,
       calendar: false,
       sensors: [],
+      bulkSensors: [],
       remindersList: null,
     });
   });

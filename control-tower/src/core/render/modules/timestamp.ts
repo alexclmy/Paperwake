@@ -3,6 +3,7 @@ import { BLACK } from "@/core/palette";
 import { drawText, filled, reservedHeight, textElementSchema } from "../text";
 import { chromeNow, type ModuleDefinition } from "../types";
 import { formatPanelStamp } from "../time";
+import { formatPanelDate, formatPanelTime } from "../i18n";
 import { clearModule, inner } from "./common";
 
 /**
@@ -37,9 +38,9 @@ export const timestamp: ModuleDefinition<TimestampOptions, never> = {
    * shortened to "{stamp}", and the overflow warning says so rather than the
    * panel quietly printing "MAJ 11/09…" and losing the time.
    */
-  defaultSpan: { w: 3, h: 1 },
-  minSpan: { w: 2, h: 1 },
-  maxSpan: { w: 4, h: 1 },
+  defaultSpan: { w: 6, h: 1 },
+  minSpan: { w: 4, h: 1 },
+  maxSpan: { w: 8, h: 2 },
   sourceBinding: "none",
 
   migrateOptions(legacy) {
@@ -62,7 +63,10 @@ export const timestamp: ModuleDefinition<TimestampOptions, never> = {
     // when the render is being hashed rather than shown. Two pushes that
     // differ by a minute are the same panel and must not cost a refresh.
     const line = filled(options.label, {
-      stamp: formatPanelStamp(chromeNow(ctx), ctx.timeZone),
+      stamp:
+        ctx.lang === "en"
+          ? `${formatPanelDate(chromeNow(ctx), ctx.timeZone, "en")} ${formatPanelTime(chromeNow(ctx), ctx.timeZone)}`
+          : formatPanelStamp(chromeNow(ctx), ctx.timeZone),
     });
     // Sit on the bottom of the box rather than the top, so the footer reads as
     // a footer at any tile height.

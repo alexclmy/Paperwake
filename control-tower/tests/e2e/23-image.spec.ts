@@ -1,6 +1,7 @@
 import zlib from "node:zlib";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  cellPosition,
   createEmptyDashboard,
   previewPixels,
   shot,
@@ -164,4 +165,59 @@ test("a dithered image survives a save and a reload with no re-dither", async ({
   await page.getByTestId("module-image").click();
   // The stored tile is blitted verbatim, so the panel is byte-identical.
   expect(await stablePixels(page)).toBe(before);
+});
+
+test("a library picture goes into the image block in one click", async ({ page }, info) => {
+  await openEmptyDesigner(page, `Library ${info.project.name}`);
+  await page.getByTestId("add-image").click();
+  await expect(page.getByTestId("module-image")).toBeVisible();
+  const empty = await previewPixels(page);
+  await page.getByTestId("opt-source-tab-library").click();
+  await page.getByTestId("opt-source-library-chip-fun").click();
+  await expect(page.getByTestId("opt-source-library-item-coffee")).toHaveCount(0);
+  await page.getByTestId("opt-source-library-search").fill("cat");
+  await page.getByTestId("opt-source-library-item-cat").click();
+  await expect(page.getByTestId("opt-source-library-name")).toContainText("Curled-up cat");
+  await page.waitForTimeout(300);
+  expect(await previewPixels(page)).not.toBe(empty);
+  await shot(page, "image-library", info.project.name);
+});
+
+test("a library picture fills a block resized to the full grid, with no re-pick", async ({ page }, info) => {
+  await openEmptyDesigner(page, `Library resize ${info.project.name}`);
+  await page.getByTestId("add-image").click();
+  const block = page.getByTestId("module-image");
+  await expect(block).toBeVisible();
+  await page.getByTestId("opt-source-tab-library").click();
+  await page.getByTestId("opt-source-library-search").fill("cat");
+  await page.getByTestId("opt-source-library-item-cat").click();
+  await expect(page.getByTestId("opt-source-library-name")).toContainText("Curled-up cat");
+  const small = await stablePixels(page);
+
+  // Grow the 6x6 block to the whole 16x12 grid from the keyboard.
+  await block.focus();
+  for (let i = 0; i < 10; i += 1) await page.keyboard.press("Shift+ArrowRight");
+  for (let i = 0; i < 6; i += 1) await page.keyboard.press("Shift+ArrowDown");
+  expect(await cellPosition(page, "module-image")).toMatchObject({ x: 0, y: 0, w: 16, h: 12 });
+
+  // The preview is the 400x300 variant, not the small tile centred on white:
+  // the inked area spans (nearly) the whole panel.
+  const full = await stablePixels(page);
+  expect(full).not.toBe(small);
+  const box = await page.evaluate(() => {
+    const c = document.querySelector<HTMLCanvasElement>('[data-testid="designer-preview"]')!;
+    const d = c.getContext("2d")!.getImageData(0, 0, 400, 300).data;
+    let x0 = 400, x1 = -1, y0 = 300, y1 = -1;
+    for (let y = 0; y < 300; y += 1) {
+      for (let x = 0; x < 400; x += 1) {
+        const i = (y * 400 + x) * 4;
+        const white = d[i]! > 200 && d[i + 1]! > 200 && d[i + 2]! > 200;
+        if (white) continue;
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      }
+    }
+    return { w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  });
+  expect(box.w).toBeGreaterThan(300);
+  expect(box.h).toBeGreaterThan(225);
 });

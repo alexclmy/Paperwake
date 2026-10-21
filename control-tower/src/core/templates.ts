@@ -7,6 +7,21 @@ import {
 } from "@/core/model";
 import type { Expression } from "@/core/theme";
 import { MODULES } from "@/core/render/modules";
+import { GRID_SCALE } from "@/core/render/types";
+import type { LibraryArt } from "@/core/library/catalog";
+import { librarySource } from "@/core/library/source";
+import * as mascotArt from "@/core/library/art/mascot";
+import * as coffeeArt from "@/core/library/art/coffee";
+import * as goodnightArt from "@/core/library/art/goodnight";
+import * as balloonArt from "@/core/library/art/balloon";
+import * as dndArt from "@/core/library/art/dnd";
+import { registerLibraryArt } from "@/core/library/registry";
+
+// The starter pictures are already in this bundle; register them so their
+// boards pick the variant from the live block size with no loading step.
+for (const [id, art] of [["mascot", mascotArt], ["coffee", coffeeArt], ["goodnight", goodnightArt], ["balloon", balloonArt], ["dnd", dndArt]] as const) {
+  registerLibraryArt(id, art);
+}
 
 /**
  * A handful of complete, expressive dashboards to start from.
@@ -47,13 +62,15 @@ function place(
   h: number,
   options: Record<string, unknown> = {},
 ): ModuleInstance {
+  // Templates are drawn in the coarse 8x6 coordinates they were designed in;
+  // scaling here keeps them pixel-identical on the 16x12 grid.
   return {
     id: newModuleId(),
     type,
-    x,
-    y,
-    w,
-    h,
+    x: x * GRID_SCALE,
+    y: y * GRID_SCALE,
+    w: w * GRID_SCALE,
+    h: h * GRID_SCALE,
     hidden: false,
     options: {
       ...(MODULES[type]?.defaultOptions as Record<string, unknown>),
@@ -111,6 +128,76 @@ function expressive(
     },
   };
 }
+
+/**
+ * A picture from the embedded library over a one-line message: the shape of
+ * the occasion boards (good morning, birthday, do not disturb…).
+ *
+ * Laid out directly on the 16x12 grid: the picture takes the top nine rows,
+ * 400 x 225, where the 300 x 225 variant sits whole and unscaled; the words
+ * take the last three, large and centred. Each picture is imported statically
+ * — five of the twenty-five — so the thumbnails render with no loading state.
+ */
+function artBoard(
+  key: string,
+  name: string,
+  desc: string,
+  art: LibraryArt,
+  artId: string,
+  words: string,
+  colour: "inherit" | "accent" = "inherit",
+): Template {
+  return {
+    key,
+    name,
+    desc,
+    build: (now) => {
+      const picture: ModuleInstance = {
+        id: newModuleId(),
+        type: "image",
+        x: 0,
+        y: 0,
+        w: 16,
+        h: 9,
+        hidden: false,
+        options: {
+          ...(MODULES.image?.defaultOptions as Record<string, unknown>),
+          source: librarySource(artId, art, 400, 225),
+        },
+      };
+      const message: ModuleInstance = {
+        id: newModuleId(),
+        type: "message",
+        x: 0,
+        y: 9,
+        w: 16,
+        h: 3,
+        hidden: false,
+        options: {
+          ...(MODULES.message?.defaultOptions as Record<string, unknown>),
+          body: {
+            text: words,
+            visible: true,
+            style: { size: 34, weight: "bold", align: "center", colour },
+          },
+          verticalAlign: "middle",
+        },
+      };
+      return expressive(
+        { ...emptyDashboard(name, now), modules: [picture, message] },
+        { colourUse: "balanced" },
+      );
+    },
+  };
+}
+
+const ART_TEMPLATES: readonly Template[] = [
+  artBoard("welcome", "Welcome to NOTE4C", "The project mascot says hello. A friendly first picture for a new panel.", mascotArt, "mascot", "Welcome to NOTE4C"),
+  artBoard("goodMorning", "Good morning", "A steaming cup and a greeting for the kitchen.", coffeeArt, "coffee", "Good morning"),
+  artBoard("goodNight", "Good night", "A bed under a red moon, for the evening.", goodnightArt, "goodnight", "Good night"),
+  artBoard("birthday", "Birthday", "Balloons and confetti over a red greeting.", balloonArt, "balloon", "Happy birthday!", "accent"),
+  artBoard("doNotDisturb", "Do not disturb", "A sleepy face for the door of a room that wants quiet.", dndArt, "dnd", "Do not disturb", "accent"),
+];
 
 export const TEMPLATES: readonly Template[] = [
   {
@@ -234,6 +321,7 @@ export const TEMPLATES: readonly Template[] = [
         { colourUse: "blackwhite" },
       ),
   },
+  ...ART_TEMPLATES,
   {
     key: "blank",
     name: "Blank",
@@ -241,3 +329,9 @@ export const TEMPLATES: readonly Template[] = [
     build: (now) => emptyDashboard("Blank", now),
   },
 ];
+
+/**
+ * What "Add sample boards" creates on first run: just the welcome board and
+ * the birthday board. The other occasion boards stay in the template picker.
+ */
+export const SAMPLE_TEMPLATE_KEYS: readonly string[] = ["welcome", "birthday"];

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Red maple leaf. NOTE4C image library, CC0. -->
+<!-- engraved backdrop rings -->
+<g fill="none" stroke="#000" stroke-width="2"><circle cx="200" cy="150" r="136"/><circle cx="200" cy="150" r="128"/></g>
+<circle cx="200" cy="150" r="124" fill="rgb(0,0,215)"/>
+<!-- leaf -->
+<path d="M200 28 L222 74 L246 62 L238 120 L278 82 L286 102 L320 96 L306 132 L322 140 L270 180 L280 202 L214 194 L210 256 H190 L186 194 L120 202 L130 180 L78 140 L94 132 L80 96 L114 102 L122 82 L162 120 L154 62 L178 74Z" fill="#ff0000" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+<!-- half shadow -->
+<path d="M200 28 L222 74 L246 62 L238 120 L278 82 L286 102 L320 96 L306 132 L322 140 L270 180 L280 202 L214 194 L210 256 H200Z" fill="rgb(128,0,0)"/>
+<!-- veins -->
+<g fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"><path d="M200 250 V44"/><path d="M200 180 L120 112"/><path d="M200 180 L280 112"/><path d="M200 196 L132 194"/><path d="M200 196 L268 194"/></g>
+<g fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"><path d="M200 120 L176 96 M200 120 L224 96 M200 90 L184 74 M200 90 L216 74 M160 146 L150 124 M160 146 L132 150 M240 146 L250 124 M240 146 L268 150"/></g>
+<path d="M188 70 L170 110" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+<!-- small falling leaves -->
+<g fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round">
+<path d="M48 236 l8 -16 l6 10 l10 -4 l-2 12 l10 4 l-14 8 l2 10 l-12 -6 l-8 6Z"/>
+<path d="M342 56 l6 -12 l5 8 l8 -3 l-2 9 l8 3 l-11 6 l2 8 l-10 -5 l-6 5Z"/>
+</g>
+<g stroke="#000" stroke-width="3" stroke-linecap="round" fill="none"><path d="M70 220 q10 -6 4 -18"/><path d="M330 76 q-8 6 -16 2"/></g>
+</svg>

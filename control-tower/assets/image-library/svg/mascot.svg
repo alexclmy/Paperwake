@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- NOTE4C mascot: a small smiling e-paper screen. Project logo. NOTE4C image library, CC0. -->
+<!-- dotted halo -->
+<circle cx="200" cy="146" r="134" fill="rgb(0,0,225)"/>
+<g stroke="#000" stroke-width="5" stroke-linecap="round"><path d="M60 50 l-16 -12 M340 50 l16 -12 M40 150 h-20 M360 150 h20"/></g>
+<!-- stand / feet -->
+<path d="M150 252 L134 286 M250 252 L266 286" stroke="#000" stroke-width="10" stroke-linecap="round"/>
+<path d="M114 288 h44 M242 288 h44" stroke="#000" stroke-width="10" stroke-linecap="round"/>
+<!-- arms waving -->
+<path d="M84 150 C60 140 46 110 54 86" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round"/>
+<circle cx="54" cy="80" r="12" fill="#fff" stroke="#000" stroke-width="6"/>
+<path d="M316 160 C340 170 352 196 344 218" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round"/>
+<circle cx="344" cy="224" r="12" fill="#fff" stroke="#000" stroke-width="6"/>
+<!-- device shadow -->
+<rect x="96" y="60" width="222" height="200" rx="18" fill="#000"/>
+<!-- device bezel -->
+<rect x="84" y="48" width="222" height="200" rx="18" fill="#fff" stroke="#000" stroke-width="8"/>
+<rect x="84" y="48" width="222" height="200" rx="18" fill="none" stroke="#000" stroke-width="8"/>
+<path d="M290 64 V232" stroke="rgb(0,0,0)" stroke-width="0"/>
+<rect x="278" y="58" width="20" height="182" fill="rgb(150,150,150)"/>
+<!-- screen -->
+<rect x="104" y="66" width="176" height="150" rx="4" fill="#fff" stroke="#000" stroke-width="5"/>
+<!-- tiny dashboard grid ghost in screen corners -->
+<g stroke="#000" stroke-width="2"><path d="M114 80 h40 M114 88 h28 M236 80 h34 M248 88 h22"/></g>
+<rect x="114" y="196" width="40" height="10" fill="#ff0000"/>
+<g fill="#000"><rect x="160" y="198" width="6" height="6"/><rect x="170" y="198" width="6" height="6"/><rect x="180" y="198" width="6" height="6"/></g>
+<!-- face -->
+<g fill="#000"><rect x="146" y="112" width="16" height="26" rx="8"/><rect x="222" y="112" width="16" height="26" rx="8"/></g>
+<g fill="#fff"><rect x="150" y="116" width="6" height="8" rx="3"/><rect x="226" y="116" width="6" height="8" rx="3"/></g>
+<path d="M162 156 C176 182 208 182 222 156" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<ellipse cx="136" cy="160" rx="12" ry="7" fill="rgb(255,120,120)"/>
+<ellipse cx="248" cy="160" rx="12" ry="7" fill="rgb(255,120,120)"/>
+<!-- bottom chin with brand dots -->
+<g fill="#000"><circle cx="180" cy="232" r="4"/><circle cx="194" cy="232" r="4"/></g><circle cx="208" cy="232" r="4" fill="#ff0000" stroke="#000" stroke-width="2"/>
+<!-- antenna -->
+<path d="M194 48 V24" stroke="#000" stroke-width="6"/>
+<circle cx="194" cy="18" r="10" fill="#ff0000" stroke="#000" stroke-width="5"/>
+</svg>

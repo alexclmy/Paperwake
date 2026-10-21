@@ -103,7 +103,7 @@ test("choosing one creates it, saves it, and opens the editor", async ({ page })
   // Saved, so there is nothing hanging unsaved from a button press, and the
   // empty canvas it began from is still in the history rather than tidied
   // away: this product never rewrites a version list.
-  await expect(page.getByTestId("version-toggle")).toContainText("saved");
+  await expect(page.getByTestId("version-toggle")).toContainText("Saved");
   await page.getByTestId("version-toggle").click();
   await expect(page.getByTestId("version-rail")).toContainText("v1");
   await expect(page.getByTestId("version-rail")).toContainText("v2");

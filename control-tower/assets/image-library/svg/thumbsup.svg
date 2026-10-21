@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Thumbs up. NOTE4C image library, CC0. -->
+<!-- red sunburst badge -->
+<g transform="translate(200 150)">
+<path d="M0 -136 L18 -118 L42 -128 L52 -104 L78 -106 L80 -80 L104 -72 L96 -48 L116 -32 L100 -12 L114 10 L94 26 L100 50 L76 58 L72 84 L46 84 L34 108 L12 96 L-8 116 L-26 98 L-50 108 L-60 84 L-86 84 L-88 58 L-112 48 L-104 24 L-122 6 L-104 -12 L-116 -34 L-96 -48 L-102 -74 L-78 -80 L-76 -106 L-50 -104 L-40 -128 L-16 -118Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<circle r="92" fill="#fff" stroke="#000" stroke-width="5"/>
+<circle r="84" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 6"/>
+</g>
+<!-- motion lines -->
+<g stroke="#000" stroke-width="5" stroke-linecap="round"><path d="M52 60 l-20 -14 M40 110 l-26 -2 M348 60 l20 -14 M360 110 l26 -2 M50 200 l-22 10 M350 200 l22 10"/></g>
+<!-- cuff -->
+<path d="M122 166 H160 V250 H122Z" fill="#000" stroke="#000" stroke-width="5"/>
+<path d="M130 176 v64" stroke="#fff" stroke-width="3"/>
+<!-- hand -->
+<path d="M160 168 C176 160 192 138 196 112 C198 92 204 74 220 76 C238 80 238 106 230 136 H274 C292 136 296 156 282 162 C298 166 296 186 280 188 C294 194 290 212 274 214 C286 220 280 240 264 240 H178 C168 240 160 236 160 230Z" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+<!-- finger separations -->
+<g fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"><path d="M230 162 H282 M236 188 H280 M238 214 H274"/></g>
+<!-- shading along bottom of fingers -->
+<path d="M240 222 H272 C280 226 278 236 264 238 H200 C220 236 236 230 240 222Z" fill="rgb(100,100,100)"/>
+<path d="M164 176 C176 196 176 222 166 232 L160 230 V170Z" fill="rgb(100,100,100)"/>
+<!-- thumb nail + crease -->
+<path d="M208 86 C214 80 224 82 226 92" fill="none" stroke="#000" stroke-width="3"/>
+<path d="M200 140 C208 146 216 146 222 140" fill="none" stroke="#000" stroke-width="3"/>
+<!-- sparkles -->
+<g fill="#000"><path d="M300 92 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z"/></g>
+</svg>

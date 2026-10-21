@@ -2,6 +2,7 @@ import type { DashboardSources } from "@/core/render/data";
 import { DEFAULT_REMINDERS_LIST } from "@/core/render/data";
 import type { ModuleData } from "@/core/render/types";
 import type { CalendarValue } from "@/core/render/data";
+import { isShowcase, SHOWCASE_SOURCES } from "./showcaseFixtures";
 
 /** The one gate. Only the Playwright web server sets this. */
 export function isE2E(): boolean {
@@ -41,6 +42,8 @@ export function isE2E(): boolean {
  */
 export function e2eSources(): DashboardSources | null {
   if (!isE2E()) return null;
+  // The README screenshots: same gate, plus an explicit opt-in.
+  if (isShowcase()) return SHOWCASE_SOURCES;
 
   const observedAt = "2026-09-11T05:00:00.000Z";
   return {
@@ -88,6 +91,11 @@ export function e2eSources(): DashboardSources | null {
         state: "ok",
         observedAt,
         value: { label: "Hallway", value: "19.4 °C" },
+      },
+      "sensor.example_humidity": {
+        state: "ok",
+        observedAt,
+        value: { label: "sensor.example_humidity", value: "48 %" },
       },
     },
     // Counts only, exactly as the real adapter projects them, and invented.

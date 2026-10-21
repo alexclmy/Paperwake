@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BLACK, RED } from "@/core/palette";
-import { drawText, textElementSchema } from "../text";
+import { drawText, layoutText, textElementSchema } from "../text";
 import { chromeNow, type ModuleDefinition } from "../types";
 import { clearModule, inner } from "./common";
 
@@ -23,6 +23,14 @@ export const MessageOptions = z.object({
    * undated note outlives its meaning by design.
    */
   expiresAt: z.string().datetime({ offset: true }).nullable().default(null),
+  /**
+   * Where the note sits vertically in its tile. Horizontal alignment is the
+   * body's own `style.align` (left, center, right), the same mechanism the
+   * headline uses to centre its banner type. "top" is what every note drew
+   * before this option existed, so a stored note without the field parses to
+   * it and renders byte-identically.
+   */
+  verticalAlign: z.enum(["top", "middle", "bottom"]).default("top"),
   /** Shown in the attention colour when expiresAt cannot be read as a date. */
   invalidExpiryText: textElementSchema({
     text: "Message : date d'expiration invalide",
@@ -39,9 +47,9 @@ export const message: ModuleDefinition<MessageOptions, never> = {
     "A short note with an expiry. After the expiry the module renders nothing, because frozen ink outlives an undated message.",
   schema: MessageOptions,
   defaultOptions: MessageOptions.parse({}),
-  defaultSpan: { w: 6, h: 1 },
+  defaultSpan: { w: 12, h: 2 },
   minSpan: { w: 2, h: 1 },
-  maxSpan: { w: 8, h: 2 },
+  maxSpan: { w: 16, h: 4 },
   sourceBinding: "none",
 
   migrateOptions(legacy) {
@@ -78,6 +86,20 @@ export const message: ModuleDefinition<MessageOptions, never> = {
       if (expiry.getTime() <= chromeNow(ctx).getTime()) return;
     }
 
-    drawText(fb, box, options.body, BLACK, "body", { wrap: true, ...report });
+    // Vertical placement is computed from the same layout drawText will use,
+    // so a centred note sits exactly in the middle of what is actually drawn.
+    // Top is the historical path and is left untouched.
+    let target = box;
+    if (options.verticalAlign !== "top") {
+      const laid = layoutText(options.body, box, "body", { wrap: true });
+      if (laid && laid.visibleLines > 0) {
+        const drawnH = (laid.visibleLines - 1) * laid.step + laid.atlas.lineHeight;
+        const slack = Math.max(0, box.h - drawnH);
+        const offset =
+          options.verticalAlign === "middle" ? Math.floor(slack / 2) : slack;
+        target = { x: box.x, y: box.y + offset, w: box.w, h: box.h - offset };
+      }
+    }
+    drawText(fb, target, options.body, BLACK, "body", { wrap: true, ...report });
   },
 };

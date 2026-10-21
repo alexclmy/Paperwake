@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Sleepy face, do not disturb. NOTE4C image library, CC0. -->
+<!-- night-cap moon stripe background -->
+<rect x="0" y="0" width="400" height="300" fill="rgb(0,0,220)"/>
+<!-- face -->
+<circle cx="190" cy="160" r="112" fill="#000"/>
+<circle cx="184" cy="154" r="112" fill="#fff" stroke="#000" stroke-width="7"/>
+<!-- shading crescent on right of face -->
+<path d="M240 58 C300 92 316 186 262 238 C230 268 186 272 150 260 C230 252 288 186 268 120 C262 96 252 74 240 58Z" fill="rgb(150,150,150)"/>
+<!-- closed eyes -->
+<g fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"><path d="M110 150 C124 166 146 166 160 150"/><path d="M200 150 C214 166 236 166 250 150"/></g>
+<g stroke="#000" stroke-width="3" stroke-linecap="round"><path d="M116 160 l-6 8 M128 166 l-3 9 M142 166 l2 9 M206 160 l-6 8 M218 166 l-3 9 M232 166 l2 9"/></g>
+<!-- cheeks -->
+<ellipse cx="114" cy="196" rx="18" ry="10" fill="rgb(255,120,120)"/>
+<ellipse cx="252" cy="196" rx="18" ry="10" fill="rgb(255,120,120)"/>
+<!-- mouth: small o -->
+<ellipse cx="184" cy="214" rx="12" ry="10" fill="#000"/>
+<!-- night cap -->
+<path d="M84 104 C100 40 170 20 250 40 C300 52 330 100 350 150 C320 120 290 100 260 96 C200 80 130 86 84 104Z" fill="#ff0000" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+<path d="M250 40 C300 52 330 100 350 150 C330 128 304 110 280 100Z" fill="rgb(128,0,0)"/>
+<path d="M76 96 C130 70 210 66 270 92 L264 114 C206 92 130 94 84 118Z" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<g fill="#000"><circle cx="110" cy="100" r="3"/><circle cx="140" cy="92" r="3"/><circle cx="170" cy="88" r="3"/><circle cx="200" cy="88" r="3"/><circle cx="230" cy="92" r="3"/></g>
+<circle cx="350" cy="156" r="18" fill="#fff" stroke="#000" stroke-width="6"/>
+<path d="M340 150 l20 12 M344 164 l14 -16" stroke="#000" stroke-width="2"/>
+<!-- Zzz -->
+<g fill="none" stroke="#000" stroke-width="7" stroke-linejoin="miter"><path d="M300 200 h26 l-26 28 h26"/><path d="M336 240 h18 l-18 20 h18" stroke-width="5"/></g>
+<!-- do-not-disturb sign: red bar -->
+<rect x="12" y="236" width="150" height="50" rx="25" fill="#ff0000" stroke="#000" stroke-width="6"/>
+<rect x="38" y="255" width="98" height="12" rx="3" fill="#fff" stroke="#000" stroke-width="3"/>
+</svg>

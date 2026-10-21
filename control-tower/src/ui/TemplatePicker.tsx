@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import type { DashboardDoc } from "@/core/model";
 import { emptySources } from "@/core/render/data";
 import { TEMPLATES } from "@/core/templates";
-import { ApiError, apiSend } from "./api";
+import { ApiError } from "./api";
+import { createFromTemplate } from "./createFromTemplate";
 import { Button } from "./components";
 import { Dialog } from "./Dialog";
 import { FramePreview } from "./FramePreview";
@@ -35,39 +36,12 @@ export function TemplatePicker({
 
   async function choose(index: number): Promise<void> {
     const template = TEMPLATES[index];
-    const doc = docs[index];
-    if (!template || !doc) return;
+    if (!template) return;
     setBusy(true);
     setError("");
     try {
-      /*
-       * The composition is created empty — a blank v1 the product keeps in the
-       * history rather than tidying away — and then the template's layout is
-       * written as the working document and saved as v2. "v1 was the blank
-       * canvas this started from" is true and worth being able to roll back to,
-       * and this product never rewrites a version list.
-       */
-      const created = await apiSend<{ record: { doc: { id: string } } }>(
-        "/api/dashboards",
-        "POST",
-        { title: template.name, starter: false },
-      );
-      const id = created.record.doc.id;
-
-      if (doc.modules.length > 0) {
-        // The server minted the id and the timestamps; only the layout is
-        // ours to contribute, so the document that goes back is the server's
-        // with our modules in it rather than the one built above wholesale.
-        const current = await apiSend<{ record: { doc: DashboardDoc } }>(
-          `/api/dashboards/${id}`,
-          "PUT",
-          { doc: { ...doc, id, title: template.name } },
-        );
-        await apiSend(`/api/dashboards/${id}/versions`, "POST", {
-          doc: current.record.doc,
-          note: `Started from the ${template.name} template`,
-        });
-      }
+      // Empty v1 kept in the history, then the template's layout as v2.
+      const id = await createFromTemplate(template, now);
 
       onCreated?.(template.name);
       onClose();

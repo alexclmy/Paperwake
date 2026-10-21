@@ -1,12 +1,13 @@
 "use client";
 
+import { usePanelLang } from "@/ui/panelLang";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { NO_REMOTE_WAKE_NOTE, deriveDeviceState } from "@/core/power";
 import { ApiError, apiGet, apiSend, csrfToken } from "./api";
 import { Button } from "./components";
 import { Dialog } from "./Dialog";
-import { SEND_STAGES, stageIndexFor } from "./sendStages";
+import { COMPACT_STAGES, SEND_STAGES, compactStageStates, stageIndexFor } from "./sendStages";
 import type { DeviceReading } from "./useDeviceState";
 
 /**
@@ -137,6 +138,7 @@ export function SendFlowDialog({
   const [error, setError] = useState("");
   const [typed, setTyped] = useState("");
   const [stamp, setStamp] = useState(() => Date.now());
+  const { lang: panelLang } = usePanelLang();
 
   const simulated = device?.simulated ?? true;
   const state = device ? deriveDeviceState(device.input) : null;
@@ -296,9 +298,7 @@ export function SendFlowDialog({
   const title =
     step === "review" || step === "preflight"
       ? "Show on the panel"
-      : step === "progress"
-        ? "Sending…"
-        : step === "blocked" || step === "queued-blocked"
+      : step === "blocked" || step === "queued-blocked"
           ? "Can't send yet"
           : "Result";
 
@@ -309,7 +309,75 @@ export function SendFlowDialog({
    * push — the frame is already on its way to the panel — it would just throw
    * away the answer. There is nothing to escape to.
    */
-  const dismissable = step !== "progress";
+
+  /*
+   * Sending and success are a banner, not a modal: the page stays usable,
+   * and the three stages (sent → received → displayed) are lit from the
+   * ledger exactly like the detailed list, which is kept under "Details".
+   * Every other verdict (queued, uncertain, failed, blocked) still asks for
+   * attention in the dialog, because each needs a decision or a reading.
+   */
+  if (step === "progress" || step === "done") {
+    const states = compactStageStates(step === "done" ? SEND_STAGES.length : stageIndex);
+    return (
+      <div
+        className="send-toast"
+        role="status"
+        aria-live="polite"
+        data-testid="send-flow"
+        data-step={step}
+      >
+        <div className="send-toast-head">
+          <strong>{step === "done" ? "Displayed on the panel" : `Sending “${dashboardTitle}”`}</strong>
+          <Button
+            className="btn-quiet send-toast-close"
+            onClick={onClose}
+            ariaLabel={step === "progress" ? "Hide (sending continues)" : "Close"}
+            testId="send-flow-close"
+          >
+            ✕
+          </Button>
+        </div>
+        <ol className="send-toast-stages" data-testid="send-toast-stages">
+          {COMPACT_STAGES.map((stage, index) => (
+            <li key={stage.name} data-state={states[index]} data-testid={`send-toast-stage-${index}`}>
+              <span className="stage-dot" aria-hidden="true" />
+              {stage.name}
+            </li>
+          ))}
+        </ol>
+        {step === "progress" && stageIndex === 3 && (
+          <p className="send-toast-note">The panel flashes for about 25 s while it refreshes. That is normal.</p>
+        )}
+        {step === "done" && (
+          <div data-testid="send-done" className="send-toast-note">
+            Confirmed by the device
+            {result?.panelMs ? ` · refreshed in ${(result.panelMs / 1000).toFixed(1)} s` : ""}
+            <Button variant="primary" className="btn-sm" onClick={onClose} testId="send-close-done">
+              OK
+            </Button>
+          </div>
+        )}
+        {step === "progress" && (
+          <details className="send-toast-more">
+            <summary>Details</summary>
+            <ul className="stage-list" data-testid="send-progress">
+              {SEND_STAGES.map((stage, index) => {
+                const stageState =
+                  index < stageIndex ? "done" : index === stageIndex ? "now" : "todo";
+                return (
+                  <li className="stage" data-state={stageState} data-testid={`send-stage-${index}`} key={stage.name}>
+                    <span className="stage-dot" aria-hidden="true" />
+                    <span className="stage-name">{stage.name}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Dialog
@@ -317,12 +385,11 @@ export function SendFlowDialog({
       title={title}
       id="send-flow"
       testId="send-flow"
-      onClose={dismissable ? onClose : () => {}}
+      onClose={onClose}
       head={
         <Button
           className="modal-close"
           onClick={onClose}
-          disabled={!dismissable}
           ariaLabel="Close"
           testId="send-flow-close"
         >
@@ -350,7 +417,7 @@ export function SendFlowDialog({
                 show the previous version of a composition edited seconds ago.
               */}
               <img
-                src={`/api/dashboards/${dashboardId}/preview?live=1&t=${stamp}`}
+                src={`/api/dashboards/${dashboardId}/preview?live=1&lang=${panelLang}&t=${stamp}`}
                 alt={`The frame that would be sent from ${dashboardTitle}`}
                 width={400}
                 height={300}
@@ -420,54 +487,6 @@ export function SendFlowDialog({
               {asleep ? "Queue for next wake" : "Confirm and send"}
             </Button>
           </div>
-        </div>
-      )}
-
-      {step === "progress" && (
-        <ul className="stage-list" data-testid="send-progress">
-          {SEND_STAGES.map((stage, index) => {
-            const stageState =
-              index < stageIndex ? "done" : index === stageIndex ? "now" : "todo";
-            return (
-              <li
-                className="stage"
-                data-state={stageState}
-                data-testid={`send-stage-${index}`}
-                key={stage.name}
-              >
-                <span className="stage-dot" aria-hidden="true" />
-                <span style={{ flex: 1 }}>
-                  <span className="stage-name">{stage.name}</span>
-                  {stageState === "now" && stage.note !== "" && (
-                    <span className="stage-note">{stage.note}</span>
-                  )}
-                </span>
-                <span className="stage-stamp" aria-hidden="true">
-                  {stageState === "done" ? "✓" : stageState === "now" ? "…" : ""}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {step === "done" && (
-        <div className="send-result" data-testid="send-done">
-          <div className="send-glyph" data-tone="done" aria-hidden="true">
-            ✓
-          </div>
-          <h3>Displayed — and the device confirmed it.</h3>
-          <span className="mono-meta">
-            {result?.panelMs
-              ? `refresh took ${(result.panelMs / 1000).toFixed(1)} s`
-              : "refresh time not reported"}
-            {result?.seq !== null && result?.seq !== undefined
-              ? ` · sequence ${result.seq}`
-              : ""}
-          </span>
-          <Button variant="primary" onClick={onClose} testId="send-close-done">
-            Done
-          </Button>
         </div>
       )}
 

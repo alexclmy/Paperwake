@@ -217,3 +217,12 @@ export function newPushId(): string {
 export function newIdempotencyKey(): string {
   return randomUUID();
 }
+
+/** Whether a push of this dashboard is still outstanding (blocking state). */
+export function hasBlockingPushFor(dashboardId: string): boolean {
+  return readPushes().some(
+    (record) =>
+      record.first.dashboardId === dashboardId &&
+      (BLOCKING_STATES as readonly string[]).includes(record.state),
+  );
+}

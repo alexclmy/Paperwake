@@ -124,7 +124,7 @@ export function ThemePanel({
     options: { ...(moduleDefinition("sky").defaultOptions as Record<string, unknown>) },
   };
   const sampleDoc = (over: Partial<Expression>): DashboardDoc =>
-    thumbnailDoc(sampleModule, { x: 0, y: 1, w: 8, h: 3 }, {
+    thumbnailDoc(sampleModule, { x: 0, y: 2, w: 16, h: 6 }, {
       ...theme,
       expression: { ...expr, ...over },
     });

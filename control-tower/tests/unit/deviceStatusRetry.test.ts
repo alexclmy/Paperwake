@@ -46,12 +46,12 @@ const { DeviceTransportError, DeviceTransportTimeout } = await import(
 const TOKEN = "d".repeat(64);
 
 function client(): InstanceType<typeof DeviceClient> {
-  return new DeviceClient({ mode: "real", address: "192.168.0.60", token: TOKEN });
+  return new DeviceClient({ mode: "real", address: "192.168.7.60", token: TOKEN });
 }
 
 /** The production failure: connect phase, EHOSTUNREACH, no packet sent, 0 ms. */
 function heldLocally(): never {
-  throw new DeviceTransportError("connect EHOSTUNREACH 192.168.0.60:80", {
+  throw new DeviceTransportError("connect EHOSTUNREACH 192.168.7.60:80", {
     phase: "connect",
     errno: "EHOSTUNREACH",
     syscall: "connect",
@@ -62,7 +62,7 @@ function heldLocally(): never {
 
 /** A panel that is genuinely not there: the resolution was actually attempted. */
 function genuinelyAbsent(): never {
-  throw new DeviceTransportError("connect EHOSTUNREACH 192.168.0.60:80", {
+  throw new DeviceTransportError("connect EHOSTUNREACH 192.168.7.60:80", {
     phase: "connect",
     errno: "EHOSTUNREACH",
     syscall: "connect",

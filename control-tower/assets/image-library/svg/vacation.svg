@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Palm tree and sun (vacation). NOTE4C image library, CC0. -->
+<!-- sun with engraved rings -->
+<circle cx="276" cy="110" r="70" fill="#ff0000" stroke="#000" stroke-width="6"/>
+<g stroke="#fff" stroke-width="5"><path d="M206 120 H346 M210 136 H342 M216 152 H336 M226 166 H326"/></g>
+<!-- sea -->
+<rect x="0" y="180" width="400" height="60" fill="rgb(0,110,0)"/>
+<path d="M0 180 H400" stroke="#000" stroke-width="5"/>
+<g fill="none" stroke="#fff" stroke-width="3"><path d="M220 192 h50 M240 204 h30 M300 196 h40"/></g>
+<!-- sailboat -->
+<path d="M330 176 L330 130 L362 172Z" fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+<path d="M318 178 h50 l-8 8 h-36z" fill="#000"/>
+<!-- sand -->
+<path d="M0 222 C120 206 280 214 400 240 V300 H0Z" fill="rgb(0,0,180)" stroke="#000" stroke-width="6"/>
+<!-- palm trunk -->
+<path d="M120 276 C118 220 130 160 168 104 L182 112 C148 164 140 222 146 276Z" fill="#fff" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<g stroke="#000" stroke-width="3"><path d="M124 260 h20 M124 240 h20 M126 220 h20 M130 200 h20 M136 180 h20 M144 160 h20 M154 140 h18 M162 122 h16"/></g>
+<path d="M140 276 C136 222 144 166 176 112 L182 112 C150 164 142 222 146 276Z" fill="#000"/>
+<!-- fronds -->
+<g stroke="#000" stroke-width="6" stroke-linejoin="round">
+<path d="M176 104 C140 70 90 70 56 96 C90 90 120 96 146 112 C120 104 92 110 72 130 C110 116 150 116 176 104Z" fill="rgb(80,80,80)"/>
+<path d="M176 104 C190 60 236 44 270 54 C240 60 220 74 208 92 C232 80 262 84 280 100 C240 96 206 100 176 104Z" fill="#fff"/>
+<path d="M176 104 C160 64 130 44 98 40 C126 56 140 76 146 92Z" fill="#fff"/>
+<path d="M176 104 C210 110 240 140 244 176 C226 150 206 134 188 128 C200 146 206 168 200 190 C192 156 184 130 176 104Z" fill="rgb(80,80,80)"/>
+</g>
+<g fill="none" stroke="#000" stroke-width="2"><path d="M186 90 C214 72 242 64 266 58"/><path d="M174 98 C150 74 124 56 104 46"/></g>
+<!-- coconuts -->
+<g fill="#000" stroke="#000" stroke-width="2"><circle cx="168" cy="114" r="9"/><circle cx="184" cy="118" r="9"/><circle cx="176" cy="128" r="8"/></g>
+<!-- beach ball + towel -->
+<ellipse cx="290" cy="268" rx="62" ry="14" fill="#fff" stroke="#000" stroke-width="5"/>
+<path d="M240 268 h100" stroke="#ff0000" stroke-width="6"/>
+<circle cx="66" cy="262" r="20" fill="#fff" stroke="#000" stroke-width="5"/>
+<path d="M50 250 C60 262 72 266 84 260 M66 242 C62 256 64 270 70 282" fill="none" stroke="#000" stroke-width="3"/>
+<path d="M66 242 C80 244 86 252 84 260 C76 262 70 256 66 242Z" fill="#ff0000"/>
+<!-- birds -->
+<g fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"><path d="M40 40 q8 -8 14 0 q6 -8 14 0"/><path d="M84 20 q6 -6 10 0 q4 -6 10 0"/></g>
+</svg>

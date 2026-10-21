@@ -9,6 +9,7 @@ import {
 } from "../text";
 import type { ModuleDefinition, PixelRect } from "../types";
 import { PANEL_TIMEZONE } from "../time";
+import { pt, type PanelLang } from "../i18n";
 import { clearModule, inner, renderUnavailable, unavailableShape } from "./common";
 
 /**
@@ -138,7 +139,12 @@ const UNIT_WORDS: Record<"days" | "hours" | "minutes", [string, string]> = {
 export function unitWord(
   unit: "days" | "hours" | "minutes",
   value: number,
+  lang?: PanelLang,
 ): string {
+  if (lang === "en") {
+    const one = unit === "days" ? "unit.day" : unit === "hours" ? "unit.hour" : "unit.minute";
+    return Math.abs(value) === 1 ? pt(lang, one) : pt(lang, `unit.${unit}`);
+  }
   const [one, many] = UNIT_WORDS[unit];
   return Math.abs(value) <= 1 ? one : many;
 }
@@ -185,9 +191,9 @@ export const countdown: ModuleDefinition<CountdownOptions, never> = {
     "How long until a date you name, with its timezone. Never guesses a date, never counts down live, and renders a configuration state rather than a zero when no target is set.",
   schema: CountdownOptions,
   defaultOptions: CountdownOptions.parse({}),
-  defaultSpan: { w: 3, h: 2 },
-  minSpan: { w: 2, h: 1 },
-  maxSpan: { w: 8, h: 3 },
+  defaultSpan: { w: 6, h: 4 },
+  minSpan: { w: 4, h: 2 },
+  maxSpan: { w: 16, h: 6 },
   sourceBinding: "none",
 
   render(fb, rect, _data, options, ctx) {
@@ -236,7 +242,7 @@ export const countdown: ModuleDefinition<CountdownOptions, never> = {
     drawText(
       fb,
       body,
-      filled(options.valueText, { value, unit: unitWord(unit, value) }),
+      filled(options.valueText, { value, unit: unitWord(unit, value, ctx.lang) }),
       colourFor(options.valueColour, BLACK),
       "valueText",
       { wrap: true, ...report },

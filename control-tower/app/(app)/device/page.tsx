@@ -19,6 +19,7 @@ import { PageLoading } from "@/ui/PageState";
 import { StateStrip } from "@/ui/StateStrip";
 import { StickyActions } from "@/ui/StickyActions";
 import { PowerPanel } from "@/ui/PowerPanel";
+import { PanelLangSwitch } from "@/ui/panelLang";
 import { RealDeviceCard } from "@/ui/RealDeviceCard";
 import { publishDeviceStatus, toDeviceReading, useDeviceState } from "@/ui/useDeviceState";
 import { useIsNarrow } from "@/ui/useMediaQuery";
@@ -767,6 +768,14 @@ export default function DevicePage() {
               </div>
             </Card>
           )}
+
+          <Card title="Panel language" testId="panel-lang-card">
+            <p style={{ color: "var(--ink-soft)", lineHeight: 1.55, margin: "0 0 var(--pad-2)" }}>
+              The words modules write on the panel: weather, calendar, sensors, dates, the
+              sky. Text you typed yourself is never translated.
+            </p>
+            <PanelLangSwitch testId="panel-lang" />
+          </Card>
 
           {/* Voice: provisional, so dashed and linked rather than hidden. */}
           <Card

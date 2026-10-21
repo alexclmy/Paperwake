@@ -36,7 +36,7 @@ function condition(raw: unknown): Condition {
 function render(
   options: Record<string, unknown>,
   context: RenderContext = ctx(),
-  span = { w: 4, h: 1 },
+  span = { w: 8, h: 2 },
 ): { frame: FrameBuffer; notes: LayoutNote[] } {
   const notes: LayoutNote[] = [];
   const frame = new FrameBuffer(WHITE);
