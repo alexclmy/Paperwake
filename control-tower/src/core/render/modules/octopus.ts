@@ -33,9 +33,9 @@ export const octopus: ModuleDefinition<OctopusOptions, WeatherValue> = {
     "The mascot, with an accessory chosen from the current condition. Pixel art at native scale: no assets, no network, no model calls in any render path.",
   schema: OctopusOptions,
   defaultOptions: OctopusOptions.parse({}),
-  defaultSpan: { w: 2, h: 2 },
-  minSpan: { w: 2, h: 2 },
-  maxSpan: { w: 3, h: 3 },
+  defaultSpan: { w: 4, h: 4 },
+  minSpan: { w: 4, h: 4 },
+  maxSpan: { w: 6, h: 6 },
   sourceBinding: "weather",
 
   migrateOptions(legacy) {

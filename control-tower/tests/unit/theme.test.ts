@@ -67,14 +67,14 @@ describe("the default theme changes nothing", () => {
     });
   });
 
-  it("lays the grid out exactly where the old fixed 50 px cells were", () => {
+  it("lays the grid out exactly on 25 px cells, which tile the old 50 px ones", () => {
     for (let x = 0; x < GRID_COLS; x += 1) {
       for (let y = 0; y < GRID_ROWS; y += 1) {
         expect(cellsToPixels(x, y, 1, 1, 0)).toEqual({
-          x: x * 50,
-          y: y * 50,
-          w: 50,
-          h: 50,
+          x: x * 25,
+          y: y * 25,
+          w: 25,
+          h: 25,
         });
       }
     }

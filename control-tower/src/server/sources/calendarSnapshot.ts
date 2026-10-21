@@ -168,7 +168,7 @@ export function readCalendarSnapshot(
     const snapshot = validateSnapshot(payload, now);
     return {
       state: "ok",
-      value: { events: normalizeEvents(snapshot, now) },
+      value: { events: normalizeEvents(snapshot, now), ...calendarHorizon() },
       observedAt: new Date(snapshot.observed_at).toISOString(),
     };
   } catch (error) {
@@ -178,4 +178,15 @@ export function readCalendarSnapshot(
         error instanceof SourceError ? error.message : "Calendar unavailable",
     };
   }
+}
+
+/**
+ * How far ahead the EventKit worker exports, from NOTE4C_CALENDAR_HORIZON_DAYS
+ * (the worker's --days). Unset or invalid: unknown, and the panel says nothing
+ * about a horizon rather than claiming one.
+ */
+export function calendarHorizon(): { horizonDays?: number } {
+  const raw = process.env.NOTE4C_CALENDAR_HORIZON_DAYS;
+  const n = raw ? Number.parseInt(raw, 10) : Number.NaN;
+  return Number.isInteger(n) && n > 0 && n <= 3660 ? { horizonDays: n } : {};
 }

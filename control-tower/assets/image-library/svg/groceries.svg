@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Grocery basket. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- floor shadow -->
+  <ellipse cx="200" cy="276" rx="170" ry="16" fill="rgb(120,120,120)"/>
+  <!-- baguette (behind) -->
+  <g transform="rotate(-28 160 120)">
+    <rect x="70" y="96" width="210" height="40" rx="20" fill="#fff" stroke="#000" stroke-width="6"/>
+    <path d="M100 106 l18 20 M136 104 l18 22 M172 104 l18 22 M208 104 l18 22 M244 106 l16 18" stroke="#000" stroke-width="4"/>
+    <rect x="72" y="120" width="206" height="14" rx="7" fill="rgb(150,150,150)"/>
+  </g>
+  <!-- leek / greens -->
+  <g stroke="#000" stroke-width="5" stroke-linejoin="round">
+    <path d="M268 160 L300 40 L314 46 L286 162Z" fill="#fff"/>
+    <path d="M300 40 C292 20 312 10 320 22 L314 46Z" fill="rgb(90,90,90)"/>
+    <path d="M276 164 L248 54 L262 50 L290 160Z" fill="rgb(160,160,160)"/>
+    <path d="M248 54 C236 34 254 24 264 36 L262 50Z" fill="#000"/>
+  </g>
+  <!-- milk carton -->
+  <g stroke="#000" stroke-width="5" stroke-linejoin="round">
+    <path d="M114 70 H164 V170 H114 Z" fill="#fff"/>
+    <path d="M114 70 L124 46 H154 L164 70Z" fill="#fff"/>
+    <path d="M124 46 V38 H154 V46" fill="#fff"/>
+    <path d="M144 72 H164 V170 H144Z" fill="rgb(170,170,170)" stroke-width="0"/>
+    <path d="M144 70 L154 46" stroke-width="3"/>
+    <rect x="120" y="92" width="34" height="26" fill="#ff0000" stroke-width="3"/>
+    <path d="M126 106 q11 -12 22 0" stroke="#fff" stroke-width="3" fill="none"/>
+    <path d="M114 70 H164 V170 H114 Z" fill="none"/>
+  </g>
+  <!-- apples -->
+  <g stroke="#000" stroke-width="5">
+    <path d="M196 150 C176 124 214 112 222 128 C232 112 268 124 248 152 C240 172 204 172 196 150Z" fill="#ff0000"/>
+    <path d="M222 128 q2 -14 12 -18" fill="none" stroke-width="4"/>
+    <path d="M234 112 q14 -6 18 4 q-12 6 -18 -4Z" fill="#000" stroke-width="2"/>
+    <path d="M206 138 q2 -6 8 -8" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M234 128 C252 130 252 154 238 164" stroke-width="0" fill="rgb(128,0,0)"/>
+  </g>
+  <!-- basket: woven body -->
+  <path d="M56 150 H344 L318 268 H82 Z" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+  <clipPath id="b"><path d="M56 150 H344 L318 268 H82 Z"/></clipPath>
+  <g clip-path="url(#b)" stroke="#000">
+    <g stroke-width="3">
+      <path d="M40 182 H360 M40 212 H360 M40 242 H360"/>
+    </g>
+    <g fill="rgb(150,150,150)" stroke-width="2">
+      <path d="M60 154 h40 v26 h-40z M140 154 h40 v26 h-40z M220 154 h40 v26 h-40z M300 154 h40 v26 h-40z"/>
+      <path d="M100 184 h40 v26 h-40z M180 184 h40 v26 h-40z M260 184 h40 v26 h-40z"/>
+      <path d="M60 214 h40 v26 h-40z M140 214 h40 v26 h-40z M220 214 h40 v26 h-40z M300 214 h40 v26 h-40z"/>
+      <path d="M100 244 h40 v26 h-40z M180 244 h40 v26 h-40z M260 244 h40 v26 h-40z"/>
+    </g>
+    <path d="M300 150 L344 150 L318 268 L280 268Z" fill="rgb(60,60,60)" stroke="none"/>
+  </g>
+  <!-- red rim band -->
+  <rect x="44" y="140" width="312" height="22" rx="4" fill="#ff0000" stroke="#000" stroke-width="6"/>
+  <path d="M52 151 H348" stroke="#000" stroke-width="2" stroke-dasharray="10 6"/>
+  <!-- handle -->
+  <path d="M80 142 C80 60 320 60 320 142" fill="none" stroke="#000" stroke-width="16"/>
+  <path d="M80 142 C80 60 320 60 320 142" fill="none" stroke="#fff" stroke-width="6"/>
+  <path d="M80 142 C80 60 320 60 320 142" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4 8"/>
+</svg>

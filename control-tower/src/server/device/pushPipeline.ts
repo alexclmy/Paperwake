@@ -2,8 +2,10 @@ import fs from "node:fs";
 import { pack } from "@/core/frame";
 import type { DashboardDoc } from "@/core/model";
 import { renderDashboard } from "@/core/render";
+import "@/core/library/allArt";
 import type { DashboardSources } from "@/core/render/data";
-import { PANEL_TIMEZONE, SEMANTIC_SENTINEL } from "@/core/render";
+import { PANEL_TIMEZONE, SEMANTIC_SENTINEL, type PanelLang } from "@/core/render";
+import { readPanelLang } from "../store/state";
 import { REAL_PUSH_CONFIRMATION } from "@/core/gates";
 import {
   autoQueuedRetryDelayMs,
@@ -162,14 +164,18 @@ export function prepareFrame(
   doc: DashboardDoc,
   sources: DashboardSources,
   now: Date,
+  lang: PanelLang = readPanelLang(),
 ): { bytes: Uint8Array; sha256: string; semanticHash: string } {
+  // French is passed as "no lang" so the context object is the historical one.
+  const langCtx = lang === "fr" ? {} : { lang };
   const bytes = pack(
-    renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE }),
+    renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE, ...langCtx }),
   );
   const semanticBytes = pack(
     renderDashboard(doc, sources, {
       now: SEMANTIC_SENTINEL,
       timeZone: PANEL_TIMEZONE,
+      ...langCtx,
     }),
   );
   return {

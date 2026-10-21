@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Halloween pumpkin. NOTE4C image library, CC0. -->
+<rect x="0" y="0" width="400" height="300" fill="rgb(0,60,0)"/>
+<!-- moon -->
+<circle cx="320" cy="70" r="46" fill="#fff" stroke="#000" stroke-width="5"/>
+<g fill="rgb(0,0,190)"><circle cx="304" cy="60" r="10"/><circle cx="334" cy="90" r="7"/><circle cx="336" cy="52" r="5"/></g>
+<!-- bats -->
+<g fill="#000" stroke="#fff" stroke-width="2"><path d="M60 50 q10 -10 20 0 q4 -6 8 0 q4 -6 8 0 q10 -10 20 0 q-12 2 -18 12 q-4 -4 -10 0 q-6 -10 -18 -12Z"/><path d="M250 120 q8 -8 16 0 q3 -5 6 0 q3 -5 6 0 q8 -8 16 0 q-10 2 -14 10 q-3 -3 -8 0 q-4 -8 -14 -10Z"/></g>
+<!-- ground -->
+<path d="M0 262 C100 250 300 250 400 262 V300 H0Z" fill="rgb(120,120,120)" stroke="#000" stroke-width="5"/>
+<!-- pumpkin -->
+<g stroke="#000" stroke-width="7" stroke-linejoin="round">
+<path d="M200 96 C130 90 76 130 80 186 C84 248 140 272 200 270 C260 272 316 248 320 186 C324 130 270 90 200 96Z" fill="#ff0000"/>
+</g>
+<!-- ribs -->
+<g fill="none" stroke="#000" stroke-width="5"><path d="M156 102 C120 140 120 230 158 266"/><path d="M244 102 C280 140 280 230 242 266"/><path d="M200 98 C190 150 190 220 200 270"/></g>
+<path d="M260 108 C306 130 318 200 286 248 C304 200 296 140 260 108Z" fill="rgb(128,0,0)"/>
+<path d="M110 150 C112 132 124 118 138 112" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round"/>
+<!-- face cut-outs (black with white inner glow) -->
+<g fill="#000" stroke="#000" stroke-width="3" stroke-linejoin="round">
+<path d="M126 170 L166 150 L158 190Z"/><path d="M274 170 L234 150 L242 190Z"/>
+<path d="M190 196 L200 180 L210 196Z"/>
+<path d="M120 212 C150 250 250 250 280 212 L262 216 L254 232 L240 218 L226 236 L212 220 L200 238 L188 220 L174 236 L160 218 L146 232 L138 216Z"/>
+</g>
+<g fill="#fff"><path d="M140 172 L158 162 L154 180Z"/><path d="M260 172 L242 162 L246 180Z"/></g>
+<!-- stem + vine + leaf -->
+<path d="M192 98 C190 76 196 62 212 52 L222 62 C210 70 208 82 210 98Z" fill="#000" stroke="#000" stroke-width="4"/>
+<path d="M214 60 C240 40 260 60 250 74 C244 84 232 80 236 70" fill="none" stroke="#000" stroke-width="4"/>
+<path d="M190 80 C160 60 136 70 132 88 C150 92 176 92 190 80Z" fill="#fff" stroke="#000" stroke-width="5"/>
+<path d="M188 82 C170 80 152 82 136 88" stroke="#000" stroke-width="2" fill="none"/>
+</svg>

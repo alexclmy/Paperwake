@@ -305,9 +305,9 @@ export const conditionalMessage: ModuleDefinition<
     "A note the panel shows only when a condition holds: a date range, certain days of the week, or the state of a source. Not an alarm: the panel only changes when it is pushed to, so nothing here can warn you about anything.",
   schema: ConditionalMessageOptions,
   defaultOptions: ConditionalMessageOptions.parse({}),
-  defaultSpan: { w: 4, h: 1 },
-  minSpan: { w: 2, h: 1 },
-  maxSpan: { w: 8, h: 3 },
+  defaultSpan: { w: 8, h: 2 },
+  minSpan: { w: 4, h: 2 },
+  maxSpan: { w: 16, h: 6 },
   sourceBinding: "none",
 
   extraSourceBindings(options): SourceKind[] {

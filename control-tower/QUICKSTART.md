@@ -14,15 +14,17 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:8654>. The port is bound to loopback; nothing else on
+Open <http://127.0.0.1:8654>. The port is bound to loopback; nothing else on
 your network can reach it.
 
 That is enforced rather than assumed: `npm run dev` runs
 `tools/tower-serve.ts`, which applies the bind policy *before* Next starts. If
 you point it somewhere else — `NOTE4C_TOWER_HOST`, or `npm run dev --
 --hostname ...` — and the policy refuses the host, the command prints why and
-exits without opening a socket. Binding every interface is
+exits without opening a socket. Binding every interface (`0.0.0.0`, `::`) is
 refused outright, even with a passphrase set and `NOTE4C_TOWER_ALLOW_LAN=1`.
+
+<img src="docs/images/ui/mobile-home.png" alt="Home on a phone" width="240" align="right">
 
 ## 2. Set a passphrase (1 minute)
 
@@ -32,17 +34,18 @@ exists. There is no account, no email, no recovery link: it is a local tool,
 and forgetting the passphrase means deleting `~/.note4c-control-tower` and
 starting over.
 
-You land on **Overview**, with a short welcome card explaining that you are on
+You land on **Home**, with a short welcome card explaining that you are on
 the simulated device. Every device-derived reading on the screen carries a
 `SIMULATED` badge while that is true.
 
 ## 3. Make a composition (2 minutes)
 
-Go to **Compositions** and press **+ New composition**. Seven starting
+Go to **Compositions** and press **+ New composition**. The starting
 compositions come up, and each thumbnail is the real renderer running over the
 layout that button would create, at the panel's four pigments — so what you
 pick is what you get. Take **Weather & agenda**: a weather hero beside the next
-events, on an 8×6 grid of 50-pixel cells, already saved.
+events, on a 16×12 grid of 25-pixel cells, already saved. **Auto layout** in
+the editor toolbar re-packs any composition into tidy rows.
 
 You land straight in the editor:
 
@@ -156,7 +159,7 @@ device's own answer.
 
 ## Step 2: understand what the device is doing
 
-The state strip at the top of Overview and Device shows one word, from one
+The state strip at the top of Home and Device shows one word, from one
 function, on every page:
 
 | Word | What it means |
@@ -180,7 +183,7 @@ for a real device and for nothing else. Then watch the send history on
 time on the last line.
 
 If confirmation never arrives, the send is `uncertain` and blocks later sends
-until you re-check the device or accept the unknown outcome from Overview. That is not a bug to work
+until you re-check the device or accept the unknown outcome from Home. That is not a bug to work
 around: it is the tower refusing to tell you a frame is on the wall when it
 does not know.
 

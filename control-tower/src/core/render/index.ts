@@ -13,6 +13,7 @@ import { emptySources, type DashboardSources } from "./data";
 import { drawModuleFrame } from "./frame";
 import { moduleDefinition } from "./modules";
 import { PANEL_TIMEZONE } from "./time";
+import { localizeOptions, type PanelLang } from "./i18n";
 import { cellsToPixels, type ModuleData, type RenderContext } from "./types";
 import type {
   ContrastFact,
@@ -24,6 +25,7 @@ import type {
 export * from "./types";
 export * from "./data";
 export { PANEL_TIMEZONE, formatPanelStamp } from "./time";
+export { PANEL_LANGS, DEFAULT_PANEL_LANG, isPanelLang, type PanelLang } from "./i18n";
 
 /** Pick the data a given module instance should receive. */
 export function dataForModule(
@@ -48,6 +50,15 @@ export function dataForModule(
           detail: "No reading for this entity",
         }
       );
+    }
+    case "homeSensors": {
+      const entities = (module.options as { entities?: unknown }).entities;
+      const readings: Record<string, ModuleData<unknown>> = {};
+      for (const entity of Array.isArray(entities) ? entities : []) {
+        const id = String((entity as { entityId?: unknown })?.entityId ?? "");
+        if (id) readings[id] = sources.sensors[id] ?? { state: "unavailable", detail: "No reading for this entity" };
+      }
+      return { state: "ok", value: { readings } };
     }
     case "none":
     default:
@@ -137,9 +148,11 @@ export function renderDashboard(
     // Inheritance is resolved once, here, so every measurement below this line
     // sees a concrete family and weight. Larger text, when the dashboard asked
     // for it, is applied in the same pass and on the same concrete styles.
-    const resolved = applyLargerText(
-      resolveInheritedStyles(options, theme),
-      theme.expression.largerText,
+    // Untouched French defaults follow the panel language; the owner's own
+    // words never match a default and are left exactly as typed.
+    const resolved = localizeOptions(
+      applyLargerText(resolveInheritedStyles(options, theme), theme.expression.largerText),
+      ctx.lang,
     );
     const scoped: RenderContext = {
       ...ctx,
@@ -186,8 +199,8 @@ export function renderDashboardPacked(
 }
 
 /** The context a semantic render uses. See RenderContext.semantic. */
-export function semanticContext(now: Date = new Date()): RenderContext {
-  return { now, timeZone: PANEL_TIMEZONE, semantic: true };
+export function semanticContext(now: Date = new Date(), lang?: PanelLang): RenderContext {
+  return { now, timeZone: PANEL_TIMEZONE, semantic: true, ...(lang && lang !== "fr" ? { lang } : {}) };
 }
 
 /**
@@ -204,6 +217,7 @@ export async function semanticHash(
   doc: DashboardDoc,
   sources: DashboardSources = emptySources(),
   now: Date = new Date(),
+  lang?: PanelLang,
 ): Promise<string> {
-  return sha256Hex(pack(renderDashboard(doc, sources, semanticContext(now))));
+  return sha256Hex(pack(renderDashboard(doc, sources, semanticContext(now, lang))));
 }

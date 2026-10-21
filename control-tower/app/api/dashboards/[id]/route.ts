@@ -3,8 +3,12 @@ import { z } from "zod";
 import { DashboardDocSchema } from "@/core/model";
 import { appendAudit } from "@/server/audit";
 import { guarded, jsonError } from "@/server/auth/guard";
+import { hasBlockingPushFor } from "@/server/device/ledger";
 import {
+  DashboardDeleteRefusedError,
+  DashboardNotFoundError,
   archiveDashboard,
+  deleteDashboard,
   listVersions,
   readRecord,
   restoreDashboard,
@@ -78,5 +82,43 @@ export const PATCH = guarded(
     const record = readRecord(id);
     if (!record) return jsonError(404, "not_found", `No dashboard with id "${id}"`);
     return NextResponse.json({ record });
+  },
+);
+
+/**
+ * Hard delete. Same guard as every mutation (session + CSRF + audit). The
+ * body must confirm the id, so a stray DELETE cannot remove anything.
+ * 409 when the composition is selected or has a push outstanding: the caller
+ * is told why, nothing is changed. See deleteDashboard() for the semantics.
+ */
+const DeleteSchema = z.object({ confirm: z.string() });
+
+export const DELETE = guarded(
+  { mutating: true, schema: DeleteSchema, action: "dashboard.delete" },
+  async ({ request, body }) => {
+    const id = idFrom(request.nextUrl.pathname);
+    if (body.confirm !== id) {
+      return jsonError(400, "confirm_mismatch", "The confirmation does not name this composition");
+    }
+    try {
+      const result = deleteDashboard(id, hasBlockingPushFor);
+      appendAudit({
+        action: "dashboard.delete",
+        target: id,
+        params: { versions: result.versions },
+        outcome: "ok",
+        detail: "Record and every version removed",
+      });
+      return NextResponse.json({ deleted: result });
+    } catch (error) {
+      if (error instanceof DashboardDeleteRefusedError) {
+        appendAudit({ action: "dashboard.delete", target: id, outcome: "refused", detail: error.reason });
+        return jsonError(409, error.reason, error.message);
+      }
+      if (error instanceof DashboardNotFoundError) {
+        return jsonError(404, "not_found", `No dashboard with id "${id}"`);
+      }
+      throw error;
+    }
   },
 );

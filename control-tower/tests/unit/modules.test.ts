@@ -36,7 +36,9 @@ const GOLDEN: Record<string, string> = {
   "calendarNext.unavailable":
     "c8850e6b5a0d68911ddecac6539ea1722e60ccfd5826e27539862e0c108cec79",
   "calendarNext.empty":
-    "071dbfd67ee25c98cb03f285b3df47e411af94f2518b86b4022967e1ca24c3ea",
+    // Changed on purpose: the empty note no longer claims a 366-day horizon
+    // the worker never exported ("pour le moment" when the horizon is unknown).
+    "1515bc93546506095add1a02cd53e8fd803d9ed9fac8d373253ef2a4e7fb97d0",
   "haSensor.ok":
     "014b59d503cc459508fff6d655e70df30cba00800341a8d0974094b0b7d77cb2",
   "haSensor.stale":
@@ -109,9 +111,11 @@ describe("module registry", () => {
       "sky",
       "weather24h",
       "weatherHero",
-  "weatherWeek",
+      "weatherWeek",
+      "weatherCompact",
       "calendarNext",
       "haSensor",
+      "homeSensors",
       "message",
       "list",
       "countdown",
@@ -150,44 +154,44 @@ describe("module registry", () => {
 
 describe("golden module renders", () => {
   const cases: Array<[string, () => FrameBuffer]> = [
-    ["weather24h.ok", () => renderModule("weather24h", { w: 6, h: 3 }, WEATHER_OK)],
+    ["weather24h.ok", () => renderModule("weather24h", { w: 12, h: 6 }, WEATHER_OK)],
     [
       "weather24h.unavailable",
-      () => renderModule("weather24h", { w: 6, h: 3 }, UNAVAILABLE),
+      () => renderModule("weather24h", { w: 12, h: 6 }, UNAVAILABLE),
     ],
     [
       "calendarNext.ok",
-      () => renderModule("calendarNext", { w: 5, h: 2 }, CALENDAR_OK),
+      () => renderModule("calendarNext", { w: 10, h: 4 }, CALENDAR_OK),
     ],
     [
       "calendarNext.unavailable",
-      () => renderModule("calendarNext", { w: 5, h: 2 }, UNAVAILABLE),
+      () => renderModule("calendarNext", { w: 10, h: 4 }, UNAVAILABLE),
     ],
     [
       "calendarNext.empty",
       () =>
-        renderModule("calendarNext", { w: 5, h: 2 }, {
+        renderModule("calendarNext", { w: 10, h: 4 }, {
           state: "ok",
           value: { events: [] },
         }),
     ],
-    ["haSensor.ok", () => renderModule("haSensor", { w: 3, h: 1 }, SENSOR_OK)],
+    ["haSensor.ok", () => renderModule("haSensor", { w: 6, h: 2 }, SENSOR_OK)],
     [
       "haSensor.stale",
       () =>
-        renderModule("haSensor", { w: 3, h: 1 }, {
+        renderModule("haSensor", { w: 6, h: 2 }, {
           state: "stale",
           value: { label: "Capteur", value: "19.4 °C" },
         }),
     ],
     [
       "haSensor.unavailable",
-      () => renderModule("haSensor", { w: 3, h: 1 }, UNAVAILABLE),
+      () => renderModule("haSensor", { w: 6, h: 2 }, UNAVAILABLE),
     ],
     [
       "message.text",
       () =>
-        renderModule("message", { w: 6, h: 1 }, { state: "ok" }, {
+        renderModule("message", { w: 12, h: 2 }, { state: "ok" }, {
           body: { text: "Collect the parcel before noon" },
           expiresAt: null,
         }),
@@ -195,19 +199,19 @@ describe("golden module renders", () => {
     [
       "message.expired",
       () =>
-        renderModule("message", { w: 6, h: 1 }, { state: "ok" }, {
+        renderModule("message", { w: 12, h: 2 }, { state: "ok" }, {
           body: { text: "Périmé" },
           expiresAt: "2020-01-01T00:00:00.000Z",
         }),
     ],
     [
       "timestamp.right",
-      () => renderModule("timestamp", { w: 3, h: 1 }, { state: "ok" }),
+      () => renderModule("timestamp", { w: 6, h: 2 }, { state: "ok" }),
     ],
     [
       "list.rows",
       () =>
-        renderModule("list", { w: 4, h: 3 }, { state: "ok" }, {
+        renderModule("list", { w: 8, h: 6 }, { state: "ok" }, {
           title: { text: "KITCHEN PANEL" },
           marker: "checkbox",
           rows: [
@@ -219,23 +223,23 @@ describe("golden module renders", () => {
     ],
     [
       "list.empty",
-      () => renderModule("list", { w: 4, h: 3 }, { state: "ok" }),
+      () => renderModule("list", { w: 8, h: 6 }, { state: "ok" }),
     ],
     [
       "countdown.ahead",
       () =>
-        renderModule("countdown", { w: 3, h: 2 }, { state: "ok" }, {
+        renderModule("countdown", { w: 6, h: 4 }, { state: "ok" }, {
           targetAt: "2026-10-01T12:00:00.000Z",
         }),
     ],
     [
       "countdown.unset",
-      () => renderModule("countdown", { w: 3, h: 2 }, { state: "ok" }),
+      () => renderModule("countdown", { w: 6, h: 4 }, { state: "ok" }),
     ],
     [
       "conditionalMessage.true",
       () =>
-        renderModule("conditionalMessage", { w: 4, h: 1 }, { state: "ok" }, {
+        renderModule("conditionalMessage", { w: 8, h: 2 }, { state: "ok" }, {
           body: { text: "Take the bins out" },
           conditions: [{ kind: "daysOfWeek", days: [5] }],
         }),
@@ -243,14 +247,14 @@ describe("golden module renders", () => {
     [
       "conditionalMessage.unconfigured",
       () =>
-        renderModule("conditionalMessage", { w: 4, h: 1 }, { state: "ok" }, {
+        renderModule("conditionalMessage", { w: 8, h: 2 }, { state: "ok" }, {
           body: { text: "Take the bins out" },
         }),
     ],
-    ["octopus.ok", () => renderModule("octopus", { w: 2, h: 2 }, WEATHER_OK)],
+    ["octopus.ok", () => renderModule("octopus", { w: 4, h: 4 }, WEATHER_OK)],
     [
       "octopus.unavailable",
-      () => renderModule("octopus", { w: 2, h: 2 }, UNAVAILABLE),
+      () => renderModule("octopus", { w: 4, h: 4 }, UNAVAILABLE),
     ],
   ];
 
@@ -263,15 +267,15 @@ describe("golden module renders", () => {
 
 describe("the unavailable-data contract", () => {
   it("weather says so in French and promises nothing was invented", () => {
-    const fb = renderModule("weather24h", { w: 6, h: 3 }, UNAVAILABLE);
+    const fb = renderModule("weather24h", { w: 12, h: 6 }, UNAVAILABLE);
     // The attention colour is present, and no temperature glyphs are.
     expect(inkCount(fb, RED)).toBeGreaterThan(50);
     expect(digest(fb)).not.toBe(GOLDEN["weather24h.ok"]);
   });
 
   it("a missing sensor never renders a number", () => {
-    const missing = renderModule("haSensor", { w: 3, h: 1 }, UNAVAILABLE);
-    const zeroed = renderModule("haSensor", { w: 3, h: 1 }, {
+    const missing = renderModule("haSensor", { w: 6, h: 2 }, UNAVAILABLE);
+    const zeroed = renderModule("haSensor", { w: 6, h: 2 }, {
       state: "ok",
       value: { label: "Capteur", value: "0" },
     });
@@ -280,8 +284,8 @@ describe("the unavailable-data contract", () => {
   });
 
   it("a stale sensor still shows its reading, labelled", () => {
-    const fresh = renderModule("haSensor", { w: 3, h: 1 }, SENSOR_OK);
-    const staleData = renderModule("haSensor", { w: 3, h: 1 }, {
+    const fresh = renderModule("haSensor", { w: 6, h: 2 }, SENSOR_OK);
+    const staleData = renderModule("haSensor", { w: 6, h: 2 }, {
       state: "stale",
       value: { label: "Capteur", value: "19.4 °C" },
     });
@@ -306,7 +310,7 @@ describe("the unavailable-data contract", () => {
 
 describe("message expiry", () => {
   it("renders nothing once the expiry has passed", () => {
-    const expired = renderModule("message", { w: 6, h: 1 }, { state: "ok" }, {
+    const expired = renderModule("message", { w: 12, h: 2 }, { state: "ok" }, {
       body: { text: "Collect the parcel" },
       expiresAt: "2020-01-01T00:00:00.000Z",
     });
@@ -314,7 +318,7 @@ describe("message expiry", () => {
   });
 
   it("renders while the expiry is still ahead", () => {
-    const live = renderModule("message", { w: 6, h: 1 }, { state: "ok" }, {
+    const live = renderModule("message", { w: 12, h: 2 }, { state: "ok" }, {
       body: { text: "Collect the parcel" },
       expiresAt: "2030-01-01T00:00:00.000Z",
     });
@@ -325,13 +329,13 @@ describe("message expiry", () => {
 describe("timestamp", () => {
   it("renders the panel timezone, not the server timezone", () => {
     // 2026-09-11T05:07Z is 01:07 in America/Toronto.
-    const fb = renderModule("timestamp", { w: 3, h: 1 }, { state: "ok" });
+    const fb = renderModule("timestamp", { w: 6, h: 2 }, { state: "ok" });
     expect(digest(fb)).toBe(GOLDEN["timestamp.right"]);
 
     const utc = new FrameBuffer(WHITE);
     moduleDefinition("timestamp").render(
       utc,
-      cellsToPixels(0, 0, 3, 1),
+      cellsToPixels(0, 0, 6, 2),
       { state: "ok" },
       moduleDefinition("timestamp").schema.parse({}),
       { now: FIXTURE_CTX.now, timeZone: "UTC" },

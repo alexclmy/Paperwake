@@ -12,7 +12,7 @@ test("creates, previews, duplicates, archives and restores a composition", async
   expect(id).toMatch(/^d_/);
 
   const card = page.getByTestId(`dash-${id}`);
-  await expect(card).toContainText("6 modules");
+  await expect(card).toContainText("6 blocks");
   await expect(card).toContainText("v1");
 
   // The preview is a real server render, so it must actually be a PNG. It is
@@ -45,7 +45,8 @@ test("creates, previews, duplicates, archives and restores a composition", async
   // Archived compositions are folded away rather than fetched on demand, so
   // the count is known before anything is expanded.
   const fold = page.getByTestId("archived-fold");
-  await expect(fold).toContainText("Archived (1)");
+  // Counted, whatever other specs sharing the data root have archived.
+  await expect(fold).toContainText(/Archived \(\d+\)/);
   await page.getByTestId("show-archived").click();
   await expect(page.getByTestId(`restore-${id}`)).toBeVisible();
 
@@ -85,7 +86,7 @@ test("Show on panel selects the composition and opens the review", async ({
   await expect(page.getByTestId(`dash-${id}`).locator('[data-badge="selected"]')).toBeVisible();
 
   await page.goto("/overview");
-  await expect(page.getByText(title)).toBeVisible();
+  await expect(page.getByRole("link", { name: title, exact: true })).toBeVisible();
   await expect(page.getByTestId("push-button")).toBeEnabled();
 });
 

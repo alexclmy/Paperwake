@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Geometric snowflake. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- background: concentric engraved rings -->
+  <circle cx="200" cy="150" r="140" fill="rgb(0,0,230)"/>
+  <circle cx="200" cy="150" r="140" fill="none" stroke="#000" stroke-width="3"/>
+  <circle cx="200" cy="150" r="128" fill="none" stroke="#000" stroke-width="1.5" stroke-dasharray="3 5"/>
+  <defs>
+    <g id="arm">
+      <path d="M0 -14 V-122" stroke="#000" stroke-width="12" stroke-linecap="square"/>
+      <path d="M0 -14 V-122" stroke="#fff" stroke-width="4"/>
+      <path d="M0 -50 L-26 -74 M0 -50 L26 -74" stroke="#000" stroke-width="9" stroke-linecap="round"/>
+      <path d="M0 -84 L-20 -104 M0 -84 L20 -104" stroke="#000" stroke-width="8" stroke-linecap="round"/>
+      <path d="M0 -112 L-10 -122 M0 -112 L10 -122" stroke="#000" stroke-width="6" stroke-linecap="round"/>
+      <path d="M-8 -30 L0 -40 L8 -30" fill="none" stroke="#000" stroke-width="5"/>
+      <path d="M0 -122 l-8 8 l8 8 l8 -8z" fill="#ff0000" stroke="#000" stroke-width="3"/>
+    </g>
+  </defs>
+  <g transform="translate(200 150)">
+    <use href="#arm"/>
+    <use href="#arm" transform="rotate(60)"/>
+    <use href="#arm" transform="rotate(120)"/>
+    <use href="#arm" transform="rotate(180)"/>
+    <use href="#arm" transform="rotate(240)"/>
+    <use href="#arm" transform="rotate(300)"/>
+    <!-- inner hexagon -->
+    <path d="M0 -24 L21 -12 L21 12 L0 24 L-21 12 L-21 -12Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M0 -10 L9 -5 L9 5 L0 10 L-9 5 L-9 -5Z" fill="#fff" stroke="#000" stroke-width="3"/>
+  </g>
+  <!-- small flakes around -->
+  <g stroke="#000" stroke-width="4" stroke-linecap="round">
+    <path d="M40 40 v24 M30 46 l20 12 M30 58 l20 -12"/>
+    <path d="M360 250 v24 M350 256 l20 12 M350 268 l20 -12"/>
+    <path d="M362 30 v16 M355 34 l14 8 M355 42 l14 -8"/>
+    <path d="M36 250 v16 M29 254 l14 8 M29 262 l14 -8"/>
+  </g>
+</svg>

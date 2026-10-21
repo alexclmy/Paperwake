@@ -107,9 +107,9 @@ export const headline: ModuleDefinition<HeadlineOptions, never> = {
     "Big editorial type — a headline, an optional kicker and subline — set over a dithered colour field. The words are yours; the colour follows the dashboard's Expression.",
   schema: HeadlineOptions,
   defaultOptions: HeadlineOptions.parse({}),
-  defaultSpan: { w: 8, h: 2 },
-  minSpan: { w: 4, h: 2 },
-  maxSpan: { w: 8, h: 4 },
+  defaultSpan: { w: 16, h: 4 },
+  minSpan: { w: 6, h: 4 },
+  maxSpan: { w: 16, h: 8 },
   sourceBinding: "none",
 
   render(fb, rect, _data, options, ctx) {

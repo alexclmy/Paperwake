@@ -16,6 +16,7 @@ import {
   staleShape,
   unavailableShape,
 } from "./common";
+import { localizeWeekdayLabel } from "../i18n";
 
 /**
  * Weather, seven days.
@@ -60,9 +61,9 @@ export const weatherWeek: ModuleDefinition<WeatherWeekOptions, WeatherValue> = {
     "A seven-day outlook: weekday, condition, high and low per column, ruled apart. Reads the daily forecast; renders an explicit unavailable state rather than any placeholder number when the source has no multi-day data.",
   schema: WeatherWeekOptions,
   defaultOptions: WeatherWeekOptions.parse({}),
-  defaultSpan: { w: 8, h: 2 },
-  minSpan: { w: 6, h: 2 },
-  maxSpan: { w: 8, h: 3 },
+  defaultSpan: { w: 16, h: 4 },
+  minSpan: { w: 8, h: 2 },
+  maxSpan: { w: 16, h: 6 },
   sourceBinding: "weather",
 
   render(fb, rect, data, options, ctx) {
@@ -113,7 +114,7 @@ export const weatherWeek: ModuleDefinition<WeatherWeekOptions, WeatherValue> = {
       drawText(
         fb,
         { ...cell, y: top, h: dayH },
-        { text: day.label, visible: true, style: { ...options.dayStyle, align: "center" } },
+        { text: localizeWeekdayLabel(day.label, ctx.lang), visible: true, style: { ...options.dayStyle, align: "center" } },
         BLACK,
         "day",
         report,

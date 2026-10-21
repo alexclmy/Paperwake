@@ -30,6 +30,7 @@ import { PANEL_LATITUDE, PANEL_LONGITUDE, PANEL_TIMEZONE } from "../time";
 import { chromeNow, type ModuleDefinition, type PixelRect } from "../types";
 import { ADVANCED_OPTION_TAG, LAYOUT_VARIANT_TAG } from "../types";
 import { clearModule, inner } from "./common";
+import { formatPanelDuration, pt, type PanelStringKey } from "../i18n";
 import { isKnownTimeZone } from "./countdown";
 
 /**
@@ -297,9 +298,9 @@ export const sky: ModuleDefinition<SkyOptions, never> = {
     "Sunrise, sunset, day length and its day-to-day change, the sun on its arc, and the moon's phase — all computed on the Mac from your latitude and longitude. No network source.",
   schema: SkyOptions,
   defaultOptions: SkyOptions.parse({}),
-  defaultSpan: { w: 5, h: 3 },
-  minSpan: { w: 3, h: 2 },
-  maxSpan: { w: 8, h: 4 },
+  defaultSpan: { w: 10, h: 6 },
+  minSpan: { w: 4, h: 2 },
+  maxSpan: { w: 16, h: 8 },
   sourceBinding: "none",
 
   render(fb, rect, _data, options, ctx) {
@@ -328,10 +329,10 @@ export const sky: ModuleDefinition<SkyOptions, never> = {
         : "—";
     const lengthText =
       day.kind === "polar-day"
-        ? "Jour polaire"
+        ? pt(ctx.lang, "sky.polarDay")
         : day.kind === "polar-night"
-          ? "Nuit polaire"
-          : formatDuration(day.dayLengthMinutes);
+          ? pt(ctx.lang, "sky.polarNight")
+          : formatPanelDuration(day.dayLengthMinutes, ctx.lang);
     const deltaText =
       day.kind === "normal"
         ? `${delta >= 0 ? "+" : "-"}${Math.abs(delta)} min`
@@ -349,6 +350,7 @@ export const sky: ModuleDefinition<SkyOptions, never> = {
       options,
       marker,
       moon,
+      moonLabel: pt(ctx.lang, `moon.${moon.name}` as PanelStringKey),
       sunriseText,
       sunsetText,
       lengthText,
@@ -426,6 +428,7 @@ interface RenderArgs {
   options: SkyOptions;
   marker: ReturnType<typeof sunPosition>;
   moon: ReturnType<typeof moonPhase>;
+  moonLabel: string;
   sunriseText: string;
   sunsetText: string;
   lengthText: string;
@@ -469,7 +472,7 @@ function renderDuo(
     fb,
     moonCX,
     moonCY + r + 6,
-    MOON_PHASE_LABEL[a.moon.name],
+    a.moonLabel,
     noteStyle,
     BLACK,
     "center",

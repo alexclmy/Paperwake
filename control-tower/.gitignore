@@ -72,3 +72,4 @@ tools/raster-lab-out/
 # Planning notes for this and neighbouring projects. Private for the same
 # reasons, and the directory is a workspace rather than a document set.
 /.hermes/
+.preview-data/

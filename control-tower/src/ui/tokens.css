@@ -1,30 +1,37 @@
 /*
  * Design tokens, single source.
  *
- * Ink on cream paper. Every surface is bordered in 2 px of ink, every raised
- * thing casts a hard shadow with no blur, and nothing has a corner radius. A
- * press moves the object into its own shadow rather than tinting it. That is
- * the whole visual grammar, and it is deliberately the opposite of the soft,
- * radiused, shadowless chrome this file used to describe: the panel this tower
- * drives is four flat pigments with a hard bezel, and the interface around it
- * now says so.
+ * Warm off-white page, white cards with hairline borders and soft shadows,
+ * near-black ink, and one red accent that matches the panel's red. Rounded
+ * 10-18 px corners, the system face, generous spacing. Component styles live
+ * in app.css and the modern layer in theme.css; both read only these tokens.
  *
  * No brightness metaphors exist anywhere in this product: the panel has none.
  */
 
 :root {
   /* Surfaces. --paper is a card; --canvas is the page it sits on. */
-  --paper: #fffdf8;
-  --canvas: #f4f1e9;
+  --paper: #ffffff;
+  --canvas: #f6f4ef;
   /*
    * Kept as an alias of --canvas. A long tail of rules named --surface for
    * "the quieter of the two surfaces", and that is still exactly what it is.
    */
-  --surface: #f4f1e9;
+  --surface: #f6f4ef;
 
-  --ink: #161513;
-  --ink-soft: #6b675e;
-  --rule: #d8d4c8;
+  --ink: #1b1a17;
+  --ink-soft: #6b6860;
+  --rule: #e7e3da;
+  --rule-strong: #d3cec3;
+  /* The one accent, matching the panel's red. Primary actions and selection. */
+  --accent: #d92d20;
+  --accent-hover: #b9241a;
+  --accent-soft: #fdecea;
+  --ok: #1f8a4c;
+  --ok-soft: #e6f4ec;
+  --warn: #9a6700;
+  --warn-soft: #fff4d6;
+  --focus-ring: 0 0 0 3px rgba(217, 45, 32, 0.28);
 
   /*
    * Reserved semantics. Never decorative.
@@ -34,8 +41,8 @@
    * button per view) and it is the colour of pending, queued and stale. Red is
    * destructive, failed, and uncertain.
    */
-  --accent-red: #e02d1b;
-  --accent-yellow: #ffd02e;
+  --accent-red: #d92d20;
+  --accent-yellow: #f6d77a;
 
   /* The device palette, exact. Kept separate from UI tokens on purpose: these
      four values are the panel contract, not a theme. */
@@ -55,12 +62,11 @@
    * is a designed object and the system face fought it everywhere.
    */
   --font-title:
-    var(--font-title-local), "Space Grotesk", -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   --font-body: var(--font-title);
   --font-mono:
-    var(--font-mono-local), ui-monospace, SFMono-Regular, "SF Mono", Menlo,
-    monospace;
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   /*
    * Type scale. 12 px is the floor for anything carrying meaning: the badges
@@ -86,11 +92,14 @@
    * hard-edged, and a 2 px radius on a 2 px border reads as a mistake rather
    * than as softness.
    */
-  --radius: 0;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
 
-  --border-2: 2px solid var(--ink);
-  --border-2-soft: 2px solid var(--ink-soft);
-  --border-dashed: 2px dashed var(--ink-soft);
+  --border-2: 1px solid var(--rule);
+  --border-2-soft: 1px solid var(--rule-strong);
+  --border-dashed: 1px dashed var(--rule-strong);
   /* Hairlines inside a bordered box: list rows, ledger lines. */
   --border: 1px solid var(--rule);
 
@@ -99,14 +108,14 @@
    * varies by how much the object claims to be lifted off the page: a card,
    * a button, a modal.
    */
-  --shadow-card: 4px 4px 0 var(--ink);
-  --shadow-card-lg: 5px 5px 0 var(--ink);
-  --shadow-btn: 3px 3px 0 var(--ink);
-  --shadow-btn-hover: 4px 4px 0 var(--ink);
-  --shadow-modal: 8px 8px 0 var(--ink);
-  --shadow-toast: 4px 4px 0 rgba(22, 21, 19, 0.3);
+  --shadow-card: 0 1px 2px rgba(27, 26, 23, 0.04), 0 4px 16px rgba(27, 26, 23, 0.05);
+  --shadow-card-lg: 0 2px 4px rgba(27, 26, 23, 0.04), 0 10px 30px rgba(27, 26, 23, 0.07);
+  --shadow-btn: 0 1px 2px rgba(27, 26, 23, 0.12);
+  --shadow-btn-hover: 0 2px 6px rgba(27, 26, 23, 0.16);
+  --shadow-modal: 0 24px 64px rgba(27, 26, 23, 0.22);
+  --shadow-toast: 0 12px 32px rgba(27, 26, 23, 0.18);
 
-  --backdrop: rgba(22, 21, 19, 0.55);
+  --backdrop: rgba(27, 26, 23, 0.36);
 
   /*
    * The minimum any control may measure on a touch screen. The browser QA
@@ -118,17 +127,18 @@
   /* Height of the mobile tab bar, so sticky things can clear it. */
   --tabs-height: 56px;
   /* Height of the sticky desktop header, so anchors and sheets can clear it. */
-  --header-height: 60px;
+  --header-height: 64px;
+  --sidebar-width: 232px;
 
   /* Density. Comfortable is the default; compact tightens spacing only. */
   --pad-1: 6px;
   --pad-2: 12px;
-  --pad-3: 18px;
-  --pad-4: 24px;
+  --pad-3: 20px;
+  --pad-4: 28px;
   --row-gap: 12px;
 
   /* The one content measure, shared by the header, the nav and the main. */
-  --shell-max: 1160px;
+  --shell-max: 1240px;
 }
 
 /*

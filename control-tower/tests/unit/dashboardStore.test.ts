@@ -191,17 +191,17 @@ describe("update", () => {
         {
           id: newModuleId(),
           type: "haSensor",
-          x: 6,
+          x: 12,
           y: 0,
-          w: 3,
-          h: 1,
+          w: 6,
+          h: 2,
           hidden: false,
           options: {},
         },
       ],
     };
     expect(() => updateDashboard(created.doc.id, broken)).toThrow(
-      /runs past the 8x6 grid/,
+      /runs past the 16x12 grid/,
     );
   });
 

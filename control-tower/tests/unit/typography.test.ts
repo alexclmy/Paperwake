@@ -569,7 +569,7 @@ describe("provenance", () => {
       const fb = new FrameBuffer(WHITE);
       definition.render(
         fb,
-        cellsToPixels(0, 0, 6, 3),
+        cellsToPixels(0, 0, 12, 6),
         WEATHER_OK as unknown as ModuleData<never>,
         definition.schema.parse({ showProvenance }),
         FIXTURE_CTX,

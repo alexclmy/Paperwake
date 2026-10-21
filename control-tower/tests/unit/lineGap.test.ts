@@ -35,7 +35,7 @@ function messageFrame(options: {
 }): FrameBuffer {
   const definition = moduleDefinition("message");
   const fb = new FrameBuffer(WHITE);
-  const cells = options.cells ?? { w: 6, h: 2 };
+  const cells = options.cells ?? { w: 12, h: 4 };
   definition.render(
     fb,
     cellsToPixels(0, 0, cells.w, cells.h),
@@ -152,29 +152,29 @@ describe("a box that only fits one line says so", () => {
   }
 
   it("warns on the one-row tile at 27 px, which is the reported case", () => {
-    const notes = notesFor({ w: 3, h: 1 }, 27);
+    const notes = notesFor({ w: 6, h: 2 }, 27);
     expect(notes).toHaveLength(1);
     expect(notes[0]?.role).toBe("body");
     expect(notes[0]?.detail).toMatch(/fits one line at 27 px/);
   });
 
   it("stays quiet when a second line does fit", () => {
-    expect(notesFor({ w: 3, h: 1 }, 15)).toEqual([]);
-    expect(notesFor({ w: 6, h: 2 }, 27)).toEqual([]);
+    expect(notesFor({ w: 6, h: 2 }, 15)).toEqual([]);
+    expect(notesFor({ w: 12, h: 4 }, 27)).toEqual([]);
   });
 
   it("agrees with what the layout actually did, at every size", () => {
     for (const size of FONT_SIZES) {
-      const inert = notesFor({ w: 3, h: 1 }, size).length > 0;
+      const inert = notesFor({ w: 6, h: 2 }, size).length > 0;
       const tight = messageFrame({
         lineSpacing: 0,
         size,
-        cells: { w: 3, h: 1 },
+        cells: { w: 6, h: 2 },
       });
       const loose = messageFrame({
         lineSpacing: 8,
         size,
-        cells: { w: 3, h: 1 },
+        cells: { w: 6, h: 2 },
       });
       // The note is true exactly when the control cannot change the pixels.
       expect(digest(tight) === digest(loose), `size ${size}`).toBe(inert);
@@ -187,7 +187,7 @@ describe("a box that only fits one line says so", () => {
     const definition = moduleDefinition("message");
     definition.render(
       new FrameBuffer(WHITE),
-      cellsToPixels(0, 0, 3, 1),
+      cellsToPixels(0, 0, 6, 2),
       { state: "ok" } as ModuleData<never>,
       definition.schema.parse({
         body: { text: "Court", style: { size: 27 } },

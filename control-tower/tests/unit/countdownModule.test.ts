@@ -20,7 +20,7 @@ const TORONTO = "America/Toronto";
 function render(
   options: Record<string, unknown>,
   now: Date,
-  span = { w: 3, h: 2 },
+  span = { w: 6, h: 4 },
 ): FrameBuffer {
   const frame = new FrameBuffer(WHITE);
   countdown.render(
@@ -175,7 +175,7 @@ describe("countdown rendering", () => {
     const broken = new FrameBuffer(WHITE);
     countdown.render(
       broken,
-      cellsToPixels(0, 0, 3, 2),
+      cellsToPixels(0, 0, 6, 4),
       { state: "ok" } as ModuleData<never>,
       { ...CountdownOptions.parse({}), targetAt: "yesterday" },
       { now: NOW, timeZone: TORONTO },
@@ -218,7 +218,7 @@ describe("countdown rendering", () => {
     const frame = new FrameBuffer(WHITE);
     countdown.render(
       frame,
-      cellsToPixels(0, 0, 2, 1),
+      cellsToPixels(0, 0, 4, 2),
       { state: "ok" } as ModuleData<never>,
       CountdownOptions.parse({
         targetAt: "2030-12-25T12:00:00Z",
@@ -268,8 +268,8 @@ describe("countdown and the duplicate-frame gate", () => {
           type: "countdown",
           x: 0,
           y: 0,
-          w: 3,
-          h: 2,
+          w: 6,
+          h: 4,
           hidden: false,
           options: moduleDefinition("countdown").schema.parse({
             targetAt: "2026-12-25T12:00:00Z",

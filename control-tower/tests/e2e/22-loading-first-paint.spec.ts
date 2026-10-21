@@ -101,9 +101,11 @@ test.describe("a device that never answers costs a badge, not a page", () => {
     // made, "Select a composition" to somebody who had selected one, and
     // "Nothing is stored on the device yet" about a panel nobody had asked.
     await expect(page.getByTestId("panel-not-read")).toBeVisible();
+    // Sources live under the Advanced disclosure on Home now.
+    await page.getByTestId("home-advanced").locator("summary").click();
     await expect(page.getByTestId("sources-not-read")).toBeVisible();
     await expect(page.getByTestId("panel-unread")).toBeVisible();
-    await expect(page.getByTestId("panel-label")).toHaveText("ON THE PANEL");
+    await expect(page.getByTestId("panel-label")).toHaveText("On the panel");
   });
 
   test("/device draws the last known state and its controls", async ({ page }) => {
@@ -160,7 +162,7 @@ test.describe("a device that never answers costs a badge, not a page", () => {
 
       const toOverview = Date.now();
       await page.getByRole("navigation", { name: "Main" }).first()
-        .getByRole("link", { name: "Overview" }).click();
+        .getByRole("link", { name: "Home" }).click();
       await expect(page.getByTestId("on-panel")).toBeVisible();
       expect(Date.now() - toOverview).toBeLessThan(FIRST_PAINT_BUDGET_MS * 3);
     }
@@ -185,7 +187,7 @@ test.describe("a device that never answers costs a badge, not a page", () => {
 
     const away = Date.now();
     await page.getByRole("navigation", { name: "Main" }).first()
-      .getByRole("link", { name: "Overview" }).click();
+      .getByRole("link", { name: "Home" }).click();
     await expect(page.getByTestId("on-panel")).toBeVisible();
     expect(Date.now() - away).toBeLessThan(FIRST_PAINT_BUDGET_MS * 3);
   });

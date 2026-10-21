@@ -75,9 +75,9 @@ export const weather24h: ModuleDefinition<Weather24hOptions, WeatherValue> = {
     "Four hourly slots at +0, +6, +12 and +18 hours with the low and high across the window. Renders an explicit unavailable state rather than any placeholder number.",
   schema: Weather24hOptions,
   defaultOptions: Weather24hOptions.parse({}),
-  defaultSpan: { w: 8, h: 3 },
-  minSpan: { w: 4, h: 2 },
-  maxSpan: { w: 8, h: 4 },
+  defaultSpan: { w: 16, h: 6 },
+  minSpan: { w: 8, h: 4 },
+  maxSpan: { w: 16, h: 8 },
   sourceBinding: "weather",
 
   migrateOptions(legacy) {

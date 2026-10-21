@@ -37,9 +37,9 @@ test("a module can be selected, moved, resized and saved from the keyboard", asy
   // The live region says what happened, for a reader who cannot see it move.
   await expect(page.getByTestId("stage-live")).toContainText("column 1, row 1");
 
-  // Shift resizes. haSensor is 3x1 by default and may grow to 4x2.
+  // Shift resizes, one fine cell at a time. haSensor is 6x2 by default.
   await page.keyboard.press("Shift+ArrowRight");
-  expect(await cellPosition(page, "module-haSensor")).toMatchObject({ w: 4 });
+  expect(await cellPosition(page, "module-haSensor")).toMatchObject({ w: 7 });
 
   await page.getByTestId("save-version").click();
   await expect(page.getByTestId("version-rail")).toContainText("v1");

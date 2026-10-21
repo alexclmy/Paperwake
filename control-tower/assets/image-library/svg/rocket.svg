@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Rocket launch. NOTE4C image library, CC0. -->
+<!-- night sky -->
+<rect x="0" y="0" width="400" height="300" fill="rgb(0,70,0)"/>
+<g fill="#fff"><path d="M40 40 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3z"/><path d="M340 60 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3z"/><rect x="80" y="110" width="4" height="4"/><rect x="300" y="140" width="4" height="4"/><rect x="360" y="20" width="4" height="4"/><rect x="120" y="30" width="4" height="4"/><rect x="40" y="170" width="4" height="4"/><rect x="270" y="30" width="4" height="4"/><rect x="370" y="190" width="4" height="4"/></g>
+<!-- planet -->
+<circle cx="70" cy="90" r="26" fill="#fff" stroke="#000" stroke-width="5"/><path d="M48 84 C60 80 80 80 94 90" stroke="#000" stroke-width="3" fill="none"/><ellipse cx="70" cy="92" rx="44" ry="10" fill="none" stroke="#fff" stroke-width="4" transform="rotate(-15 70 92)"/>
+<!-- smoke clouds at ground -->
+<g fill="#fff" stroke="#000" stroke-width="6"><circle cx="120" cy="280" r="40"/><circle cx="290" cy="280" r="40"/><circle cx="170" cy="290" r="36"/><circle cx="240" cy="292" r="36"/><circle cx="60" cy="296" r="30"/><circle cx="350" cy="296" r="30"/></g>
+<g fill="none" stroke="#000" stroke-width="3"><path d="M100 268 q10 -10 20 0 M276 270 q10 -10 20 0"/></g>
+<!-- flame -->
+<path d="M200 270 C178 240 174 214 184 196 H216 C226 214 222 240 200 270Z" fill="#ff0000" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+<path d="M200 244 C192 228 192 214 196 204 H204 C208 214 208 228 200 244Z" fill="#fff" stroke="#000" stroke-width="3"/>
+<!-- fins -->
+<path d="M166 150 L132 196 L170 192Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<path d="M234 150 L268 196 L230 192Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<!-- body -->
+<path d="M200 24 C236 54 246 120 234 196 H166 C154 120 164 54 200 24Z" fill="#fff" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+<path d="M214 40 C234 70 240 130 232 194 H214 C222 130 222 80 214 40Z" fill="rgb(110,110,110)"/>
+<!-- nose cone red -->
+<path d="M200 24 C214 36 224 52 230 70 H170 C176 52 186 36 200 24Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+<!-- porthole -->
+<circle cx="200" cy="112" r="22" fill="#fff" stroke="#000" stroke-width="7"/>
+<circle cx="200" cy="112" r="13" fill="rgb(0,0,120)" stroke="#000" stroke-width="3"/>
+<path d="M192 106 q4 -5 10 -4" stroke="#fff" stroke-width="3" fill="none"/>
+<!-- rivets & band -->
+<path d="M168 166 H232" stroke="#000" stroke-width="4"/><path d="M168 178 H232" stroke="#000" stroke-width="2"/>
+<g fill="#000"><circle cx="180" cy="152" r="2.5"/><circle cx="200" cy="152" r="2.5"/><circle cx="220" cy="152" r="2.5"/></g>
+<rect x="176" y="194" width="48" height="10" fill="#000"/>
+<path d="M200 196 V270" stroke="#000" stroke-width="6"/>
+</svg>

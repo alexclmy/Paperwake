@@ -15,20 +15,27 @@ import {
 } from "@/ui/components";
 import { BottomSheet } from "@/ui/BottomSheet";
 import { ComponentGallery } from "@/ui/ComponentGallery";
+import { LibraryGrid } from "@/ui/LibraryGrid";
+import { loadLibraryArt } from "@/core/library/catalog";
+import { librarySource } from "@/core/library/source";
 import { ConfirmDialog } from "@/ui/Dialog";
 import { PageError, PageLoading } from "@/ui/PageState";
 import { SendFlowDialog } from "@/ui/SendFlowDialog";
 import { StickyActions } from "@/ui/StickyActions";
 import { FramePreview } from "@/ui/FramePreview";
+import { PanelLangSwitch, langCtx, usePanelLang } from "@/ui/panelLang";
 import { ModuleInspector } from "@/ui/ModuleInspector";
 import { ThemePanel } from "@/ui/ThemePanel";
 import { useToast } from "@/ui/Toast";
 import { useDeviceState } from "@/ui/useDeviceState";
 import { useMediaQuery, SINGLE_COLUMN_QUERY } from "@/ui/useMediaQuery";
 import "@/ui/designer.css";
+import "@/ui/theme.css";
 import {
+  NO_ROOM_MESSAGE,
   applyDrag,
-  findFreeSlot,
+  autoLayout,
+  findPlacement,
   layoutProblems,
   newModuleId,
   type DashboardDoc,
@@ -44,7 +51,7 @@ import {
   type DashboardNote,
   type DashboardOverflow,
 } from "@/core/render";
-import { cellsToPixels, contentRect } from "@/core/render/types";
+import { GRID_COLS, GRID_ROWS, PANEL_CELL_PX, cellsToPixels, contentRect } from "@/core/render/types";
 import { DEFAULT_THEME } from "@/core/theme";
 
 interface VersionMeta {
@@ -59,7 +66,7 @@ interface RecordPayload {
   versions: VersionMeta[];
 }
 
-/** 2x on desktop so a 50 px cell is a comfortable 100 px drag target. */
+/** 2x on desktop so a 25 px cell is a comfortable 50 px drag target. */
 const DESKTOP_ZOOM = 2;
 
 /** The panel, in pixels. The stage is always this multiplied by the zoom. */
@@ -103,10 +110,18 @@ export default function DesignerPage() {
   const [zoomMode, setZoomMode] = useState<ZoomMode>("fit");
   const [fitScale, setFitScale] = useState(1);
   const [now, setNow] = useState(() => new Date());
+  const { lang: panelLang } = usePanelLang();
   const [announcement, setAnnouncement] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
+  // An inline, persistent "no room" message: never a silent failure, never a
+  // toast that vanishes before it is read.
+  const [noRoom, setNoRoom] = useState("");
+  // The layout before the last Auto layout, so it can be reverted in-session.
+  const [preAutoLayout, setPreAutoLayout] = useState<ModuleInstance[] | null>(null);
+  const [dragging, setDragging] = useState<"move" | "resize" | null>(null);
 
   const singleColumn = useMediaQuery(SINGLE_COLUMN_QUERY);
 
@@ -274,7 +289,7 @@ export default function DesignerPage() {
     if (!doc) return empty;
     try {
       const report = new RenderReport();
-      renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE }, report);
+      renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE, ...langCtx(panelLang) }, report);
       return {
         overflows: report.overflows,
         notes: report.notes,
@@ -285,7 +300,7 @@ export default function DesignerPage() {
       // A render that throws is already surfaced by the preview itself.
       return empty;
     }
-  }, [doc, sources, now]);
+  }, [doc, sources, now, panelLang]);
   const overflows = rendered.overflows;
   const dirty = doc !== null && JSON.stringify(doc) !== saved;
   const selected = doc?.modules.find((module) => module.id === selectedId) ?? null;
@@ -320,24 +335,87 @@ export default function DesignerPage() {
    * with the inspector still saying "select a module on the canvas".
    */
   function addModule(type: string): void {
+    placeModule(type, { ...(moduleDefinition(type).defaultOptions as Record<string, unknown>) });
+  }
+
+  /**
+   * Put a library picture on the panel in one click: into the selected Image
+   * block when one is selected, otherwise into a new Image block placed
+   * wherever it fits (the same always-insertable placement as any new block).
+   * The variant is chosen for the block's real pixel size.
+   */
+  async function insertLibraryArt(id: string): Promise<void> {
     if (!doc) return;
-    const definition = moduleDefinition(type);
-    const slot = findFreeSlot(doc, definition.defaultSpan);
-    if (!slot) {
-      setError(
-        `There is no free ${definition.defaultSpan.w}x${definition.defaultSpan.h} space left on the grid`,
-      );
+    const art = await loadLibraryArt(id);
+    if (!art) return;
+    const padding = doc.theme?.contentPadding ?? 0;
+    if (selected && selected.type === "image") {
+      const tile = cellsToPixels(selected.x, selected.y, selected.w, selected.h, padding);
+      const base = (selected.options as { source?: Record<string, unknown> }).source ?? {};
+      updateModule(selected.id, {
+        options: { ...selected.options, source: librarySource(id, art, tile.w, tile.h, base) },
+      });
       return;
     }
+    const placement = findPlacement(doc, "image", { w: 12, h: 9 });
+    if (!placement) {
+      setNoRoom(NO_ROOM_MESSAGE);
+      return;
+    }
+    const tile = cellsToPixels(placement.x, placement.y, placement.w, placement.h, padding);
+    placeModule(
+      "image",
+      {
+        ...(moduleDefinition("image").defaultOptions as Record<string, unknown>),
+        source: librarySource(id, art, tile.w, tile.h),
+      },
+      { w: placement.w, h: placement.h },
+    );
+  }
+
+  /** Duplicate a block: same type, options and frame, in the best free spot. */
+  function duplicateModule(source: ModuleInstance): void {
+    placeModule(
+      source.type,
+      structuredClone(source.options as Record<string, unknown>),
+      { w: source.w, h: source.h },
+      source.frame,
+      source.hidden,
+    );
+  }
+
+  /**
+   * Place a new block wherever it fits: at its preferred size when there is
+   * room, otherwise at the largest size (down to the module's own minimum)
+   * that fits any free spot. When not even the minimum fits, nothing is placed
+   * and the editor says so inline.
+   */
+  function placeModule(
+    type: string,
+    options: Record<string, unknown>,
+    preferred?: { w: number; h: number },
+    frame?: ModuleInstance["frame"],
+    hidden = false,
+  ): void {
+    if (!doc) return;
+    const definition = moduleDefinition(type);
+    const placement = findPlacement(doc, type, preferred);
+    if (!placement) {
+      setNoRoom(NO_ROOM_MESSAGE);
+      setAnnouncement(`${definition.label}: ${NO_ROOM_MESSAGE}`);
+      return;
+    }
+    setNoRoom("");
     const module: ModuleInstance = {
       id: newModuleId(),
       type,
-      x: slot.x,
-      y: slot.y,
-      w: definition.defaultSpan.w,
-      h: definition.defaultSpan.h,
-      hidden: false,
-      options: { ...(definition.defaultOptions as Record<string, unknown>) },
+      x: placement.x,
+      y: placement.y,
+      w: placement.w,
+      h: placement.h,
+      hidden,
+      options,
+      ...(frame ? { frame: structuredClone(frame) } : {}),
     };
     // On a narrow screen the module palette is below the canvas, so pressing
     // one of its buttons has scrolled the canvas off the top of the screen —
@@ -366,10 +444,45 @@ export default function DesignerPage() {
     if (singleColumn) {
       stageRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
     }
-    toast(`Added “${definition.label}” in the free slot`);
+    toast(
+      placement.shrunk
+        ? `Added “${definition.label}” at ${placement.w} × ${placement.h} cells to fit the free space`
+        : `Added “${definition.label}” in the free slot`,
+    );
+  }
+
+  function runAutoLayout(): void {
+    if (!doc) return;
+    const next = autoLayout(doc);
+    if (!next) {
+      setNoRoom("Auto layout could not fit every block at its minimum size: shrink or remove a block");
+      return;
+    }
+    setNoRoom("");
+    setPreAutoLayout(doc.modules);
+    setDoc(next);
+    setAnnouncement("Blocks re-packed in rows. Undo auto layout restores the previous arrangement.");
+  }
+
+  function undoAutoLayout(): void {
+    if (!doc || !preAutoLayout) return;
+    // Restore geometry only: wording edited since the auto layout is kept.
+    const before = new Map(preAutoLayout.map((m) => [m.id, m]));
+    const restored = doc.modules.map((m) => {
+      const old = before.get(m.id);
+      return old ? { ...m, x: old.x, y: old.y, w: old.w, h: old.h } : m;
+    });
+    const candidate = { ...doc, modules: restored };
+    if (layoutProblems(candidate).some((p) => p.includes("overlap"))) {
+      setNoRoom("The previous layout no longer fits the blocks you have now, so it was not restored");
+      return;
+    }
+    setDoc(candidate);
+    setPreAutoLayout(null);
   }
 
   function removeModule(moduleId: string): void {
+    setNoRoom("");
     setDoc((current) =>
       current
         ? { ...current, modules: current.modules.filter((m) => m.id !== moduleId) }
@@ -387,6 +500,7 @@ export default function DesignerPage() {
     event.stopPropagation();
     (event.target as Element).setPointerCapture?.(event.pointerId);
     setSelectedId(module.id);
+    setDragging(mode);
     dragRef.current = {
       moduleId: module.id,
       mode,
@@ -400,7 +514,7 @@ export default function DesignerPage() {
     const drag = dragRef.current;
     if (!drag || !doc) return;
 
-    const cell = 50 * zoom;
+    const cell = PANEL_CELL_PX * zoom;
     const dx = Math.round((event.clientX - drag.startX) / cell);
     const dy = Math.round((event.clientY - drag.startY) / cell);
 
@@ -412,6 +526,7 @@ export default function DesignerPage() {
 
   function endDrag(): void {
     dragRef.current = null;
+    setDragging(null);
   }
 
   /**
@@ -431,6 +546,12 @@ export default function DesignerPage() {
       ArrowUp: [0, -1],
       ArrowDown: [0, 1],
     };
+
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "d") {
+      event.preventDefault();
+      duplicateModule(module);
+      return;
+    }
 
     if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
@@ -531,7 +652,7 @@ export default function DesignerPage() {
     <>
       <div className="inspector-head">
         <h2>{moduleDefinition(selected.type).label}</h2>
-        <span className="mono-meta">
+        <span className="mono-meta" data-testid="inspector-size">
           {selected.w} × {selected.h} cells
         </span>
       </div>
@@ -555,6 +676,13 @@ export default function DesignerPage() {
         onFrameChange={(frame) => updateModule(selected.id, { frame })}
       />
       <div className="inspector-foot">
+        <Button
+          className="btn-grow"
+          onClick={() => duplicateModule(selected)}
+          testId="duplicate-module"
+        >
+          Duplicate
+        </Button>
         <Button
           className="btn-grow"
           onClick={() => updateModule(selected.id, { hidden: !selected.hidden })}
@@ -585,19 +713,51 @@ export default function DesignerPage() {
       {/* ------------------------------------------------------- header -- */}
       <div className="editor-head">
         <div className="editor-title">
-          <Link className="btn" href="/dashboards" data-testid="back-to-gallery">
+          <Link className="btn btn-quiet editor-back" href="/dashboards" data-testid="back-to-gallery" aria-label="Back to compositions">
             ← Back
           </Link>
           <div className="version-anchor" ref={versionsRef}>
-            <h1 data-testid="designer-title">{doc.title}</h1>
+            {renaming ? (
+              <input
+                className="editor-rename"
+                autoFocus
+                defaultValue={doc.title}
+                maxLength={80}
+                aria-label="Composition name"
+                data-testid="rename-input"
+                onBlur={(event) => {
+                  const next = event.target.value.trim();
+                  if (next && next !== doc.title) setDoc({ ...doc, title: next });
+                  setRenaming(false);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") (event.target as HTMLInputElement).blur();
+                  if (event.key === "Escape") setRenaming(false);
+                }}
+              />
+            ) : (
+              <h1 data-testid="designer-title">
+                <button
+                  type="button"
+                  className="editor-title-button"
+                  onClick={() => setRenaming(true)}
+                  title="Rename"
+                  data-testid="rename-title"
+                >
+                  {doc.title}
+                </button>
+              </h1>
+            )}
             <button
               type="button"
               className="version-toggle"
               aria-expanded={versionsOpen}
               onClick={() => setVersionsOpen((value) => !value)}
               data-testid="version-toggle"
+              data-dirty={dirty || undefined}
             >
-              v{latestVersion} · {dirty ? "unsaved changes" : "saved"}{" "}
+              <span className="save-dot" aria-hidden="true" />
+              {dirty ? "Unsaved changes" : "Saved"} · v{latestVersion}{" "}
               <span aria-hidden="true">▾</span>
             </button>
 
@@ -653,7 +813,22 @@ export default function DesignerPage() {
         </div>
 
         <div className="card-actions">
-          <Button onClick={cycleZoom} testId="zoom-toggle">
+          {preAutoLayout ? (
+            <Button variant="quiet" onClick={undoAutoLayout} testId="undo-auto-layout">
+              Undo auto layout
+            </Button>
+          ) : (
+            <Button
+              variant="quiet"
+              onClick={runAutoLayout}
+              disabled={doc.modules.length === 0}
+              testId="auto-layout"
+              title="Re-pack blocks top to bottom in rows, keeping their order"
+            >
+              Auto layout
+            </Button>
+          )}
+          <Button variant="quiet" onClick={cycleZoom} testId="zoom-toggle">
             {zoomLabel}
           </Button>
           <Button
@@ -663,6 +838,7 @@ export default function DesignerPage() {
           >
             Save
           </Button>
+          <PanelLangSwitch compact testId="editor-panel-lang" />
           <Button
             variant="primary"
             onClick={() => setSendOpen(true)}
@@ -701,6 +877,7 @@ export default function DesignerPage() {
             <div className="stage-measure" ref={columnRef} aria-hidden="true" />
             <div
               className="stage"
+              data-dragging={dragging ?? undefined}
               ref={stageRef}
               style={{ width: PANEL_W * zoom, height: 300 * zoom }}
               onPointerMove={onPointerMove}
@@ -724,12 +901,14 @@ export default function DesignerPage() {
               */}
               <div
                 className="grid-overlay"
+                data-testid="grid-overlay"
+                data-active={dragging !== null}
                 style={{
                   left: content.x * zoom,
                   top: content.y * zoom,
                   width: content.w * zoom,
                   height: content.h * zoom,
-                  backgroundSize: `${(content.w / 8) * zoom}px ${(content.h / 6) * zoom}px`,
+                  backgroundSize: `${(content.w / GRID_COLS) * zoom}px ${(content.h / GRID_ROWS) * zoom}px`,
                 }}
               />
               {/*
@@ -787,7 +966,7 @@ export default function DesignerPage() {
                   onPointerDown={(event) => beginDrag(event, module, "move")}
                 >
                   <span className="tag">
-                    {module.type}
+                    {moduleDefinition(module.type).label}
                     {module.hidden ? " · hidden" : ""}
                   </span>
                   {hasOverflow && (
@@ -810,11 +989,23 @@ export default function DesignerPage() {
             </div>
 
             <div className="stage-captions">
+              <span className="mono-meta">Exact panel preview · 400 × 300</span>
               <span className="mono-meta">
-                400 × 300 · dashed line = content area
+                {dragging && selected
+                  ? `${selected.w} × ${selected.h} cells`
+                  : "Click a block to edit · drag to move"}
               </span>
-              <span className="mono-meta">exactly what the panel receives</span>
             </div>
+            {/* Inside the sticky stage block, so it is seen from wherever the
+                add button that caused it was pressed. */}
+            {noRoom && (
+              <p className="inline-warning stage-no-room" role="alert" data-testid="no-room">
+                <span className="inline-warning-flag" aria-hidden="true">
+                  ▲
+                </span>
+                {noRoom}
+              </p>
+            )}
           </div>
 
           {/* What the keyboard just did, for a reader who cannot see the move. */}
@@ -829,10 +1020,23 @@ export default function DesignerPage() {
               product can draw. */}
           <ComponentGallery theme={doc.theme ?? DEFAULT_THEME} onAdd={addModule} />
 
+          <details className="gallery library-panel" data-testid="designer-library">
+            <summary>
+              Picture library
+              <span className="field-hint">
+                {selected?.type === "image"
+                  ? " · click a picture to put it in the selected image"
+                  : " · click a picture to add it as a new block"}
+              </span>
+            </summary>
+            <LibraryGrid testId="designer-library" onPick={(id) => void insertLibraryArt(id)} />
+          </details>
+
           <p className="field-hint">
-            8 × 6 grid of 50 px cells. Drag to move, drag the corner to resize;
-            overlaps never land. Keyboard: Tab to a block, arrows move,
-            Shift+arrows resize, Delete removes.
+            16 × 12 grid of 25 px cells. Drag to move, drag the corner to resize;
+            overlaps never land. A new block shrinks to fit the free space.
+            Keyboard: Tab to a block, arrows move, Shift+arrows resize,
+            Ctrl/⌘+D duplicates, Delete removes.
           </p>
 
           {problems.length > 0 && (
@@ -919,7 +1123,8 @@ export default function DesignerPage() {
               </div>
             ) : (
               <div className="inspector-empty" data-testid="inspector-empty">
-                Select a block on the preview to edit it.
+                <strong>Select a block</strong>
+                <span>Click any block on the panel to edit it, or add one below the canvas.</span>
               </div>
             ))}
 

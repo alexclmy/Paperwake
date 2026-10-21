@@ -40,7 +40,7 @@ function render(data: ModuleData<WeatherValue>): FrameBuffer {
   const fb = new FrameBuffer(WHITE);
   definition.render(
     fb,
-    cellsToPixels(0, 0, 8, 2),
+    cellsToPixels(0, 0, 16, 4),
     data,
     definition.schema.parse({}),
     { now: NOW, timeZone: "America/Toronto" },

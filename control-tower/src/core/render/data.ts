@@ -24,6 +24,35 @@ export const DayForecastSchema = z.object({
 });
 export type DayForecast = z.infer<typeof DayForecastSchema>;
 
+/**
+ * Conditions right now, when the source provided them. Every field beyond the
+ * temperature is optional on its own: Open-Meteo can omit any one, and the
+ * compact weather module prints only what it was actually given.
+ */
+export const WeatherNowSchema = z.object({
+  temp: z.number().int(),
+  condition: z.string(),
+  /** "Ressenti", in the source's own unit. */
+  apparent: z.number().int().optional(),
+  /** Wind at 10 m, km/h. */
+  windKmh: z.number().int().optional(),
+  /** Where the wind comes FROM, in degrees (meteorological convention). */
+  windDirDeg: z.number().optional(),
+  /** Chance of precipitation for the current hour, 0..100. */
+  precipProb: z.number().int().optional(),
+});
+export type WeatherNow = z.infer<typeof WeatherNowSchema>;
+
+/** One part of the day (morning, midday, evening) for the day summary. */
+export const DayPartSchema = z.object({
+  /** "Matin", "Midi", "Soir". Panel content is French. */
+  label: z.string(),
+  temp: z.number().int(),
+  condition: z.string(),
+  precipProb: z.number().int().optional(),
+});
+export type DayPart = z.infer<typeof DayPartSchema>;
+
 export const WeatherValueSchema = z.object({
   slots: z.array(WeatherSlotSchema).length(4),
   low: z.number().int(),
@@ -47,6 +76,13 @@ export const WeatherValueSchema = z.object({
    * Optional: when it is absent the hero draws a day sky, never a guessed night.
    */
   isDay: z.boolean().optional(),
+  /**
+   * Now: feels-like, wind, rain chance. Optional and read only by the compact
+   * weather module, so every module that predates it renders exactly as before.
+   */
+  now: WeatherNowSchema.optional(),
+  /** Morning / midday / evening, for the two-line day summary. */
+  dayParts: z.array(DayPartSchema).max(3).optional(),
 });
 export type WeatherValue = z.infer<typeof WeatherValueSchema>;
 
@@ -61,6 +97,12 @@ export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
 
 export const CalendarValueSchema = z.object({
   events: z.array(CalendarEventSchema),
+  /**
+   * How many days ahead the snapshot covers, when the tower knows it
+   * (NOTE4C_CALENDAR_HORIZON_DAYS). Optional: unknown means the empty state
+   * says nothing about a horizon rather than inventing one.
+   */
+  horizonDays: z.number().int().positive().optional(),
 });
 export type CalendarValue = z.infer<typeof CalendarValueSchema>;
 

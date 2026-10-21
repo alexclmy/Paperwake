@@ -20,7 +20,7 @@ const digest = (fb: FrameBuffer): string => sha256HexSync(pack(fb));
 
 describe("the Expression migration", () => {
   it("is the current schema version", () => {
-    expect(DASHBOARD_SCHEMA_VERSION).toBe(5);
+    expect(DASHBOARD_SCHEMA_VERSION).toBe(6);
   });
 
   it("lifts a v4 document to v5 by giving its theme the default expression", () => {
@@ -103,7 +103,7 @@ describe("larger text", () => {
 });
 
 describe("the full migration chain", () => {
-  it("carries a v1 document all the way to v5", () => {
+  it("carries a v1 document all the way to v6", () => {
     const v1 = {
       schema_version: 1,
       id: "d",
@@ -115,7 +115,7 @@ describe("the full migration chain", () => {
       updatedAt: "2026-01-01T00:00:00.000Z",
     };
     const out = migrateDashboardDoc(v1) as { schema_version: number };
-    expect(out.schema_version).toBe(5);
+    expect(out.schema_version).toBe(6);
     expect(() => parseDashboard(v1)).not.toThrow();
   });
 });

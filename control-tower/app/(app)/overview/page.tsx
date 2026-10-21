@@ -30,6 +30,7 @@ import { PageError, PageLoading } from "@/ui/PageState";
 import { useRegisterPageDeviceState } from "@/ui/pageDeviceState";
 import { ScaledPanel } from "@/ui/ScaledPanel";
 import { SendFlowDialog } from "@/ui/SendFlowDialog";
+import { HomeGallery } from "@/ui/HomeGallery";
 import { TemplatePicker } from "@/ui/TemplatePicker";
 import { useToast } from "@/ui/Toast";
 import { publishDeviceStatus, toDeviceReading } from "@/ui/useDeviceState";
@@ -100,7 +101,7 @@ interface OverviewPayload {
         };
       }
     | { observed: boolean; reachable: false; detail: string };
-  displayedMatch: { dashboardTitle: string; version: number } | null;
+  displayedMatch: { dashboardId?: string; dashboardTitle: string; version: number } | null;
   storedMatch: { dashboardTitle: string; version: number } | null;
   storedEqualsDisplayed: boolean;
   selected: { id: string; title: string; latestVersion: number } | null;
@@ -348,15 +349,42 @@ export default function OverviewPage() {
    * says only what the block is about.
    */
   const panelLabel = !data.device.observed
-    ? "ON THE PANEL"
+    ? "On the panel"
     : unresolved
-      ? "LAST CONFIRMED IMAGE"
-      : "ON THE PANEL — CONFIRMED";
+      ? "Last confirmed image"
+      : "On the panel · confirmed";
   const hasFrame = reachable && status?.displayed.present === true;
 
   return (
     <>
-      <h1 className="visually-hidden">Overview</h1>
+      <div className="page-title">
+        <div>
+          <h1>Home</h1>
+          <p>What your panel shows right now, and one click to change it.</p>
+        </div>
+        <Button variant="quiet" onClick={() => setTemplatesOpen(true)} testId="new-composition-top">
+          + New composition
+        </Button>
+      </div>
+
+      {/* The day-to-day answer in one line: awake or asleep, battery, next
+          wake, what the panel shows. Everything technical is under Advanced. */}
+      <div className="home-status" data-testid="home-status" data-state={state.state}>
+        <span className={`home-status-badge dot-${state.state}`}>{state.label}</span>
+        <span>
+          {battery && battery.percent !== null ? `Battery ${battery.percent}%` : "Battery unknown"}
+        </span>
+        <span>
+          {reading.nextWakeLabel ? `Next wake ${reading.nextWakeLabel}` : "Next wake unknown"}
+        </span>
+        <span className="home-status-now">
+          {data.displayedMatch
+            ? `Showing “${data.displayedMatch.dashboardTitle}”`
+            : hasFrame
+              ? "Unknown image on screen"
+              : "Nothing known on screen"}
+        </span>
+      </div>
 
       {overview.error && <ErrorNote>{overview.error}</ErrorNote>}
       {actionError && <ErrorNote>{actionError}</ErrorNote>}
@@ -417,19 +445,10 @@ export default function OverviewPage() {
         </Card>
       )}
 
-      <div className="grid-2">
+      <div className="home-hero">
         {/* ------------------------------------------------- the panel -- */}
         <section style={{ minWidth: 0 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              gap: "var(--pad-2)",
-              flexWrap: "wrap",
-              marginBottom: 10,
-            }}
-          >
+          <div className="home-section-label">
             <h2 data-testid="panel-label">{panelLabel}</h2>
             <span className="mono-meta" data-testid="panel-provenance">
               {/*
@@ -485,17 +504,8 @@ export default function OverviewPage() {
                     />
                   </ScaledPanel>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: 10,
-                      flexWrap: "wrap",
-                      marginTop: 12,
-                    }}
-                  >
-                    <strong style={{ fontSize: "var(--size-14)" }}>
+                  <div className="home-panel-caption">
+                    <strong>
                       {data.displayedMatch ? (
                         <>
                           {data.displayedMatch.dashboardTitle} v
@@ -507,7 +517,7 @@ export default function OverviewPage() {
                         </span>
                       )}
                     </strong>
-                    <span className="mono-meta">400 × 300 · 4 colours</span>
+                    <span className="mono-meta">400 × 300 e-paper</span>
                   </div>
 
                   <TechDetails testId="panel-tech">
@@ -571,7 +581,56 @@ export default function OverviewPage() {
               None of this is what somebody opened the page for, and none of it
               was deleted to make room — it is simply below the fold now rather
               than competing with the panel for the top of the screen. */}
-          <div className="stack" style={{ marginTop: "var(--pad-4)" }}>
+          <div className="stack" style={{ marginTop: "var(--pad-3)" }}>
+            <Card title="Last send" variant="plain">
+              {data.lastPush ? (
+                <>
+                  <p style={{ margin: 0 }}>
+                    <Badge
+                      kind={
+                        data.lastPush.state === "verified_displayed"
+                          ? "displayed"
+                          : data.lastPush.state === "failed"
+                            ? "failed"
+                            : data.lastPush.state === "uncertain"
+                              ? "uncertain"
+                              : "pending"
+                      }
+                    >
+                      {data.lastPush.state === "verified_displayed"
+                        ? "Displayed"
+                        : data.lastPush.state.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}
+                    </Badge>{" "}
+                    {data.lastPush.first.dashboardTitle} v
+                    {data.lastPush.first.version},{" "}
+                    <FreshnessStamp iso={data.lastPush.latest.at} />
+                  </p>
+                  <p className="mono-note" style={{ marginTop: 6 }}>
+                    {data.lastPush.latest.detail ?? "no detail"}
+                  </p>
+                </>
+              ) : (
+                <Empty>Nothing has been sent from this tower yet.</Empty>
+              )}
+              {data.autoRefresh.intervalMinutes !== null && (
+                <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
+                  automatic refresh every {data.autoRefresh.intervalMinutes} min
+                  {data.autoRefresh.lastAt && (
+                    <>
+                      {" "}
+                      · last <FreshnessStamp iso={data.autoRefresh.lastAt} />
+                      {data.autoRefresh.lastOutcome
+                        ? ` · ${data.autoRefresh.lastOutcome}`
+                        : ""}
+                    </>
+                  )}
+                </p>
+              )}
+            </Card>
+          </div>
+          <details className="fold tech-fold" style={{ marginTop: "var(--pad-3)" }} data-testid="home-advanced">
+          <summary>Advanced — sources</summary>
+          <div className="stack">
             <Card title="Sources" variant="plain">
               {!data.observed ? (
                 /*
@@ -626,51 +685,9 @@ export default function OverviewPage() {
                 </p>
               )}
             </Card>
-
-            <Card title="Last send" variant="plain">
-              {data.lastPush ? (
-                <>
-                  <p style={{ margin: 0 }}>
-                    <Badge
-                      kind={
-                        data.lastPush.state === "verified_displayed"
-                          ? "displayed"
-                          : data.lastPush.state === "failed"
-                            ? "failed"
-                            : data.lastPush.state === "uncertain"
-                              ? "uncertain"
-                              : "pending"
-                      }
-                    >
-                      {data.lastPush.state.replace(/_/g, " ")}
-                    </Badge>{" "}
-                    {data.lastPush.first.dashboardTitle} v
-                    {data.lastPush.first.version},{" "}
-                    <FreshnessStamp iso={data.lastPush.latest.at} />
-                  </p>
-                  <p className="mono-note" style={{ marginTop: 6 }}>
-                    {data.lastPush.latest.detail ?? "no detail"}
-                  </p>
-                </>
-              ) : (
-                <Empty>Nothing has been sent from this tower yet.</Empty>
-              )}
-              {data.autoRefresh.intervalMinutes !== null && (
-                <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-                  automatic refresh every {data.autoRefresh.intervalMinutes} min
-                  {data.autoRefresh.lastAt && (
-                    <>
-                      {" "}
-                      · last <FreshnessStamp iso={data.autoRefresh.lastAt} />
-                      {data.autoRefresh.lastOutcome
-                        ? ` · ${data.autoRefresh.lastOutcome}`
-                        : ""}
-                    </>
-                  )}
-                </p>
-              )}
-            </Card>
           </div>
+          </details>
+
         </section>
 
         {/* ------------------------------------------------ the device -- */}
@@ -714,6 +731,47 @@ export default function OverviewPage() {
               </div>
             </div>
           )}
+
+          <div className="stack">
+            <Cta
+              glyph="→"
+              onClick={() => setSendOpen(true)}
+              disabled={busy || data.selected === null}
+              testId="push-button"
+            >
+              {data.selected ? `Show “${data.selected.title}”` : "Show on panel"}
+            </Cta>
+            <Cta
+              glyph="+"
+              variant="default"
+              onClick={() => setTemplatesOpen(true)}
+              testId="new-composition"
+            >
+              New composition
+            </Cta>
+            {data.selected === null && (
+              <p className="field-hint" data-testid="no-selection">
+                No composition is selected. Choose one on{" "}
+                <Link href="/dashboards">Compositions</Link>, or start a new one.
+              </p>
+            )}
+            {data.selected !== null && (
+              <p className="field-hint">
+                Sends{" "}
+                <Link href={`/dashboards/${data.selected.id}/edit`}>
+                  {data.selected.title}
+                </Link>{" "}
+                v{data.selected.latestVersion}
+                {data.pending?.wouldDedup && (
+                  <span data-testid="would-dedup">
+                    {" "}
+                    — unchanged since the last confirmed send, so it would be
+                    skipped.
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
 
           {/*
             `data-state` on the wrapper, carrying the same word the header chip
@@ -831,49 +889,18 @@ export default function OverviewPage() {
           </Card>
           </div>
 
-          <div className="stack">
-            <Cta
-              glyph="→"
-              onClick={() => setSendOpen(true)}
-              disabled={busy || data.selected === null}
-              testId="push-button"
-            >
-              Show a composition
-            </Cta>
-            <Cta
-              glyph="+"
-              variant="default"
-              onClick={() => setTemplatesOpen(true)}
-              testId="new-composition"
-            >
-              New composition
-            </Cta>
-            {data.selected === null && (
-              <p className="field-hint" data-testid="no-selection">
-                No composition is selected. Choose one on{" "}
-                <Link href="/dashboards">Compositions</Link>, or start a new one.
-              </p>
-            )}
-            {data.selected !== null && (
-              <p className="field-hint">
-                Sends{" "}
-                <Link href={`/dashboards/${data.selected.id}/edit`}>
-                  {data.selected.title}
-                </Link>{" "}
-                v{data.selected.latestVersion}
-                {data.pending?.wouldDedup && (
-                  <span data-testid="would-dedup">
-                    {" "}
-                    — unchanged since the last confirmed send, so it would be
-                    skipped.
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-
         </section>
       </div>
+
+      <HomeGallery
+        device={reading}
+        displayedId={data.displayedMatch?.dashboardId ?? null}
+        stamp={frameStamp}
+        onSettled={() => {
+          setFrameStamp(Date.now());
+          void overview.reload();
+        }}
+      />
 
       <SendFlowDialog
         open={sendOpen}

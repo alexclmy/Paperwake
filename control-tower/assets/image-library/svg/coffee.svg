@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Steaming coffee cup. NOTE4C image library, CC0. Ink codes: see tools/build-image-library.ts -->
+  <!-- morning light: horizontal engraving behind -->
+  <circle cx="300" cy="78" r="46" fill="rgb(0,200,0)"/>
+  <circle cx="300" cy="78" r="30" fill="#fff" stroke="#000" stroke-width="4"/>
+  <g stroke="#000" stroke-width="4" stroke-linecap="round">
+    <path d="M300 18v-10M300 148v10M240 78h-10M360 78h10M258 36l-7-7M342 36l7-7M258 120l-7 7M342 120l7 7"/>
+  </g>
+  <!-- table line + shadow -->
+  <path d="M20 262 H380" stroke="#000" stroke-width="4"/>
+  <ellipse cx="200" cy="262" rx="150" ry="16" fill="rgb(140,140,140)"/>
+  <path d="M20 262 H380" stroke="#000" stroke-width="4"/>
+  <path d="M30 274 H370 M60 284 H340" stroke="#000" stroke-width="2"/>
+  <!-- saucer -->
+  <ellipse cx="190" cy="250" rx="128" ry="22" fill="#fff" stroke="#000" stroke-width="6"/>
+  <ellipse cx="190" cy="246" rx="86" ry="11" fill="rgb(120,120,120)" stroke="#000" stroke-width="3"/>
+  <!-- handle -->
+  <path d="M262 150 C320 140 322 214 254 214" fill="none" stroke="#000" stroke-width="18"/>
+  <path d="M262 150 C320 140 322 214 254 214" fill="none" stroke="#ff0000" stroke-width="8"/>
+  <!-- cup body (red, with black hatched shadow side) -->
+  <path d="M104 120 H276 C276 190 252 238 190 242 C128 238 104 190 104 120 Z" fill="#ff0000" stroke="#000" stroke-width="6"/>
+  <path d="M236 124 H272 C272 186 252 232 196 240 C238 222 244 180 236 124 Z" fill="rgb(128,0,0)"/>
+  <path d="M120 140 C122 180 136 214 160 228" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M132 140 C133 160 138 176 146 190" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <!-- white band with dots -->
+  <path d="M106 150 H274" stroke="#000" stroke-width="3"/>
+  <path d="M106 166 H272" stroke="#000" stroke-width="3"/>
+  <path d="M106 158 H274" stroke="#fff" stroke-width="10"/>
+  <g fill="#000"><circle cx="130" cy="158" r="3"/><circle cx="150" cy="158" r="3"/><circle cx="170" cy="158" r="3"/><circle cx="190" cy="158" r="3"/><circle cx="210" cy="158" r="3"/><circle cx="230" cy="158" r="3"/><circle cx="250" cy="158" r="3"/></g>
+  <!-- rim + coffee -->
+  <ellipse cx="190" cy="120" rx="86" ry="18" fill="#fff" stroke="#000" stroke-width="6"/>
+  <ellipse cx="190" cy="122" rx="74" ry="12" fill="rgb(70,70,70)" stroke="#000" stroke-width="3"/>
+  <path d="M150 120 C170 112 200 112 220 118" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- steam -->
+  <g fill="none" stroke="#000" stroke-width="6" stroke-linecap="round">
+    <path d="M160 100 C140 80 180 66 160 44 C148 30 162 20 168 14"/>
+    <path d="M196 98 C176 74 220 62 198 36 C188 24 196 14 204 8"/>
+    <path d="M230 100 C214 84 246 74 232 54"/>
+  </g>
+  <g fill="none" stroke="#000" stroke-width="2" stroke-linecap="round">
+    <path d="M172 96 C160 84 186 74 174 60"/>
+    <path d="M210 92 C198 80 222 70 212 56"/>
+  </g>
+</svg>

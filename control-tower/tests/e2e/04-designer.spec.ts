@@ -35,7 +35,7 @@ async function dragBy(
     const box = node.getBoundingClientRect();
     return {
       box: { x: box.x, y: box.y, height: box.height },
-      cell: stageNode.getBoundingClientRect().width / 8,
+      cell: stageNode.getBoundingClientRect().width / 16,
     };
   });
   if (!measured) throw new Error("The element has no box to drag");
@@ -98,17 +98,17 @@ test("moving a module snaps to the grid and persists", async ({ page }, info) =>
   // Measured in grid cells against the stage, so the assertion says what it
   // means and does not move when page chrome above the canvas reflows.
   const before = await cellPosition(page, "module-timestamp");
-  expect(before).toMatchObject({ x: 5, y: 4, w: 3, h: 1 });
+  expect(before).toMatchObject({ x: 10, y: 8, w: 6, h: 2 });
 
-  // Row 5 at column 5 is the free slot the starter leaves.
-  await dragBy(page, page.getByTestId("module-timestamp"), 0, 1);
-  expect(await cellPosition(page, "module-timestamp")).toMatchObject({ x: 5, y: 5 });
+  // Rows 10-11 at column 10 are the free slot the starter leaves.
+  await dragBy(page, page.getByTestId("module-timestamp"), 0, 2);
+  expect(await cellPosition(page, "module-timestamp")).toMatchObject({ x: 10, y: 10 });
 
   await page.getByTestId("save-version").click();
   await expect(page.getByTestId("version-rail")).toContainText("v2");
 
   await page.reload();
-  expect(await cellPosition(page, "module-timestamp")).toMatchObject({ x: 5, y: 5 });
+  expect(await cellPosition(page, "module-timestamp")).toMatchObject({ x: 10, y: 10 });
 });
 
 test("resizing respects the module's declared span limits", async ({ page }, info) => {
@@ -116,22 +116,22 @@ test("resizing respects the module's declared span limits", async ({ page }, inf
   const { id } = await createEmptyDashboard(page, `Resize ${info.project.name}`);
   await page.goto(`/dashboards/${id}/edit`);
 
-  // haSensor: default 3x1, minimum 2x1, maximum 4x2. It lands at 0,0 on an
+  // haSensor: default 6x2, minimum 4x2, maximum 8x4 (16x12 cells). It lands at 0,0 on an
   // empty grid, which keeps the resize handle on screen at either viewport.
   await page.getByTestId("add-haSensor").click();
   expect(await cellPosition(page, "module-haSensor")).toMatchObject({
     x: 0,
     y: 0,
-    w: 3,
-    h: 1,
+    w: 6,
+    h: 2,
   });
 
-  await dragBy(page, page.getByTestId("resize-haSensor"), 3, 3);
-  expect(await cellPosition(page, "module-haSensor")).toMatchObject({ w: 4, h: 2 });
+  await dragBy(page, page.getByTestId("resize-haSensor"), 6, 6);
+  expect(await cellPosition(page, "module-haSensor")).toMatchObject({ w: 8, h: 4 });
   await expect(page.getByTestId("layout-problems")).toHaveCount(0);
 
-  await dragBy(page, page.getByTestId("resize-haSensor"), -4, -4);
-  expect(await cellPosition(page, "module-haSensor")).toMatchObject({ w: 2, h: 1 });
+  await dragBy(page, page.getByTestId("resize-haSensor"), -8, -8);
+  expect(await cellPosition(page, "module-haSensor")).toMatchObject({ w: 4, h: 2 });
   await expect(page.getByTestId("layout-problems")).toHaveCount(0);
 });
 
@@ -140,13 +140,13 @@ test("a module that would overlap does not land", async ({ page }, info) => {
   await page.goto(`/dashboards/${id}/edit`);
 
   const before = await cellPosition(page, "module-message");
-  expect(before).toMatchObject({ x: 5, y: 3 });
+  expect(before).toMatchObject({ x: 10, y: 6 });
 
-  // Straight up into the weather block, which occupies rows 0 to 2.
-  await dragBy(page, page.getByTestId("module-message"), -3, -2);
+  // Straight up into the weather block, which occupies rows 0 to 5.
+  await dragBy(page, page.getByTestId("module-message"), -6, -4);
 
   // The move simply does not land, and the layout stays valid throughout.
-  expect(await cellPosition(page, "module-message")).toMatchObject({ x: 5, y: 3 });
+  expect(await cellPosition(page, "module-message")).toMatchObject({ x: 10, y: 6 });
   await expect(page.getByTestId("layout-problems")).toHaveCount(0);
 });
 

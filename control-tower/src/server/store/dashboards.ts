@@ -25,7 +25,7 @@ export const VersionMetaSchema = z.object({
 });
 export type VersionMeta = z.infer<typeof VersionMetaSchema>;
 
-export const STORE_SCHEMA_VERSION = 5;
+export const STORE_SCHEMA_VERSION = 6;
 
 export const DashboardRecordSchema = z.object({
   schema_version: z.literal(STORE_SCHEMA_VERSION),
@@ -376,4 +376,54 @@ export function selectDashboard(id: string): void {
 /** Where a version file lives, for diagnostics. Never exposed over the API. */
 export function versionPath(id: string, version: number): string {
   return path.join(paths.dashboardVersionsDir(assertSafeId(id)), `${String(version).padStart(4, "0")}.json`);
+}
+
+export class DashboardDeleteRefusedError extends Error {
+  readonly reason: "selected" | "push_in_flight";
+  constructor(reason: "selected" | "push_in_flight", message: string) {
+    super(message);
+    this.name = "DashboardDeleteRefusedError";
+    this.reason = reason;
+  }
+}
+
+/**
+ * Delete a composition for good: its record and every version.
+ *
+ * Safe by refusal, never by side effect:
+ *  - the composition selected for the next push / auto-refresh is refused —
+ *    the person picks another (or archives) first, so deleting can never
+ *    silently change what the panel will show next;
+ *  - a composition with a push still pending, sent, uncertain or queued is
+ *    refused, so the ledger never points at an in-flight frame whose source
+ *    has vanished.
+ *
+ * Atomic as seen by every reader: the directory is first renamed out of
+ * dashboards/ (one rename(2) on the same filesystem), then removed. A crash
+ * between the two leaves a hidden ".deleted-*" directory that listDashboardIds
+ * ignores; never a half-deleted composition. Past ledger lines keep their own
+ * copy of the title and version, so history still reads correctly.
+ */
+export function deleteDashboard(
+  id: string,
+  blockingPushFor: (id: string) => boolean,
+): { id: string; title: string; versions: number } {
+  const record = requireRecord(id);
+  if (readState().selectedDashboardId === id) {
+    throw new DashboardDeleteRefusedError(
+      "selected",
+      "Cette composition est celle sélectionnée pour le panneau. Choisissez-en une autre (ou archivez-la) avant de la supprimer.",
+    );
+  }
+  if (blockingPushFor(id)) {
+    throw new DashboardDeleteRefusedError(
+      "push_in_flight",
+      "Un envoi de cette composition est encore en cours ou en attente. Attendez qu'il se termine (ou retirez-le) avant de la supprimer.",
+    );
+  }
+  const dir = paths.dashboardDir(assertSafeId(id));
+  const tomb = path.join(paths.dashboards(), `.deleted-${id}-${Date.now()}`);
+  fs.renameSync(dir, tomb);
+  fs.rmSync(tomb, { recursive: true, force: true });
+  return { id, title: record.doc.title, versions: record.versions.length };
 }

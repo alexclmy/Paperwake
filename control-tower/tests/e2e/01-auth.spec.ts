@@ -25,7 +25,7 @@ test("first run sets a passphrase and lands on Overview", async ({ page }, info)
     await page.waitForURL("**/overview");
   }
 
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home", level: 1 })).toBeVisible();
   await expect(page.getByTestId("simulated-banner")).toBeVisible();
 
   // The tower store is new, so give the simulated panel a matching blank slate.

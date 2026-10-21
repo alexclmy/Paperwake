@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- New Year fireworks. NOTE4C image library, CC0. -->
+<rect x="0" y="0" width="400" height="300" fill="#000"/>
+<defs>
+<g id="burstW"><g stroke="#fff" stroke-width="4" stroke-linecap="round"><path d="M0 -20 V-60 M0 20 V60 M-20 0 H-60 M20 0 H60 M14 -14 L42 -42 M-14 -14 L-42 -42 M14 14 L42 42 M-14 14 L-42 42"/></g><g fill="#fff"><circle cy="-68" r="5"/><circle cy="68" r="5"/><circle cx="-68" r="5"/><circle cx="68" r="5"/><circle cx="48" cy="-48" r="4"/><circle cx="-48" cy="-48" r="4"/><circle cx="48" cy="48" r="4"/><circle cx="-48" cy="48" r="4"/></g><g stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M8 -20 L20 -52 M-8 -20 L-20 -52 M8 20 L20 52 M-8 20 L-20 52 M20 8 L52 20 M20 -8 L52 -20 M-20 8 L-52 20 M-20 -8 L-52 -20"/></g></g>
+<g id="burstR"><g stroke="#ff0000" stroke-width="5" stroke-linecap="round"><path d="M0 -16 V-50 M0 16 V50 M-16 0 H-50 M16 0 H50 M12 -12 L36 -36 M-12 -12 L-36 -36 M12 12 L36 36 M-12 12 L-36 36"/></g><g fill="#ff0000"><circle cy="-58" r="5"/><circle cy="58" r="5"/><circle cx="-58" r="5"/><circle cx="58" r="5"/></g></g>
+</defs>
+<use href="#burstW" transform="translate(110 96)"/>
+<use href="#burstR" transform="translate(110 96) rotate(22) scale(0.5)"/>
+<use href="#burstR" transform="translate(290 80)"/>
+<circle cx="290" cy="80" r="8" fill="#fff"/>
+<use href="#burstW" transform="translate(220 150) scale(0.6)"/>
+<use href="#burstW" transform="translate(350 180) scale(0.4)"/>
+<use href="#burstR" transform="translate(40 190) scale(0.4)"/>
+<!-- trails -->
+<g fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 6"><path d="M110 250 C112 200 108 160 110 120"/><path d="M290 250 C286 190 292 140 290 104"/></g>
+<!-- city skyline -->
+<path d="M0 300 V246 H30 V220 H54 V236 H76 V200 H110 V236 H130 V214 H150 V250 H172 V190 L188 172 L204 190 V250 H226 V226 H250 V206 H286 V240 H306 V218 H330 V244 H356 V226 H380 V250 H400 V300Z" fill="#fff" stroke="#fff" stroke-width="2"/>
+<g fill="#000"><rect x="82" y="208" width="6" height="8"/><rect x="96" y="208" width="6" height="8"/><rect x="82" y="224" width="6" height="8"/><rect x="96" y="224" width="6" height="8"/><rect x="180" y="200" width="6" height="8"/><rect x="190" y="200" width="6" height="8"/><rect x="180" y="216" width="6" height="8"/><rect x="190" y="230" width="6" height="8"/><rect x="258" y="214" width="6" height="8"/><rect x="272" y="214" width="6" height="8"/><rect x="258" y="228" width="6" height="8"/><rect x="36" y="228" width="6" height="8"/><rect x="312" y="226" width="6" height="8"/><rect x="360" y="234" width="6" height="8"/></g>
+<rect x="0" y="262" width="400" height="38" fill="rgb(160,160,160)"/>
+<path d="M0 262 H400" stroke="#000" stroke-width="4"/>
+<!-- red clock face on tower -->
+<circle cx="188" cy="168" r="0" fill="#ff0000"/>
+<rect x="180" y="236" width="16" height="14" fill="#ff0000"/>
+</svg>

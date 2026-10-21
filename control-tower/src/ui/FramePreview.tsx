@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { loadLibraryArt } from "@/core/library/catalog";
+import { registeredLibraryArt } from "@/core/library/registry";
 import { FrameBuffer, pack } from "@/core/frame";
 import {
   FRAME_HEIGHT,
@@ -10,6 +12,7 @@ import {
 import type { DashboardDoc } from "@/core/model";
 import { renderDashboard, PANEL_TIMEZONE } from "@/core/render";
 import type { DashboardSources } from "@/core/render/data";
+import { langCtx, usePanelLang } from "./panelLang";
 
 /**
  * The designer preview.
@@ -50,16 +53,36 @@ export function FramePreview({
   onPacked?: (bytes: Uint8Array) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { lang } = usePanelLang();
+
+  // Library pictures pick their variant from the block size at render time,
+  // which needs the art in memory. Load any the document uses that are not
+  // yet, then render again; until then the stored tile stands in.
+  const missingArt = doc.modules
+    .map((m) => (m.type === "image" ? (m.options as { source?: { library?: string } }).source?.library : undefined))
+    .filter((id): id is string => !!id && !registeredLibraryArt(id));
+  const missingKey = [...new Set(missingArt)].sort().join(",");
+  const [artEpoch, setArtEpoch] = useState(0);
+  useEffect(() => {
+    if (!missingKey) return;
+    let live = true;
+    void Promise.all(missingKey.split(",").map((id) => loadLibraryArt(id))).then(() => {
+      if (live) setArtEpoch((n) => n + 1);
+    });
+    return () => {
+      live = false;
+    };
+  }, [missingKey]);
 
   const frame = useMemo<FrameBuffer | { error: string }>(() => {
     try {
-      return renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE });
+      return renderDashboard(doc, sources, { now, timeZone: PANEL_TIMEZONE, ...langCtx(lang) });
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : "The frame could not be rendered",
       };
     }
-  }, [doc, sources, now]);
+  }, [doc, sources, now, lang, artEpoch]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

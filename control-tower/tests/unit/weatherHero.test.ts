@@ -39,7 +39,7 @@ function render(
 ): FrameBuffer {
   const definition = moduleDefinition("weatherHero");
   const fb = new FrameBuffer(WHITE);
-  definition.render(fb, cellsToPixels(0, 0, 8, 4), data, definition.schema.parse(options), ctxFor(expression));
+  definition.render(fb, cellsToPixels(0, 0, 16, 8), data, definition.schema.parse(options), ctxFor(expression));
   return fb;
 }
 
@@ -84,7 +84,7 @@ describe("weatherHero module", () => {
   });
 
   it("draws every scene by day and by night, inside its rect, in every colour stance", () => {
-    const below = cellsToPixels(0, 0, 8, 4).h * FrameBuffer.WIDTH;
+    const below = cellsToPixels(0, 0, 16, 8).h * FrameBuffer.WIDTH;
     for (const colourUse of ["blackwhite", "balanced", "expressive"] as const) {
       for (const scene of WEATHER_SCENES) {
         for (const timeOfDay of ["day", "night"] as const) {

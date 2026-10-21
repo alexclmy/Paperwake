@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import "@/ui/app.css";
+import "@/ui/theme.css";
 import { AppShell } from "@/ui/AppShell";
 import { SESSION_COOKIE, verifySession } from "@/server/auth/session";
 import { readState } from "@/server/store/state";
@@ -31,6 +32,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           : state.deviceAddress || "No device address set"
       }
       density={state.density}
+      panelLang={state.panelLang ?? "fr"}
     >
       {children}
     </AppShell>

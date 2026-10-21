@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Great wave, in the manner of a woodblock print. Original drawing. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- sky: light engraving -->
+  <rect x="0" y="0" width="400" height="200" fill="rgb(0,225,0)"/>
+  <!-- red sun -->
+  <circle cx="318" cy="70" r="34" fill="#ff0000" stroke="#000" stroke-width="4"/>
+  <!-- distant mountain -->
+  <path d="M220 214 L272 160 L324 214Z" fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M258 174 L272 160 L286 174 L278 170 L272 178 L266 170Z" fill="#000"/>
+  <!-- back swell -->
+  <path d="M150 230 C200 200 250 214 300 200 C340 190 370 200 400 196 V300 H150Z" fill="rgb(0,0,120)" stroke="#000" stroke-width="4"/>
+  <!-- great wave body -->
+  <path d="M0 300 V150 C10 90 60 40 130 30 C190 22 236 48 238 90 C240 120 214 134 196 120 C210 110 206 86 186 84 C160 82 150 120 168 160 C190 210 240 236 290 250 C330 262 370 260 400 254 V300 Z" fill="rgb(40,40,40)" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+  <!-- white interior bands of the wave -->
+  <g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">
+    <path d="M24 280 C30 200 60 120 120 70"/>
+    <path d="M50 290 C60 220 90 150 140 104"/>
+    <path d="M90 296 C100 240 120 190 156 150"/>
+    <path d="M140 300 C150 260 168 228 196 212"/>
+  </g>
+  <g fill="none" stroke="#fff" stroke-width="2"><path d="M10 260 C20 180 50 110 100 64"/><path d="M70 296 C78 230 104 170 146 128"/><path d="M116 300 C124 250 144 214 176 188"/></g>
+  <!-- foam crest: white lip with claw-like fingers -->
+  <path d="M120 40 C170 22 230 40 238 88 C240 112 222 128 200 122 C214 112 214 92 196 84 C174 74 150 94 156 126 C138 102 136 70 120 40 Z" fill="#fff" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+  <g fill="#fff" stroke="#000" stroke-width="3" stroke-linejoin="round">
+    <path d="M200 122 l10 10 l4 -10 l8 10 l2 -12 l10 6 l-4 -14Z"/>
+    <path d="M156 126 l-4 12 l10 -4 l2 12 l8 -10 l6 8 l0 -14Z"/>
+  </g>
+  <!-- foam spray dots -->
+  <g fill="#fff" stroke="#000" stroke-width="2.5"><circle cx="250" cy="64" r="6"/><circle cx="262" cy="86" r="4"/><circle cx="246" cy="110" r="5"/><circle cx="270" cy="50" r="3"/><circle cx="232" cy="30" r="5"/><circle cx="256" cy="34" r="3"/><circle cx="276" cy="110" r="3"/></g>
+  <!-- little boat, red hull -->
+  <path d="M250 262 C280 274 330 274 360 258 L352 272 C320 286 280 284 258 274Z" fill="#ff0000" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+  <g fill="#000"><circle cx="286" cy="262" r="4"/><circle cx="302" cy="264" r="4"/><circle cx="318" cy="262" r="4"/></g>
+  <!-- foreground crest -->
+  <path d="M190 300 C220 270 260 262 280 280 C266 278 256 288 262 300Z" fill="#fff" stroke="#000" stroke-width="4"/>
+  <path d="M330 300 C350 280 380 276 400 284 V300Z" fill="#fff" stroke="#000" stroke-width="4"/>
+</svg>

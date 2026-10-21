@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Snowy mountains. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- sky -->
+  <rect x="0" y="0" width="400" height="190" fill="rgb(0,210,0)"/>
+  <circle cx="330" cy="58" r="26" fill="#ff0000" stroke="#000" stroke-width="5"/>
+  <!-- falling snow -->
+  <g fill="#fff" stroke="#000" stroke-width="2"><circle cx="40" cy="30" r="4"/><circle cx="96" cy="60" r="3"/><circle cx="150" cy="22" r="4"/><circle cx="220" cy="48" r="3"/><circle cx="270" cy="20" r="4"/><circle cx="380" cy="110" r="3"/><circle cx="20" cy="110" r="3"/><circle cx="380" cy="18" r="3"/></g>
+  <!-- back range -->
+  <path d="M0 170 L60 110 L100 140 L160 70 L210 130 L250 96 L300 140 L340 100 L400 150 V220 H0Z" fill="rgb(0,0,160)" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+  <!-- main peak -->
+  <path d="M40 240 L190 40 L340 240 Z" fill="rgb(70,70,70)" stroke="#000" stroke-width="7" stroke-linejoin="round"/>
+  <!-- lit face (white) -->
+  <path d="M40 240 L190 40 L176 120 L150 170 L120 240Z" fill="#fff"/>
+  <!-- snow cap -->
+  <path d="M190 40 L238 104 L222 96 L212 116 L196 100 L184 122 L170 100 L156 112 L142 104 Z" fill="#fff" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M190 40 L196 100" stroke="#000" stroke-width="3"/>
+  <!-- ridge lines -->
+  <g stroke="#000" stroke-width="3" fill="none"><path d="M176 120 L150 170 L120 240"/><path d="M84 200 L104 214 M96 184 L124 196 M60 226 L82 232"/></g>
+  <!-- secondary peak -->
+  <path d="M220 240 L300 120 L390 240Z" fill="rgb(130,130,130)" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M220 240 L300 120 L290 170 L270 240Z" fill="#fff"/>
+  <path d="M300 120 L326 158 L314 154 L306 166 L296 152 L284 162 L276 156Z" fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+  <!-- pine forest -->
+  <g fill="#000">
+    <path d="M10 270 l14 -46 l14 46z M34 272 l12 -38 l12 38z M60 272 l16 -52 l16 52z M300 272 l14 -44 l14 44z M324 272 l16 -54 l16 54z M352 272 l12 -40 l12 40z M372 272 l14 -48 l14 48z"/>
+  </g>
+  <g stroke="#fff" stroke-width="2"><path d="M76 236 v30 M340 234 v34 M24 236 v30"/></g>
+  <!-- snow field -->
+  <path d="M0 262 C100 246 280 250 400 262 V300 H0Z" fill="#fff" stroke="#000" stroke-width="5"/>
+  <g stroke="#000" stroke-width="2" fill="none"><path d="M40 280 C120 270 200 272 260 280"/><path d="M200 292 C260 286 320 286 380 292"/></g>
+  <!-- red cabin -->
+  <path d="M150 270 V248 H196 V270Z" fill="#ff0000" stroke="#000" stroke-width="4"/>
+  <path d="M144 250 L173 230 L202 250Z" fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+  <rect x="166" y="256" width="10" height="14" fill="#000"/>
+  <path d="M188 238 v-10 h6 v14" fill="#000"/>
+</svg>

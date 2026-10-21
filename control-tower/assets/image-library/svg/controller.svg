@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Game controller. NOTE4C image library, CC0. -->
+<!-- pixel backdrop: checker stipple band -->
+<rect x="0" y="0" width="400" height="300" fill="rgb(0,0,215)"/>
+<g fill="#000"><rect x="24" y="24" width="12" height="12"/><rect x="36" y="36" width="12" height="12"/><rect x="352" y="252" width="12" height="12"/><rect x="364" y="240" width="12" height="12"/><rect x="340" y="30" width="12" height="12"/><rect x="40" y="250" width="12" height="12"/></g>
+<g fill="#ff0000"><rect x="364" y="24" width="12" height="12"/><rect x="24" y="264" width="12" height="12"/></g>
+<!-- cable -->
+<path d="M200 70 C200 40 240 40 250 24 C260 8 300 10 320 0" fill="none" stroke="#000" stroke-width="7"/>
+<!-- shadow -->
+<path d="M108 92 H308 C356 92 384 160 374 214 C366 256 324 262 300 230 L274 196 H142 L116 230 C92 262 50 256 42 214 C32 160 60 92 108 92Z" fill="#000" transform="translate(10 10)"/>
+<!-- body -->
+<path d="M100 82 H300 C348 82 376 150 366 204 C358 246 316 252 292 220 L266 186 H134 L108 220 C84 252 42 246 34 204 C24 150 52 82 100 82Z" fill="#fff" stroke="#000" stroke-width="8" stroke-linejoin="round"/>
+<!-- lower hatched shading -->
+<path d="M40 190 C44 230 82 246 106 216 L132 182 H268 L294 216 C318 246 356 230 360 190 C350 220 320 226 300 200 L278 170 H122 L100 200 C80 226 50 220 40 190Z" fill="rgb(120,120,120)"/>
+<!-- center panel -->
+<rect x="160" y="104" width="80" height="44" rx="8" fill="rgb(0,0,140)" stroke="#000" stroke-width="4"/>
+<rect x="172" y="120" width="22" height="8" rx="4" fill="#000"/><rect x="206" y="120" width="22" height="8" rx="4" fill="#000"/>
+<circle cx="200" cy="96" r="5" fill="#ff0000" stroke="#000" stroke-width="2"/>
+<!-- d-pad -->
+<path d="M94 110 h24 v22 h22 v24 h-22 v22 h-24 v-22 h-22 v-24 h22z" fill="#000"/>
+<path d="M100 118 h12 v8 M78 140 v-4 M100 172 h12" stroke="#fff" stroke-width="3" fill="none"/>
+<!-- face buttons -->
+<g stroke="#000" stroke-width="5"><circle cx="300" cy="114" r="14" fill="#ff0000"/><circle cx="328" cy="144" r="14" fill="#fff"/><circle cx="272" cy="144" r="14" fill="#fff"/><circle cx="300" cy="174" r="14" fill="#ff0000"/></g>
+<g fill="#fff"><circle cx="296" cy="110" r="4"/><circle cx="296" cy="170" r="4"/></g>
+<!-- thumbsticks -->
+<circle cx="150" cy="176" r="22" fill="#000"/><circle cx="150" cy="176" r="13" fill="#fff" stroke="#000" stroke-width="3"/>
+<circle cx="250" cy="176" r="22" fill="#000"/><circle cx="250" cy="176" r="13" fill="#fff" stroke="#000" stroke-width="3"/>
+<!-- highlight -->
+<path d="M62 132 C66 112 78 98 96 94" fill="none" stroke="#000" stroke-width="3"/>
+</svg>

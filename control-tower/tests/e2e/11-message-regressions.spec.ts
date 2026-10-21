@@ -55,8 +55,10 @@ async function messageDashboard(
       type: "message",
       x: 0,
       y: 0,
-      w: span.w,
-      h: span.h,
+      // Spans below are written in the 8x6 units the reports were made in;
+      // the 16x12 grid is exactly twice as fine.
+      w: span.w * 2,
+      h: span.h * 2,
       hidden: false,
       options: {},
     },

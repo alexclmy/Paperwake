@@ -15,6 +15,9 @@ import {
   type ImageMode,
   type ImageSource,
 } from "@/core/render/modules/image";
+import { libraryEntry, loadLibraryArt } from "@/core/library/catalog";
+import { librarySource } from "@/core/library/source";
+import { LibraryGrid } from "./LibraryGrid";
 
 /**
  * The upload-and-dither widget for the Image module.
@@ -118,6 +121,35 @@ export function ImageField({
   const previewRef = useRef<HTMLCanvasElement | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"upload" | "library">(
+    value.library ? "library" : "upload",
+  );
+  const [pickingId, setPickingId] = useState<string | null>(null);
+
+  // Each pick (or resize re-pick) gets a ticket; only the latest may write.
+  // A burst of keyboard resizes used to fire overlapping re-picks whose late
+  // answers wrote a stale, smaller tile back over the current size.
+  const pickTicket = useRef(0);
+  const pickLibrary = useCallback(
+    async (id: string) => {
+      if (tileW <= 0 || tileH <= 0) return;
+      const ticket = ++pickTicket.current;
+      setPickingId(id);
+      setError(null);
+      try {
+        const art = await loadLibraryArt(id);
+        if (!art) throw new Error("missing");
+        if (ticket !== pickTicket.current) return;
+        sourceRef.current = null;
+        onChange(librarySource(id, art, tileW, tileH, valueRef.current));
+      } catch {
+        setError("That picture could not be loaded.");
+      } finally {
+        setPickingId(null);
+      }
+    },
+    [tileW, tileH, onChange],
+  );
 
   // Keep the latest options in a ref so the resize effect re-dithers with them.
   const valueRef = useRef(value);
@@ -175,9 +207,13 @@ export function ImageField({
     [dither],
   );
 
-  // Re-dither when the module is resized while the source is still in memory.
+  // Re-dither when the module is resized while the source is still in memory;
+  // a library picture instead re-picks the variant that fits the new size.
   useEffect(() => {
     if (sourceRef.current) dither(sourceRef.current, valueRef.current);
+    else if (valueRef.current.library && valueRef.current.data) {
+      void pickLibrary(valueRef.current.library);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tileW, tileH]);
 
@@ -204,13 +240,69 @@ export function ImageField({
 
   return (
     <div className="image-field" data-testid="opt-source">
+      <div className="image-tabs" role="tablist" aria-label="Picture source">
+        <button
+          type="button"
+          role="tab"
+          className="image-tab"
+          aria-selected={tab === "library"}
+          onClick={() => setTab("library")}
+          data-testid="opt-source-tab-library"
+        >
+          Library
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className="image-tab"
+          aria-selected={tab === "upload"}
+          onClick={() => setTab("upload")}
+          data-testid="opt-source-tab-upload"
+        >
+          Upload
+        </button>
+      </div>
+
+      {hasImage && (
+        <canvas
+          ref={previewRef}
+          className="image-preview"
+          data-testid="opt-source-preview"
+        />
+      )}
+      {value.library && hasImage && (
+        <p className="field-hint" data-testid="opt-source-library-name">
+          {libraryEntry(value.library)?.name ?? value.library} · from the library
+        </p>
+      )}
+      {error && (
+        <p className="error-note" data-testid="opt-source-error">
+          {error}
+        </p>
+      )}
+
+      {tab === "library" && (
+        <LibraryGrid
+          testId="opt-source-library"
+          selectedId={value.library ?? null}
+          busyId={pickingId}
+          onPick={(id) => void pickLibrary(id)}
+        />
+      )}
+
+      {tab === "upload" && (
+      <>
       <div className="image-field-head">
         <label className="image-upload" data-testid="opt-source-upload-label">
           <input
             type="file"
             accept="image/*"
             data-testid="opt-source-upload"
-            onChange={(event) => onFile(event.target.files?.[0])}
+            onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) onChange({ ...valueRef.current, library: undefined });
+            onFile(file);
+          }}
           />
           <span>{hasImage ? "Replace image" : "Upload an image"}</span>
         </label>
@@ -230,19 +322,6 @@ export function ImageField({
       </div>
 
       {busy && <p className="field-hint" data-testid="opt-source-busy">Working…</p>}
-      {error && (
-        <p className="error-note" data-testid="opt-source-error">
-          {error}
-        </p>
-      )}
-
-      {hasImage && (
-        <canvas
-          ref={previewRef}
-          className="image-preview"
-          data-testid="opt-source-preview"
-        />
-      )}
 
       <div className="image-knobs">
         <div className="image-toggle" role="group" aria-label="Fit">
@@ -302,10 +381,12 @@ export function ImageField({
         </label>
       </div>
 
-      {hasImage && !canReprocess && (
+      {hasImage && !canReprocess && !value.library && (
         <p className="field-hint" data-testid="opt-source-reupload">
           Re-upload the image to change how it is dithered.
         </p>
+      )}
+      </>
       )}
     </div>
   );

@@ -66,9 +66,9 @@ export const haSensor: ModuleDefinition<HaSensorOptions, SensorValue> = {
     "One read-only sensor or binary_sensor value. A reading older than three hours renders as périmé rather than as a current number.",
   schema: HaSensorOptions,
   defaultOptions: HaSensorOptions.parse({}),
-  defaultSpan: { w: 3, h: 1 },
-  minSpan: { w: 2, h: 1 },
-  maxSpan: { w: 4, h: 2 },
+  defaultSpan: { w: 6, h: 2 },
+  minSpan: { w: 4, h: 2 },
+  maxSpan: { w: 8, h: 4 },
   sourceBinding: "haSensor",
 
   migrateOptions(legacy) {

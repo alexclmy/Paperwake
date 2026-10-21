@@ -3,7 +3,7 @@ import type { DashboardSources } from "@/core/render/data";
 import { moduleDefinition } from "@/core/render/modules";
 import { readCalendarSnapshot } from "./calendarSnapshot";
 import { readOpenMeteo } from "./openMeteo";
-import { readSensors } from "./haSensor";
+import { readSensors, readSensorsBulk } from "./haSensor";
 import { DEFAULT_REMINDERS_LIST, cachedRemindersValue } from "./appleReminders";
 import { e2eSources } from "./e2eFixtures";
 import { isNotConfigured } from "./notConfigured";
@@ -21,6 +21,8 @@ export function sourceBindings(doc: DashboardDoc): {
   weather: boolean;
   calendar: boolean;
   sensors: Array<{ entityId: string; label: string }>;
+  /** Entities a Home sensors module reads, in one bulk /api/states call. */
+  bulkSensors: string[];
   /** Null when no module asks for Reminders at all; otherwise the list name. */
   remindersList: string | null;
 } {
@@ -28,6 +30,7 @@ export function sourceBindings(doc: DashboardDoc): {
   let calendar = false;
   let remindersList: string | null = null;
   const sensors: Array<{ entityId: string; label: string }> = [];
+  const bulkSensors: string[] = [];
 
   for (const module of doc.modules) {
     let binding: string;
@@ -58,6 +61,13 @@ export function sourceBindings(doc: DashboardDoc): {
             : DEFAULT_REMINDERS_LIST;
       }
     }
+    if (binding === "homeSensors" && Array.isArray(options.entities)) {
+      for (const entity of options.entities as Array<{ entityId?: unknown }>) {
+        if (typeof entity?.entityId === "string" && !bulkSensors.includes(entity.entityId)) {
+          bulkSensors.push(entity.entityId);
+        }
+      }
+    }
     if (binding === "haSensor") {
       const entityId = typeof options.entityId === "string" ? options.entityId : "";
       if (entityId.length > 0) {
@@ -78,7 +88,7 @@ export function sourceBindings(doc: DashboardDoc): {
     }
   }
 
-  return { weather, calendar, sensors, remindersList };
+  return { weather, calendar, sensors, bulkSensors, remindersList };
 }
 
 const NOT_USED = {
@@ -127,13 +137,16 @@ export async function collectSources(
 
   const bindings = sourceBindings(doc);
 
-  const [weather, calendar, sensors, reminders] = await Promise.all([
+  const [weather, calendar, sensors, bulk, reminders] = await Promise.all([
     bindings.weather ? readOpenMeteo(now) : Promise.resolve(NOT_USED),
     bindings.calendar
       ? Promise.resolve(readCalendarSnapshot(now))
       : Promise.resolve(NOT_USED),
     bindings.sensors.length > 0
       ? readSensors(bindings.sensors, now)
+      : Promise.resolve({}),
+    bindings.bulkSensors.length > 0
+      ? readSensorsBulk(bindings.bulkSensors, now)
       : Promise.resolve({}),
     bindings.remindersList !== null
       ? cachedRemindersValue({
@@ -144,7 +157,9 @@ export async function collectSources(
       : Promise.resolve(NOT_USED),
   ]);
 
-  return { weather, calendar, sensors, reminders };
+  // Single-entity tiles keep their own per-entity read; a bulk reading only
+  // fills entities no haSensor tile already covered.
+  return { weather, calendar, sensors: { ...bulk, ...sensors }, reminders };
 }
 
 export interface SourceHealthRow {

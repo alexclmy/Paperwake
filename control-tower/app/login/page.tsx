@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import "@/ui/app.css";
+import "@/ui/theme.css";
 import { ApiError, apiGet, apiSend } from "@/ui/api";
 import { Button, Card, ErrorNote } from "@/ui/components";
 

@@ -42,7 +42,7 @@ describe("headline module", () => {
       for (const colourUse of ["blackwhite", "balanced", "expressive"] as const) {
         const fb = renderModule(
           "headline",
-          { w: 8, h: 2 },
+          { w: 16, h: 4 },
           { variant },
           ctxFor({ colourUse }),
         );
@@ -53,8 +53,8 @@ describe("headline module", () => {
   });
 
   it("is deterministic: same options and context, byte-identical", () => {
-    const once = renderModule("headline", { w: 8, h: 2 }, {}, ctxFor({}));
-    const twice = renderModule("headline", { w: 8, h: 2 }, {}, ctxFor({}));
+    const once = renderModule("headline", { w: 16, h: 4 }, {}, ctxFor({}));
+    const twice = renderModule("headline", { w: 16, h: 4 }, {}, ctxFor({}));
     expect(digest(once)).toBe(digest(twice));
   });
 
@@ -66,13 +66,13 @@ describe("headline module", () => {
     };
     const bw = renderModule(
       "headline",
-      { w: 8, h: 2 },
+      { w: 16, h: 4 },
       { variant: "sidebar" },
       ctxFor({ colourUse: "blackwhite" }),
     );
     const expressive = renderModule(
       "headline",
-      { w: 8, h: 2 },
+      { w: 16, h: 4 },
       { variant: "sidebar" },
       ctxFor({ colourUse: "expressive" }),
     );
@@ -81,8 +81,8 @@ describe("headline module", () => {
   });
 
   it("changes the frame when the brush changes", () => {
-    const grain = renderModule("headline", { w: 8, h: 2 }, {}, ctxFor({ brush: "grain" }));
-    const grid = renderModule("headline", { w: 8, h: 2 }, {}, ctxFor({ brush: "grid" }));
+    const grain = renderModule("headline", { w: 16, h: 4 }, {}, ctxFor({ brush: "grain" }));
+    const grid = renderModule("headline", { w: 16, h: 4 }, {}, ctxFor({ brush: "grid" }));
     expect(digest(grain)).not.toBe(digest(grid));
   });
 });
@@ -93,7 +93,7 @@ describe("sky module", () => {
       for (const colourUse of ["blackwhite", "balanced", "expressive"] as const) {
         const fb = renderModule(
           "sky",
-          { w: 5, h: 3 },
+          { w: 10, h: 6 },
           { variant, latitude: 48.86, longitude: 2.35 },
           ctxFor({ colourUse }),
         );
@@ -106,14 +106,14 @@ describe("sky module", () => {
   it("survives the polar cases without throwing", () => {
     const midnightSun = renderModule(
       "sky",
-      { w: 5, h: 3 },
+      { w: 10, h: 6 },
       { latitude: 78.2, longitude: 15.6 },
       { ...ctxFor({}), now: new Date("2026-06-21T12:00:00Z") },
     );
     expect(() => pack(midnightSun)).not.toThrow();
     const polarNight = renderModule(
       "sky",
-      { w: 5, h: 3 },
+      { w: 10, h: 6 },
       { latitude: 78.2, longitude: 15.6 },
       { ...ctxFor({}), now: new Date("2026-12-21T12:00:00Z") },
     );
@@ -121,8 +121,8 @@ describe("sky module", () => {
   });
 
   it("is deterministic for a fixed clock and location", () => {
-    const a = renderModule("sky", { w: 5, h: 3 }, { latitude: 48.86, longitude: 2.35 }, ctxFor({}));
-    const b = renderModule("sky", { w: 5, h: 3 }, { latitude: 48.86, longitude: 2.35 }, ctxFor({}));
+    const a = renderModule("sky", { w: 10, h: 6 }, { latitude: 48.86, longitude: 2.35 }, ctxFor({}));
+    const b = renderModule("sky", { w: 10, h: 6 }, { latitude: 48.86, longitude: 2.35 }, ctxFor({}));
     expect(digest(a)).toBe(digest(b));
   });
 });

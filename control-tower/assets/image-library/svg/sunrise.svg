@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Sunrise over hills. NOTE4C image library, CC0. -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <!-- sky: engraving lines denser toward the top -->
+  <rect x="0" y="0" width="400" height="40" fill="rgb(0,60,0)"/>
+  <rect x="0" y="40" width="400" height="40" fill="rgb(0,130,0)"/>
+  <rect x="0" y="80" width="400" height="50" fill="rgb(0,190,0)"/>
+  <!-- rays -->
+  <g fill="#fff">
+    <path d="M200 170 L120 0 H160Z M200 170 L230 0 H260Z M200 170 L330 0 H370Z M200 170 L0 30 V70Z M200 170 L400 50 V90Z M200 170 L40 0 H70Z"/>
+  </g>
+  <!-- sun -->
+  <circle cx="200" cy="170" r="62" fill="#ff0000" stroke="#000" stroke-width="6"/>
+  <g stroke="#fff" stroke-width="4"><path d="M146 150 H254 M142 166 H258 M146 182 H254"/></g>
+  <!-- birds -->
+  <g fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"><path d="M296 70 q8 -8 14 0 q6 -8 14 0"/><path d="M330 96 q6 -6 10 0 q4 -6 10 0"/><path d="M70 92 q6 -6 10 0 q4 -6 10 0"/></g>
+  <!-- far hill (light hatch) -->
+  <path d="M0 196 C60 150 120 170 170 190 C230 168 300 140 400 180 V300 H0 Z" fill="rgb(200,200,200)" stroke="#000" stroke-width="5"/>
+  <!-- mid hill (stipple) with tree row -->
+  <path d="M0 230 C80 186 180 200 250 226 C310 206 360 200 400 214 V300 H0 Z" fill="rgb(0,0,140)" stroke="#000" stroke-width="5"/>
+  <g fill="#000"><path d="M300 210 l6 -22 l6 22z M320 206 l7 -26 l7 26z M342 204 l6 -22 l6 22z M362 206 l5 -18 l5 18z"/></g>
+  <!-- near hill (white, field furrows) -->
+  <path d="M0 262 C90 228 200 240 400 268 V300 H0 Z" fill="#fff" stroke="#000" stroke-width="6"/>
+  <g stroke="#000" stroke-width="2" fill="none">
+    <path d="M20 274 C110 248 200 256 300 272"/><path d="M10 286 C110 262 230 270 380 286"/><path d="M60 296 C160 282 260 286 360 296"/>
+  </g>
+  <!-- path to a little house on the near hill -->
+  <path d="M90 250 h28 v-18 l-14 -12 l-14 12z" fill="#fff" stroke="#000" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M86 234 l18 -16 l18 16" fill="none" stroke="#ff0000" stroke-width="5"/>
+  <rect x="100" y="238" width="8" height="12" fill="#000"/>
+</svg>

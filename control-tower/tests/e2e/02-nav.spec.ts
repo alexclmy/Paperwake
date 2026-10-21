@@ -18,7 +18,7 @@ test.beforeEach(async ({ page }) => {
  * dropping out of the navigation must not mean it drops out of the QA.
  */
 const NAV_PAGES = [
-  { path: "/overview", label: "Overview", heading: "Overview" },
+  { path: "/overview", label: "Home", heading: "Home" },
   { path: "/dashboards", label: "Compositions", heading: "Compositions" },
   { path: "/device", label: "Device", heading: "Device" },
   { path: "/diagnostics", label: "Advanced", heading: "Diagnostics" },

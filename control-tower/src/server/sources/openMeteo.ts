@@ -28,7 +28,8 @@ export function openMeteoUrl(): string | null {
   return (
     `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}` +
     `&longitude=${location.longitude}` +
-    "&hourly=temperature_2m,weather_code" +
+    "&hourly=temperature_2m,weather_code,apparent_temperature,precipitation_probability" +
+    "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m" +
     "&daily=weather_code,temperature_2m_max,temperature_2m_min" +
     "&timezone=UTC&forecast_days=7"
   );
@@ -71,7 +72,18 @@ const OpenMeteoResponse = z.object({
     time: z.array(z.string()),
     temperature_2m: z.array(z.number().nullable()),
     weather_code: z.array(z.number().nullable()),
+    apparent_temperature: z.array(z.number().nullable()).optional(),
+    precipitation_probability: z.array(z.number().nullable()).optional(),
   }),
+  current: z
+    .object({
+      temperature_2m: z.number().nullable().optional(),
+      apparent_temperature: z.number().nullable().optional(),
+      weather_code: z.number().nullable().optional(),
+      wind_speed_10m: z.number().nullable().optional(),
+      wind_direction_10m: z.number().nullable().optional(),
+    })
+    .optional(),
   // The daily block is optional so the hourly-only contract still parses: a
   // response without it (or the ECCC fallback) simply yields no multi-day
   // outlook, and the module that wants one renders its unavailable state.
@@ -84,6 +96,70 @@ const OpenMeteoResponse = z.object({
     })
     .optional(),
 });
+
+const PART_HOURS: Array<{ label: string; hour: number }> = [
+  { label: "Matin", hour: 8 },
+  { label: "Midi", hour: 13 },
+  { label: "Soir", hour: 19 },
+];
+
+/**
+ * Feels-like, wind and rain chance now, plus a morning / midday / evening
+ * summary of the next 24 h — the extras the compact weather module reads. Each
+ * part is optional: whatever the payload lacks is simply left out, never
+ * replaced by a made-up number. Hours are local to `timeZone`.
+ */
+export function parseOpenMeteoExtras(
+  payload: unknown,
+  now: Date,
+  timeZone = "Europe/Paris",
+): Pick<import("@/core/render/data").WeatherValue, "now" | "dayParts"> {
+  const parsed = OpenMeteoResponse.safeParse(payload);
+  if (!parsed.success) return {};
+  const { hourly, current } = parsed.data;
+  const at = (stamp: string) => new Date(`${stamp}${stamp.endsWith("Z") ? "" : "Z"}`);
+  const hourOf = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone });
+  const rows = hourly.time.map((stamp, i) => ({
+    at: at(stamp),
+    temp: hourly.temperature_2m[i],
+    code: hourly.weather_code[i],
+    apparent: hourly.apparent_temperature?.[i],
+    prob: hourly.precipitation_probability?.[i],
+  }));
+  const upcoming = rows.filter(
+    (r) => r.at.getTime() >= now.getTime() - HOUR_MS && r.at.getTime() < now.getTime() + 24 * HOUR_MS,
+  );
+  const first = upcoming[0];
+  const out: Pick<import("@/core/render/data").WeatherValue, "now" | "dayParts"> = {};
+  const temp = current?.temperature_2m ?? first?.temp;
+  if (typeof temp === "number") {
+    const apparent = current?.apparent_temperature ?? first?.apparent;
+    const wind = current?.wind_speed_10m;
+    const dir = current?.wind_direction_10m;
+    const prob = first?.prob;
+    out.now = {
+      temp: Math.round(temp),
+      condition: conditionForWmoCode(current?.weather_code ?? first?.code ?? -1),
+      ...(typeof apparent === "number" ? { apparent: Math.round(apparent) } : {}),
+      ...(typeof wind === "number" ? { windKmh: Math.round(wind) } : {}),
+      ...(typeof dir === "number" ? { windDirDeg: dir } : {}),
+      ...(typeof prob === "number" ? { precipProb: Math.round(prob) } : {}),
+    };
+  }
+  const parts: NonNullable<ReturnType<typeof parseOpenMeteoExtras>["dayParts"]> = [];
+  for (const part of PART_HOURS) {
+    const row = upcoming.find((r) => Number(hourOf.format(r.at)) === part.hour);
+    if (!row || typeof row.temp !== "number") continue;
+    parts.push({
+      label: part.label,
+      temp: Math.round(row.temp),
+      condition: conditionForWmoCode(row.code ?? -1),
+      ...(typeof row.prob === "number" ? { precipProb: Math.round(row.prob) } : {}),
+    });
+  }
+  if (parts.length > 0) out.dayParts = parts;
+  return out;
+}
 
 /** Uppercase weekday label for a calendar date, e.g. "2026-09-22" → "TUE". */
 const WEEKDAY = new Intl.DateTimeFormat("en-US", {
@@ -358,9 +434,10 @@ export async function readOpenMeteo(
       });
       const value = normalizeWeather(parseOpenMeteo(payload), now);
       const days = parseOpenMeteoDaily(payload);
+      const extras = parseOpenMeteoExtras(payload, now);
       const data: ModuleData<WeatherValue> = {
         state: "ok",
-        value: days.length > 0 ? { ...value, days } : value,
+        value: { ...(days.length > 0 ? { ...value, days } : value), ...extras },
         observedAt: now.toISOString(),
       };
       cachedForecast = { data, fetchedAt: nowMs };

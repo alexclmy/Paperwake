@@ -127,9 +127,9 @@ export const weatherHero: ModuleDefinition<WeatherHeroOptions, WeatherValue> = {
     "The current temperature, set very large over a risograph sky, with the condition and the day's high and low. Reads from across the room. Renders an explicit unavailable state rather than any placeholder number.",
   schema: WeatherHeroOptions,
   defaultOptions: WeatherHeroOptions.parse({}),
-  defaultSpan: { w: 8, h: 4 },
-  minSpan: { w: 5, h: 3 },
-  maxSpan: { w: 8, h: 6 },
+  defaultSpan: { w: 16, h: 8 },
+  minSpan: { w: 6, h: 4 },
+  maxSpan: { w: 16, h: 12 },
   sourceBinding: "weather",
 
   render(fb, rect, data, options, ctx) {

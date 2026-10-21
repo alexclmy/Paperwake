@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { FrameBuffer } from "@/core/frame";
 import type { PaletteIndex } from "@/core/palette";
 import { decodeTile } from "../imageDither";
+import { pickVariant } from "@/core/library/catalog";
+import { registeredLibraryArt } from "@/core/library/registry";
 import type { ModuleDefinition, PixelRect } from "../types";
 import { clearModule, renderUnavailable, unavailableShape } from "./common";
 
@@ -65,6 +67,13 @@ export const ImageSourceSchema = z
     tileW: z.number().int().min(0).max(400).default(0),
     tileH: z.number().int().min(0).max(300).default(0),
     data: z.string().max(MAX_ENCODED_TILE).nullable().default(null),
+    /**
+     * Set when the tile came from the embedded image library rather than an
+     * upload: the picture's id, so the inspector can say which drawing this
+     * is and re-pick the right size when the block is resized. Optional with
+     * no default, so documents saved before the library are unchanged.
+     */
+    library: z.string().max(40).optional(),
   })
   .describe(IMAGE_SOURCE_TAG);
 export type ImageSource = z.infer<typeof ImageSourceSchema>;
@@ -113,9 +122,9 @@ export const image: ModuleDefinition<ImageOptions, never> = {
     "A photo you upload, dithered to the panel's four colours in the browser and stored as the finished tile. The picture never leaves this machine, and the renderer only blits the stored result.",
   schema: ImageOptions,
   defaultOptions: ImageOptions.parse({}),
-  defaultSpan: { w: 3, h: 3 },
-  minSpan: { w: 1, h: 1 },
-  maxSpan: { w: 8, h: 6 },
+  defaultSpan: { w: 6, h: 6 },
+  minSpan: { w: 2, h: 2 },
+  maxSpan: { w: 16, h: 12 },
   sourceBinding: "none",
 
   render(fb, rect, _data, options, ctx) {
@@ -129,7 +138,14 @@ export const image: ModuleDefinition<ImageOptions, never> = {
       return;
     }
 
-    const tile = decodeTile(source.data, source.tileW, source.tileH);
-    blitTile(fb, rect, tile, source.tileW, source.tileH);
+    // A library picture is chosen from the block as it is NOW, not as it was
+    // when the picture was picked: the stored tile is only a fallback for when
+    // the art is not in memory. Uploads (no `library`) blit their stored tile.
+    const art = source.library ? registeredLibraryArt(source.library) : undefined;
+    const chosen = art
+      ? pickVariant(art, rect.w, rect.h)
+      : { w: source.tileW, h: source.tileH, data: source.data };
+    const tile = decodeTile(chosen.data, chosen.w, chosen.h);
+    blitTile(fb, rect, tile, chosen.w, chosen.h);
   },
 };

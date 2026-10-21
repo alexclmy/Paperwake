@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+<rect width="400" height="300" fill="#fff"/>
+<!-- Christmas tree. NOTE4C image library, CC0. -->
+<!-- snowy night -->
+<rect x="0" y="0" width="400" height="300" fill="rgb(0,170,0)"/>
+<g fill="#fff" stroke="#000" stroke-width="2"><circle cx="40" cy="40" r="5"/><circle cx="90" cy="110" r="4"/><circle cx="60" cy="190" r="5"/><circle cx="330" cy="60" r="5"/><circle cx="360" cy="140" r="4"/><circle cx="320" cy="200" r="5"/><circle cx="110" cy="30" r="3"/><circle cx="290" cy="20" r="3"/><circle cx="30" cy="120" r="3"/><circle cx="380" cy="230" r="3"/></g>
+<!-- snow ground -->
+<path d="M0 256 C100 240 300 240 400 256 V300 H0Z" fill="#fff" stroke="#000" stroke-width="5"/>
+<!-- trunk -->
+<rect x="186" y="236" width="28" height="30" fill="#000"/>
+<!-- tree tiers (black with hatched white garland swags) -->
+<g stroke="#000" stroke-width="6" stroke-linejoin="round">
+<path d="M200 40 L270 120 H130Z" fill="rgb(60,60,60)"/>
+<path d="M200 80 L300 180 H100Z" fill="rgb(60,60,60)"/>
+<path d="M200 130 L330 244 H70Z" fill="rgb(60,60,60)"/>
+</g>
+<!-- snow on tier edges -->
+<g fill="#fff" stroke="#000" stroke-width="3"><path d="M130 120 C150 112 170 126 190 116 C210 126 236 112 270 120 L262 128 C240 122 220 132 200 126 C180 134 156 122 138 128Z"/>
+<path d="M100 180 C130 170 160 186 200 174 C240 186 270 170 300 180 L290 188 C262 180 240 194 200 184 C160 194 136 180 110 188Z"/>
+<path d="M70 244 C110 232 150 250 200 238 C250 250 290 232 330 244 L320 252 C286 242 250 258 200 248 C150 258 116 242 80 252Z"/></g>
+<!-- garland: dotted white swags -->
+<g fill="none" stroke="#fff" stroke-width="4" stroke-dasharray="2 6" stroke-linecap="round"><path d="M160 100 C190 116 220 110 246 96"/><path d="M130 156 C180 170 230 164 276 146"/><path d="M104 216 C170 232 240 226 304 206"/></g>
+<!-- red baubles -->
+<g fill="#ff0000" stroke="#000" stroke-width="3"><circle cx="176" cy="104" r="8"/><circle cx="234" cy="150" r="9"/><circle cx="150" cy="160" r="8"/><circle cx="270" cy="214" r="10"/><circle cx="130" cy="220" r="9"/><circle cx="200" cy="200" r="10"/><circle cx="216" cy="92" r="7"/></g>
+<g fill="#fff"><circle cx="198" cy="196" r="3"/><circle cx="268" cy="210" r="3"/><circle cx="128" cy="216" r="3"/></g>
+<!-- star -->
+<path d="M200 10 L208 30 L230 32 L213 46 L218 68 L200 56 L182 68 L187 46 L170 32 L192 30Z" fill="#ff0000" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+<g stroke="#000" stroke-width="3" stroke-linecap="round"><path d="M240 20 l12 -6 M240 40 l14 2 M160 20 l-12 -6 M160 40 l-14 2"/></g>
+<!-- gifts -->
+<g stroke="#000" stroke-width="5" stroke-linejoin="round">
+<rect x="98" y="246" width="56" height="40" fill="#ff0000"/><path d="M126 246 V286 M98 264 H154" stroke="#fff" stroke-width="6"/><path d="M126 246 c-14 -16 -24 -4 0 0 c14 -16 24 -4 0 0" fill="#fff"/>
+<rect x="240" y="256" width="64" height="32" fill="#fff"/><path d="M272 256 V288" stroke="#ff0000" stroke-width="8"/><path d="M240 256 h64 v32 h-64z" fill="none"/>
+<rect x="196" y="262" width="36" height="26" fill="rgb(100,100,100)"/>
+</g>
+</svg>

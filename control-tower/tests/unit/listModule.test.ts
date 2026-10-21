@@ -12,7 +12,7 @@ type Row = { text: string; visible?: boolean };
 
 function render(
   options: Record<string, unknown>,
-  span = { w: 4, h: 3 },
+  span = { w: 8, h: 6 },
 ): { frame: FrameBuffer; overflows: OverflowFact[] } {
   const overflows: OverflowFact[] = [];
   const frame = new FrameBuffer(WHITE);
@@ -177,7 +177,7 @@ describe("list overflow is honest", () => {
     // does, and the difference is exactly what the warning is about.
     const { overflows, frame } = render(
       { rows: SEVEN, maxVisibleRows: 7 },
-      { w: 4, h: 4 },
+      { w: 8, h: 8 },
     );
     expect(overflows).toEqual([]);
     expect(ink(frame, RED)).toBe(0);
@@ -195,7 +195,7 @@ describe("list overflow is honest", () => {
   it("stops at the bottom of its tile rather than drawing past it", () => {
     const { frame, overflows } = render(
       { rows: SEVEN, maxVisibleRows: 7 },
-      { w: 4, h: 1 },
+      { w: 8, h: 2 },
     );
     expect(overflows.length).toBeGreaterThan(0);
     // Nothing outside the tile.
@@ -209,7 +209,7 @@ describe("list overflow is honest", () => {
   it("marks the truncation even when there is no room to explain it", () => {
     const { frame } = render(
       { rows: SEVEN, maxVisibleRows: 7, title: { visible: false } },
-      { w: 2, h: 1 },
+      { w: 4, h: 2 },
     );
     expect(ink(frame, RED)).toBeGreaterThan(0);
   });

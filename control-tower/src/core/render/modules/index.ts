@@ -3,6 +3,7 @@ import { calendarNext } from "./calendarNext";
 import { conditionalMessage } from "./conditionalMessage";
 import { countdown } from "./countdown";
 import { haSensor } from "./haSensor";
+import { homeSensors } from "./homeSensors";
 import { image } from "./image";
 import { headline } from "./headline";
 import { list } from "./list";
@@ -13,6 +14,7 @@ import { timestamp } from "./timestamp";
 import { weather24h } from "./weather24h";
 import { weatherHero } from "./weatherHero";
 import { weatherWeek } from "./weatherWeek";
+import { weatherCompact } from "./weatherCompact";
 
 /**
  * The module registry. Adding a module here is the only step needed to make
@@ -26,8 +28,10 @@ const definitions = [
   weather24h,
   weatherHero,
   weatherWeek,
+  weatherCompact,
   calendarNext,
   haSensor,
+  homeSensors,
   message,
   list,
   countdown,
@@ -63,6 +67,7 @@ export {
   conditionalMessage,
   countdown,
   haSensor,
+  homeSensors,
   headline,
   image,
   list,
@@ -72,4 +77,5 @@ export {
   timestamp,
   weather24h,
   weatherHero,
+  weatherCompact,
 };

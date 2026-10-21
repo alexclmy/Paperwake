@@ -3,7 +3,8 @@
  *
  * Run by hand, committed as PNGs:
  *
- *     npx tsx tools/screenshots.ts
+ *     npm run screenshots        (UI screenshots only)
+ *     npm run screenshots:all    (panel showcase renders, then these)
  *
  * Why a script rather than "take a screenshot when you remember to":
  *
@@ -12,11 +13,13 @@
  *    fixtures on (NOTE4C_TOWER_E2E=1). No weather for a real place, no
  *    calendar, no Reminders, no LAN address — nothing on the resulting images
  *    is a fact about the machine that produced them.
- *  - **The same content every time.** It seeds one dashboard with fixed
- *    wording, so a re-run produces the same picture and a diff in
- *    docs/images/ means the interface changed, not that the weather did.
- *  - **Both form factors.** 1440x900 and 375x812, the two the README shows and
- *    the two Playwright measures.
+ *  - **The same content every time.** It seeds the showcase compositions from
+ *    tools/showcase.ts over the fictional showcase sources
+ *    (src/server/sources/showcaseFixtures.ts, NOTE4C_TOWER_SHOWCASE=1), with
+ *    the panel language set to English, so a re-run produces the same
+ *    pictures and a diff in docs/images/ui/ means the interface changed.
+ *  - **Desktop first.** Seven 1440x900 shots of the main flows, plus one
+ *    375x812 phone shot.
  *
  * It starts its own development server, on a port of its own and building into
  * a directory of its own, so it cannot disturb a tower you have running.
@@ -34,7 +37,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { chromium, type Page } from "@playwright/test";
-import { TEMPLATES } from "@/core/templates";
+import { SHOWCASE } from "./showcase";
 import {
   SCREENSHOT_DIST_DIR,
   preserveGeneratedFiles,
@@ -44,7 +47,7 @@ import {
 const PORT = 8658;
 const BASE = `http://127.0.0.1:${PORT}`;
 const DATA_DIR = path.join(os.tmpdir(), "note4c-tower-screenshots");
-const OUT_DIR = path.join("docs", "images");
+const OUT_DIR = path.join("docs", "images", "ui");
 const QA_REPORT = path.join("test-results", "screenshots-qa.json");
 const PASSPHRASE = "screenshot tower passphrase";
 
@@ -53,14 +56,71 @@ const VIEWPORTS = [
   { name: "mobile", width: 375, height: 812 },
 ] as const;
 
-const PAGES = [
-  { slug: "overview", path: "/overview" },
-  { slug: "dashboards", path: "/dashboards" },
-  { slug: "designer", path: null }, // resolved once a dashboard exists
-  { slug: "device", path: "/device" },
-  { slug: "voice", path: "/voice" },
-  { slug: "diagnostics", path: "/diagnostics" },
-] as const;
+type Ids = Record<string, string>;
+type Shot = {
+  slug: string;
+  path: (ids: Ids) => string;
+  /** Put the page in the state worth photographing. */
+  prepare?: (page: Page) => Promise<void>;
+};
+
+async function selectBlock(page: Page, type: string): Promise<void> {
+  await page.locator(`[data-testid="module-${type}"]`).first().click({ position: { x: 20, y: 20 } });
+  await page.waitForTimeout(600);
+}
+
+async function reveal(page: Page, selector: string): Promise<void> {
+  const target = page.locator(selector).first();
+  await target.waitFor({ timeout: 10000 });
+  await target.evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await page.waitForTimeout(400);
+}
+
+const PAGES: Record<(typeof VIEWPORTS)[number]["name"], Shot[]> = {
+  desktop: [
+    { slug: "home", path: () => "/overview" },
+    { slug: "compositions", path: () => "/dashboards" },
+    {
+      slug: "editor",
+      path: (ids) => `/dashboards/${ids["morning-briefing"]}/edit`,
+      prepare: (page) => selectBlock(page, "headline"),
+    },
+    {
+      slug: "image-library",
+      path: (ids) => `/dashboards/${ids["welcome"]}/edit`,
+      prepare: async (page) => {
+        // The picker as the inspector shows it for a selected Image block.
+        await selectBlock(page, "image");
+        const tab = page.getByTestId("opt-source-tab-library");
+        if (await tab.count()) await tab.click();
+        await page.waitForTimeout(800);
+        await page
+          .locator('[data-testid="inspector-card"] .library-search')
+          .first()
+          .evaluate((el) => el.scrollIntoView({ block: "start" }));
+        await page.waitForTimeout(800);
+      },
+    },
+    {
+      slug: "weather-formats",
+      path: (ids) => `/dashboards/${ids["morning-briefing"]}/edit`,
+      prepare: async (page) => {
+        await selectBlock(page, "weatherCompact");
+        await reveal(page, '[data-testid="inspector-card"] .visual-picker');
+      },
+    },
+    {
+      slug: "home-assistant",
+      path: (ids) => `/dashboards/${ids["home-dashboard"]}/edit`,
+      prepare: async (page) => {
+        await selectBlock(page, "homeSensors");
+        await reveal(page, '[data-testid="ha-picker"]');
+      },
+    },
+    { slug: "device", path: () => "/device" },
+  ],
+  mobile: [{ slug: "home", path: () => "/overview" }],
+};
 
 /** Something noticed while one page was on screen at one width. */
 type Problem = {
@@ -178,10 +238,11 @@ async function main(): Promise<void> {
         NEXT_DIST_DIR: SCREENSHOT_DIST_DIR,
         // Fixtures, not the world. See src/server/sources/e2eFixtures.ts.
         NOTE4C_TOWER_E2E: "1",
+        NOTE4C_TOWER_SHOWCASE: "1",
         NOTE4C_MOCK_PANEL_MS: "300",
         NOTE4C_PUSH_MAX_WAIT_MS: "12000",
         // A fixed zone, so the timestamp tile reads the same in every run.
-        NOTE4C_PANEL_TIMEZONE: "UTC",
+        NOTE4C_PANEL_TIMEZONE: "Europe/Lisbon",
         // Every source explicitly off, so a developer's own .env.local — which
         // Next loads into this process — cannot put their calendar, their
         // sensors or their coordinates into a committed screenshot.
@@ -207,7 +268,7 @@ async function main(): Promise<void> {
     await waitForServer();
 
     const browser = await chromium.launch();
-    let dashboardId = "";
+    const ids: Ids = {};
     const reports: PageReport[] = [];
     const outsideCapture: Array<Problem & { viewport: string }> = [];
 
@@ -216,7 +277,7 @@ async function main(): Promise<void> {
         viewport: { width: viewport.width, height: viewport.height },
         // The same zone the server is given above: the browser preview reads
         // the clock too, and would otherwise print the host machine's zone.
-        timezoneId: "UTC",
+        timezoneId: "Europe/Lisbon",
         deviceScaleFactor: 2,
       });
       const page = await context.newPage();
@@ -271,48 +332,41 @@ async function main(): Promise<void> {
       await page.getByTestId("submit-auth").click();
       await page.waitForURL("**/overview");
 
-      if (dashboardId === "") {
+      if (Object.keys(ids).length === 0) {
         await page.goto(`${BASE}/dashboards`);
         const token = await csrf(page);
-        // Through the API, the way the first template does it. The gallery has
-        // no title-and-Create form any more: a new composition starts from the
-        // template picker, and driving a dialog to seed a screenshot would be
-        // photographing the seeding rather than the product.
-        // The "Weather & agenda" starting composition, written the way the
-        // template picker writes it: a blank v1, the layout as v2.
-        const template = TEMPLATES.find((t) => t.key === "weatherAgenda");
-        if (!template) throw new Error("The weatherAgenda template is gone");
-        const created = await page.request.post(`${BASE}/api/dashboards`, {
-          headers: { "content-type": "application/json", "x-csrf-token": token },
-          data: { title: template.name, starter: false },
-        });
-        const body = (await created.json()) as { record: { doc: { id: string } } };
-        dashboardId = body.record.doc.id;
-        const doc = { ...template.build(new Date()), id: dashboardId, title: template.name };
-        const saved = await page.request.put(`${BASE}/api/dashboards/${dashboardId}`, {
-          headers: { "content-type": "application/json", "x-csrf-token": token },
-          data: { doc },
-        });
-        const savedBody = (await saved.json()) as { record: { doc: unknown } };
-        await page.request.post(`${BASE}/api/dashboards/${dashboardId}/versions`, {
-          headers: { "content-type": "application/json", "x-csrf-token": token },
-          data: { doc: savedBody.record.doc, note: "Started from the Weather & agenda template" },
-        });
-        // Selected, so Overview has something to talk about.
-        await page.request.patch(`${BASE}/api/dashboards/${dashboardId}`, {
-          headers: { "content-type": "application/json", "x-csrf-token": token },
+        const headers = { "content-type": "application/json", "x-csrf-token": token };
+        // English on the panel, like the README renders.
+        await page.request.patch(`${BASE}/api/state`, { headers, data: { panelLang: "en" } });
+        // Seeded through the API in reverse, so the gallery lists them in
+        // showcase order (newest first).
+        for (const item of [...SHOWCASE].reverse()) {
+          const created = await page.request.post(`${BASE}/api/dashboards`, {
+            headers,
+            data: { title: item.title, starter: false },
+          });
+          const body = (await created.json()) as { record: { doc: { id: string } } };
+          const id = body.record.doc.id;
+          ids[item.key] = id;
+          const doc = { ...item.doc, id, title: item.title };
+          const saved = await page.request.put(`${BASE}/api/dashboards/${id}`, { headers, data: { doc } });
+          const savedBody = (await saved.json()) as { record: { doc: unknown } };
+          await page.request.post(`${BASE}/api/dashboards/${id}/versions`, {
+            headers,
+            data: { doc: savedBody.record.doc, note: "Showcase composition" },
+          });
+        }
+        // The morning briefing is on the panel, so Home has a frame to show.
+        await page.request.patch(`${BASE}/api/dashboards/${ids["morning-briefing"]}`, {
+          headers,
           data: { selected: true },
         });
-        // One push, so the panel card shows a frame rather than an empty state.
-        await page.request.post(`${BASE}/api/device/push`, {
-          headers: { "content-type": "application/json", "x-csrf-token": token },
-          data: { force: true },
-        });
+        await page.request.post(`${BASE}/api/device/push`, { headers, data: { force: true } });
+        await page.waitForTimeout(3000);
       }
 
-      for (const target of PAGES) {
-        const url =
-          target.path ?? `/dashboards/${dashboardId}/edit`;
+      for (const target of PAGES[viewport.name]) {
+        const url = target.path(ids);
         const file = path.join(OUT_DIR, `${viewport.name}-${target.slug}.png`);
         const report: PageReport = {
           viewport: viewport.name,
@@ -329,6 +383,7 @@ async function main(): Promise<void> {
         await page.goto(`${BASE}${url}`);
         // Let the first read land, so nothing is photographed mid-skeleton.
         await page.waitForTimeout(2500);
+        if (target.prepare) await target.prepare(page);
 
         report.scrollWidth = await page.evaluate(
           () => document.documentElement.scrollWidth,

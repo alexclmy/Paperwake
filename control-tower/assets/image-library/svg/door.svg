@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Front door with keys. NOTE4C image library, CC0. -->
+  <!-- brick wall -->
+  <rect x="0" y="0" width="400" height="270" fill="#fff"/>
+  <g stroke="#000" stroke-width="2">
+    <path d="M0 30H400M0 60H400M0 90H400M0 120H400M0 150H400M0 180H400M0 210H400M0 240H400"/>
+    <path d="M30 0V30M90 0V30M150 0V30M250 0V30M310 0V30M370 0V30
+             M60 30V60M120 30V60M280 30V60M340 30V60
+             M30 60V90M90 60V90M310 60V90M370 60V90
+             M60 90V120M340 90V120M30 120V150M370 120V150
+             M60 150V180M340 150V180M30 180V210M370 180V210
+             M60 210V240M340 210V240M30 240V270M370 240V270"/>
+  </g>
+  <g fill="rgb(170,170,170)"><rect x="0" y="62" width="28" height="26"/><rect x="342" y="152" width="58" height="26"/><rect x="62" y="212" width="40" height="26"/><rect x="312" y="2" width="56" height="26"/></g>
+  <!-- door frame & lintel -->
+  <rect x="100" y="30" width="200" height="240" fill="#000"/>
+  <rect x="90" y="22" width="220" height="16" fill="#fff" stroke="#000" stroke-width="5"/>
+  <!-- door panel -->
+  <rect x="116" y="46" width="168" height="224" fill="#ff0000" stroke="#000" stroke-width="5"/>
+  <!-- fanlight window -->
+  <path d="M132 100 V82 A68 32 0 0 1 268 82 V100 Z" fill="rgb(0,170,0)" stroke="#000" stroke-width="5"/>
+  <path d="M200 52 V100 M166 58 L176 100 M234 58 L224 100" stroke="#000" stroke-width="3"/>
+  <!-- raised panels -->
+  <g fill="none" stroke="#000" stroke-width="4">
+    <rect x="134" y="114" width="56" height="62"/>
+    <rect x="210" y="114" width="56" height="62"/>
+    <rect x="134" y="190" width="56" height="64"/>
+    <rect x="210" y="190" width="56" height="64"/>
+  </g>
+  <g fill="rgb(128,0,0)"><path d="M186 118h0v54h-0zM184 118 H186 V172 H140 V170 H184Z"/><rect x="182" y="118" width="4" height="54"/><rect x="138" y="168" width="48" height="4"/><rect x="258" y="118" width="4" height="54"/><rect x="214" y="168" width="48" height="4"/><rect x="182" y="194" width="4" height="56"/><rect x="138" y="246" width="48" height="4"/><rect x="258" y="194" width="4" height="56"/><rect x="214" y="246" width="48" height="4"/></g>
+  <!-- right-side door shadow -->
+  <rect x="270" y="46" width="14" height="224" fill="rgb(128,0,0)"/>
+  <!-- knocker -->
+  <circle cx="200" cy="140" r="5" fill="#000"/>
+  <circle cx="200" cy="152" r="10" fill="none" stroke="#000" stroke-width="4"/>
+  <!-- handle + lock plate -->
+  <rect x="240" y="176" width="16" height="44" rx="4" fill="#fff" stroke="#000" stroke-width="4"/>
+  <circle cx="248" cy="188" r="6" fill="#000"/>
+  <path d="M248 204 v10" stroke="#000" stroke-width="4"/>
+  <!-- house number -->
+  <rect x="180" y="62" width="40" height="0" fill="none"/>
+  <!-- step -->
+  <rect x="80" y="270" width="240" height="14" fill="#fff" stroke="#000" stroke-width="5"/>
+  <rect x="60" y="284" width="280" height="16" fill="rgb(140,140,140)" stroke="#000" stroke-width="5"/>
+  <!-- doormat -->
+  <!-- keys on a hook, hanging at left -->
+  <circle cx="54" cy="104" r="6" fill="#000"/>
+  <path d="M54 104 V120" stroke="#000" stroke-width="4"/>
+  <circle cx="54" cy="132" r="12" fill="none" stroke="#000" stroke-width="5"/>
+  <g stroke="#000" stroke-width="4" stroke-linejoin="round">
+    <circle cx="40" cy="156" r="11" fill="#fff"/>
+    <circle cx="40" cy="156" r="4" fill="#000"/>
+    <path d="M36 166 V210 M36 196 h-8 M36 204 h-8" fill="none" stroke-width="6"/>
+    <circle cx="70" cy="154" r="11" fill="#ff0000"/>
+    <circle cx="70" cy="154" r="4" fill="#fff"/>
+    <path d="M72 164 V214 M72 200 h9 M72 208 h7" fill="none" stroke-width="6"/>
+  </g>
+  <!-- tag -->
+  <path d="M54 144 L58 176 L48 196 L36 186 L44 160Z" fill="none"/>
+  <!-- potted shrub at right -->
+  <path d="M324 270 H368 L374 230 H318 Z" fill="#fff" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M320 240 H372" stroke="#000" stroke-width="2"/>
+  <circle cx="346" cy="204" r="30" fill="rgb(90,90,90)" stroke="#000" stroke-width="5"/>
+  <path d="M330 196 q8 -8 14 0 M348 214 q8 -8 14 0 M344 186 q6 -6 12 0" stroke="#fff" stroke-width="3" fill="none"/>
+</svg>

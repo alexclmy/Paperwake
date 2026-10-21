@@ -61,3 +61,26 @@ export function stageIndexFor(state: string | null): number {
       return 0;
   }
 }
+
+/**
+ * The same ledger facts, said in three words for the non-blocking send
+ * banner: sent → received → displayed. Each lights on the stage index
+ * above, so the banner can never claim more than the dialog would have.
+ */
+export const COMPACT_STAGES: ReadonlyArray<{ name: string; doneAt: number }> = [
+  { name: "Sent", doneAt: 2 },
+  { name: "Received", doneAt: 3 },
+  { name: "Displayed", doneAt: SEND_STAGES.length },
+];
+
+export function compactStageStates(stageIndex: number): Array<"done" | "now" | "todo"> {
+  let nowGiven = false;
+  return COMPACT_STAGES.map((stage) => {
+    if (stageIndex >= stage.doneAt) return "done";
+    if (!nowGiven) {
+      nowGiven = true;
+      return "now";
+    }
+    return "todo";
+  });
+}

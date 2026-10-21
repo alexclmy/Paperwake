@@ -31,9 +31,11 @@ import {
   LIST_ROWS_TAG,
   type ListRow,
 } from "@/core/render/modules/list";
-import { ADVANCED_OPTION_TAG, LAYOUT_VARIANT_TAG, cellsToPixels } from "@/core/render/types";
+import { ADVANCED_OPTION_TAG, GRID_COLS, GRID_ROWS, LAYOUT_VARIANT_TAG, cellsToPixels } from "@/core/render/types";
 import { IMAGE_SOURCE_TAG, type ImageSource } from "@/core/render/modules/image";
 import { ImageField } from "./ImageField";
+import { HomeSensorsField } from "./HomeSensorsField";
+import { HOME_SENSORS_TAG, type HomeSensorEntity } from "@/core/render/modules/homeSensors";
 import type { DashboardSources } from "@/core/render/data";
 import { VisualPicker, thumbnailDoc, type PickerOption } from "./VisualPicker";
 import { Fold } from "./Disclosure";
@@ -76,6 +78,7 @@ type FieldKind =
   | { kind: "enum"; values: string[] }
   | { kind: "datetime-nullable" }
   | { kind: "image-source" }
+  | { kind: "home-sensors" }
   | { kind: "unsupported" };
 
 function unwrap(schema: z.ZodTypeAny): z.ZodTypeAny {
@@ -113,6 +116,7 @@ function isAdvanced(schema: z.ZodTypeAny): boolean {
 
 function describe(schema: z.ZodTypeAny): FieldKind {
   if (taggedAs(schema, IMAGE_SOURCE_TAG)) return { kind: "image-source" };
+  if (taggedAs(schema, HOME_SENSORS_TAG)) return { kind: "home-sensors" };
   if (taggedAs(schema, TEXT_ELEMENT_TAG)) return { kind: "text-element" };
   if (taggedAs(schema, TEXT_STYLE_TAG)) return { kind: "text-style" };
   if (taggedAs(schema, LIST_ROWS_TAG)) return { kind: "list-rows" };
@@ -166,7 +170,35 @@ function maxLengthOf(schema: z.ZodTypeAny): number | undefined {
   return max && "value" in max ? (max.value as number) : undefined;
 }
 
+const FIELD_LABEL: Record<string, string> = {
+  showCurrent: "Current temp & condition",
+  showFeelsLike: "Feels like",
+  showWind: "Wind",
+  showRain: "Rain chance (now)",
+  showDaySummary: "Day summary (morning · noon · evening)",
+  showPartTemp: "Day summary: temperature",
+  showPartRain: "Day summary: rain chance",
+  partRainLabel: "Day summary rain chance label",
+  staleMarker: "Old reading marker",
+  unavailableWord: "Missing reading word",
+  emptyText: "No sensor text",
+  valueStyle: "Value style",
+  labelStyle: "Label style",
+  lineStyle: "Line style",
+  partStyle: "Day parts style",
+};
+
+/**
+ * Toggles stored as optional: absent means "follow this other option", which
+ * is how older modules keep their exact rendering. The switch shows what the
+ * panel actually does.
+ */
+const INHERITED_TOGGLE: Record<string, (options: Record<string, unknown>) => unknown> = {
+  showPartRain: (options) => options.showRain,
+};
+
 function humanise(key: string): string {
+  if (FIELD_LABEL[key]) return FIELD_LABEL[key];
   const spaced = key.replace(/([A-Z])/g, " $1").toLowerCase().trim();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
@@ -210,6 +242,8 @@ const WEIGHT_LABEL: Record<string, string> = {
 
 /** Friendlier words for the enums a module offers. Falls back to the value. */
 const ENUM_LABEL: Record<string, string> = {
+  percent: "Number only (2%)",
+  drop: "Rain drop + number",
   bullet: "Bullet",
   numbered: "Numbered",
   checkbox: "Checkbox (drawing only)",
@@ -1099,6 +1133,16 @@ export function ModuleInspector({
         const roleNotes = notes.filter((entry) => entry.role === key);
         const roleContrasts = contrasts.filter((entry) => entry.role === key);
 
+        if (field.kind === "home-sensors") {
+          return (
+            <HomeSensorsField
+              key={key}
+              value={Array.isArray(value) ? (value as HomeSensorEntity[]) : []}
+              onChange={(next) => set(key, next)}
+            />
+          );
+        }
+
         if (field.kind === "image-source") {
           const source = value as ImageSource | undefined;
           if (!source || typeof source !== "object") return null;
@@ -1192,16 +1236,17 @@ export function ModuleInspector({
 
         if (field.kind === "boolean") {
           return (
-            <label className="field" key={key}>
+            <label className="field field-switch" key={key}>
               <span>
+                {humanise(key)}
                 <input
                   id={id}
                   type="checkbox"
-                  checked={value === true}
+                  role="switch"
+                  checked={(value ?? INHERITED_TOGGLE[key]?.(options)) === true}
                   onChange={(event) => set(key, event.target.checked)}
                   data-testid={id}
-                />{" "}
-                {humanise(key)}
+                />
               </span>
               {key === "showProvenance" && (
                 <span className="field-hint">
@@ -1218,7 +1263,7 @@ export function ModuleInspector({
               <span>{humanise(key)}</span>
               <select
                 id={id}
-                value={String(value ?? "")}
+                value={String(value ?? field.values[0] ?? "")}
                 onChange={(event) => set(key, event.target.value)}
                 data-testid={id}
               >
@@ -1387,10 +1432,18 @@ export function ModuleInspector({
    * is the whole of the first surface.
    */
   const primary: ReactNode[] = [];
+  const toggles: ReactNode[] = [];
+  const layout: ReactNode[] = [];
   const fine: ReactNode[] = [];
+
+  const hasAlignment = module.type === "message" && "verticalAlign" in shape;
+  if (hasAlignment) {
+    layout.push(<AlignmentControls key="alignment" options={options} onChange={onChange} />);
+  }
 
   for (const [key, fieldSchema] of bodyEntries) {
     const field = describe(fieldSchema);
+    if (hasAlignment && key === "verticalAlign") continue;
 
     if (field.kind === "text-element") {
       const element = options[key] as TextElement | undefined;
@@ -1447,6 +1500,8 @@ export function ModuleInspector({
       field.kind === "colour-token"
     ) {
       fine.push(node);
+    } else if (field.kind === "boolean") {
+      toggles.push(node);
     } else {
       primary.push(node);
     }
@@ -1454,13 +1509,33 @@ export function ModuleInspector({
 
   return (
     <div data-testid="module-inspector">
-      <p className="field-hint">{definition.description}</p>
+      <p className="field-hint inspector-lede">{definition.description}</p>
 
-      {variantPicker}
-      {primary}
+      {variantPicker && <section className="inspector-section">{variantPicker}</section>}
+
+      {primary.length > 0 && (
+        <section className="inspector-section" aria-label="Content">
+          <h3 className="inspector-section-title">Content</h3>
+          {primary}
+        </section>
+      )}
+
+      {toggles.length > 0 && (
+        <section className="inspector-section inspector-switches" aria-label="Show">
+          <h3 className="inspector-section-title">Show</h3>
+          {toggles}
+        </section>
+      )}
+
+      {layout.length > 0 && (
+        <section className="inspector-section" aria-label="Layout">
+          <h3 className="inspector-section-title">Layout</h3>
+          {layout}
+        </section>
+      )}
 
       {fine.length > 0 && (
-        <Fold summary="Fine-tune" testId="inspector-finetune">
+        <Fold summary="Style" testId="inspector-finetune">
           <p className="field-hint">Type, colour and the fine print.</p>
           {fine}
         </Fold>
@@ -1504,6 +1579,12 @@ const VARIANT_LABEL: Record<string, string> = {
   hail: "Hail",
   fog: "Fog",
   wind: "Wind",
+  list: "List",
+  oneLine: "1 line",
+  twoLines: "2 lines",
+  dayParts: "Morning · noon · evening",
+  compact: "One line",
+  tiles: "Tiles",
 };
 
 const VARIANT_HINT: Record<string, string> = {
@@ -1515,12 +1596,109 @@ const VARIANT_HINT: Record<string, string> = {
   horizon: "A low sky band with the readings large below.",
   duo: "The sun on the left, the moon on the right.",
   auto: "Follows the weather right now, by day and by night.",
+  list: "Date above, title on two lines.",
+  oneLine: "The next event, on one line.",
+  twoLines: "The next two, one line each.",
+  dayParts: "Today's line, then morning, noon and evening.",
 };
 
 /** What the thumbnail row is called, per option: layouts by default. */
 const VARIANT_LEGEND: Record<string, string> = {
   scene: "Sky",
+  format: "Format",
 };
+
+const H_ALIGN: Array<{ value: "left" | "center" | "right"; label: string }> = [
+  { value: "left", label: "Left" },
+  { value: "center", label: "Center" },
+  { value: "right", label: "Right" },
+];
+const V_ALIGN: Array<{ value: "top" | "middle" | "bottom"; label: string }> = [
+  { value: "top", label: "Top" },
+  { value: "middle", label: "Middle" },
+  { value: "bottom", label: "Bottom" },
+];
+
+/**
+ * Text placement for a note, in one place and in plain view: horizontal is the
+ * body's own style.align (the headline's mechanism), vertical is the module's
+ * verticalAlign. Two segmented controls, nothing else.
+ */
+/** Small line icons for the alignment segmented controls. */
+function AlignIcon({ kind }: { kind: "left" | "center" | "right" | "top" | "middle" | "bottom" }) {
+  const lines: Record<typeof kind, ReactNode> = {
+    left: <path d="M4 6h16M4 10h10M4 14h16M4 18h10" />,
+    center: <path d="M4 6h16M7 10h10M4 14h16M7 18h10" />,
+    right: <path d="M4 6h16M10 10h10M4 14h16M10 18h10" />,
+    top: <path d="M4 4h16M9 8h6v6H9z" />,
+    middle: <path d="M4 12h3M17 12h3M9 9h6v6H9z" />,
+    bottom: <path d="M4 20h16M9 10h6v6H9z" />,
+  };
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {lines[kind]}
+    </svg>
+  );
+}
+
+function AlignmentControls({
+  options,
+  onChange,
+}: {
+  options: Record<string, unknown>;
+  onChange: (next: Record<string, unknown>) => void;
+}) {
+  const body = options.body as TextElement | undefined;
+  if (!body) return null;
+  const h = body.style.align;
+  const v = (options.verticalAlign as string | undefined) ?? "top";
+  return (
+    <div className="align-controls" data-testid="align-controls">
+      <div className="type-field">
+        <span id="align-h-label">Horizontal</span>
+        <div className="segmented" role="group" aria-labelledby="align-h-label">
+          {H_ALIGN.map((entry) => (
+            <button
+              key={entry.value}
+              type="button"
+              className="btn"
+              title={entry.label}
+              aria-label={entry.label}
+              aria-pressed={h === entry.value}
+              data-testid={`align-h-${entry.value}`}
+              onClick={() =>
+                onChange({ ...options, body: { ...body, style: { ...body.style, align: entry.value } } })
+              }
+            >
+              <AlignIcon kind={entry.value} />
+              <span className="visually-hidden">{entry.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="type-field">
+        <span id="align-v-label">Vertical</span>
+        <div className="segmented" role="group" aria-labelledby="align-v-label">
+          {V_ALIGN.map((entry) => (
+            <button
+              key={entry.value}
+              type="button"
+              className="btn"
+              title={entry.label}
+              aria-label={entry.label}
+              aria-pressed={v === entry.value}
+              data-testid={`align-v-${entry.value}`}
+              onClick={() => onChange({ ...options, verticalAlign: entry.value })}
+            >
+              <AlignIcon kind={entry.value} />
+              <span className="visually-hidden">{entry.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function renderVariantPicker({
   field,
@@ -1545,12 +1723,16 @@ function renderVariantPicker({
 }) {
   const span = definition.defaultSpan;
   // Lay the module across the panel so its disposition reads in the thumbnail.
-  const w = Math.min(8, Math.max(span.w, 6));
-  const h = Math.min(6, Math.max(span.h, 3));
+  const w = Math.min(GRID_COLS, Math.max(span.w, 12));
+  const h = Math.min(GRID_ROWS, Math.max(span.h, 6));
   const options: PickerOption<string>[] = field.values.map((variantValue) => ({
     value: variantValue,
-    label: VARIANT_LABEL[variantValue] ?? humanise(variantValue),
-    ...(VARIANT_HINT[variantValue] ? { hint: VARIANT_HINT[variantValue] } : {}),
+    // "auto" on a weather scene follows the live weather; on every other
+    // layout option it means "pick the best disposition for this size".
+    label: variantValue === "auto" && optionKey !== "scene" ? "Auto" : VARIANT_LABEL[variantValue] ?? humanise(variantValue),
+    ...(variantValue === "auto" && optionKey !== "scene"
+      ? { hint: "Picks the best layout for the block's size, and changes when you resize it." }
+      : VARIANT_HINT[variantValue] ? { hint: VARIANT_HINT[variantValue] } : {}),
     doc: thumbnailDoc(
       {
         ...module,
@@ -1562,7 +1744,7 @@ function renderVariantPicker({
   }));
   return (
     <VisualPicker
-      legend={VARIANT_LEGEND[optionKey] ?? "Disposition"}
+      legend={VARIANT_LEGEND[optionKey] ?? "Layout"}
       value={value}
       options={options}
       sources={sources}

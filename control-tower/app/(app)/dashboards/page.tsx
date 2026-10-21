@@ -1,10 +1,12 @@
 "use client";
 
+import { usePanelLang } from "@/ui/panelLang";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiError, apiGet, apiSend, relativeTime } from "@/ui/api";
 import { Badge, Button, ErrorNote } from "@/ui/components";
+import { DeleteCompositionDialog } from "@/ui/DeleteCompositionDialog";
 import { PageEmpty, PageLoading } from "@/ui/PageState";
 import { SendFlowDialog } from "@/ui/SendFlowDialog";
 import { TemplatePicker } from "@/ui/TemplatePicker";
@@ -49,9 +51,11 @@ export default function DashboardsPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [stamp, setStamp] = useState(() => Date.now());
+  const { lang: panelLang } = usePanelLang();
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [sendFor, setSendFor] = useState<DashboardSummary | null>(null);
+  const [deleteFor, setDeleteFor] = useState<DashboardSummary | null>(null);
 
   /*
    * Archived compositions are always fetched, and folded away in the markup.
@@ -156,8 +160,11 @@ export default function DashboardsPage() {
 
   return (
     <>
-      <div className="page-head">
-        <h1>Compositions</h1>
+      <div className="page-head page-title">
+        <div>
+          <h1>Compositions</h1>
+          <p>Everything you can show on the panel. Click a preview to edit it.</p>
+        </div>
         <Button
           variant="primary"
           onClick={() => setTemplatesOpen(true)}
@@ -200,7 +207,7 @@ export default function DashboardsPage() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/api/dashboards/${summary.id}/preview?live=1&t=${stamp}`}
+                  src={`/api/dashboards/${summary.id}/preview?live=1&lang=${panelLang}&t=${stamp}`}
                   alt={`Preview of ${summary.title}`}
                   width={400}
                   height={300}
@@ -212,12 +219,12 @@ export default function DashboardsPage() {
               <div className="dash-body">
                 <div className="dash-title-row">
                   <h3>{summary.title}</h3>
-                  <span className="meta">edited {relativeTime(summary.updatedAt)}</span>
+                  
                 </div>
                 <span className="meta">
-                  v{summary.latestVersion} · {summary.moduleCount} modules
+                  v{summary.latestVersion} · edited {relativeTime(summary.updatedAt)} · {summary.moduleCount} blocks
                   {summary.refreshIntervalMinutes !== null && (
-                    <> · auto every {summary.refreshIntervalMinutes} min</>
+                    <> · refreshes every {summary.refreshIntervalMinutes} min</>
                   )}
                 </span>
 
@@ -265,9 +272,6 @@ export default function DashboardsPage() {
                       Show on panel
                     </Button>
                   )}
-                  <Link className="btn btn-default" href={`/dashboards/${summary.id}/edit`}>
-                    Edit
-                  </Link>
                   {/*
                     Labelled, because an unlabelled "..." announces nothing to
                     a screen reader. The row it opens replaces the floating
@@ -290,7 +294,10 @@ export default function DashboardsPage() {
                 </div>
 
                 {menuFor === summary.id && (
-                  <div className="more-row" data-testid={`more-panel-${summary.id}`}>
+                  <div className="more-row menu-popover" role="menu" data-testid={`more-panel-${summary.id}`}>
+                    <Link className="btn btn-default" role="menuitem" href={`/dashboards/${summary.id}/edit`}>
+                      Edit
+                    </Link>
                     <Button
                       disabled={busy}
                       onClick={() =>
@@ -316,6 +323,17 @@ export default function DashboardsPage() {
                       }
                     >
                       Archive
+                    </Button>
+                    <Button
+                      variant="danger"
+                      disabled={busy}
+                      onClick={() => {
+                        setMenuFor(null);
+                        setDeleteFor(summary);
+                      }}
+                      testId={`delete-${summary.id}`}
+                    >
+                      Delete…
                     </Button>
                   </div>
                 )}
@@ -351,6 +369,14 @@ export default function DashboardsPage() {
                 >
                   Restore
                 </Button>
+                <Button
+                  variant="danger"
+                  disabled={busy}
+                  onClick={() => setDeleteFor(summary)}
+                  testId={`delete-${summary.id}`}
+                >
+                  Delete…
+                </Button>
               </div>
             ))}
           </div>
@@ -365,6 +391,24 @@ export default function DashboardsPage() {
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
         onCreated={(name) => toast(`Started from “${name}” — saved`)}
+      />
+
+      <DeleteCompositionDialog
+        target={deleteFor}
+        selected={deleteFor !== null && list?.selectedDashboardId === deleteFor.id}
+        onClose={() => setDeleteFor(null)}
+        onArchive={(target) => {
+          setDeleteFor(null);
+          void run(
+            () => apiSend(`/api/dashboards/${target.id}`, "PATCH", { status: "archived" }),
+            "Archived — nothing on the panel changed",
+          );
+        }}
+        onDeleted={(target) => {
+          setDeleteFor(null);
+          void load();
+          toast(`“${target.title}” deleted permanently`);
+        }}
       />
 
       <SendFlowDialog

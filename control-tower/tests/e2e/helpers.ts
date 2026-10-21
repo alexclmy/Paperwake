@@ -104,7 +104,7 @@ export async function cellPosition(
 
   if (!measured) throw new Error(`No box for ${testId}`);
   const { stage, box } = measured;
-  const cell = stage.width / 8;
+  const cell = stage.width / 16;
   return {
     x: Math.round((box.x - stage.x) / cell),
     y: Math.round((box.y - stage.y) / cell),

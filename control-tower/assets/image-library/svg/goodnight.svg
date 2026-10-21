@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <!-- Bed under a crescent moon. NOTE4C image library, CC0. -->
+  <!-- night sky through the window: dense horizontal engraving -->
+  <rect x="0" y="0" width="400" height="300" fill="#fff"/>
+  <rect x="210" y="16" width="170" height="130" fill="rgb(0,40,0)" stroke="#000" stroke-width="6"/>
+  <path d="M295 16 V146 M210 81 H380" stroke="#000" stroke-width="5"/>
+  <!-- moon -->
+  <path d="M262 30 A30 30 0 1 0 288 76 A24 24 0 1 1 262 30 Z" fill="#ff0000" stroke="#000" stroke-width="3"/>
+  <g fill="#fff">
+    <path d="M330 34 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3z"/>
+    <path d="M356 104 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z"/>
+    <path d="M234 110 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2z"/>
+    <rect x="320" y="110" width="4" height="4"/><rect x="250" y="94" width="3" height="3"/><rect x="360" y="56" width="3" height="3"/><rect x="312" y="70" width="3" height="3"/>
+  </g>
+  <!-- curtains -->
+  <path d="M196 8 H226 C220 60 230 110 214 156 H196 Z" fill="rgb(150,150,150)" stroke="#000" stroke-width="4"/>
+  <path d="M394 8 H364 C370 60 360 110 376 156 H394 Z" fill="rgb(150,150,150)" stroke="#000" stroke-width="4"/>
+  <path d="M190 8 H400" stroke="#000" stroke-width="6"/>
+  <!-- floor -->
+  <path d="M0 268 H400" stroke="#000" stroke-width="5"/>
+  <rect x="0" y="270" width="400" height="30" fill="rgb(0,150,0)"/>
+  <!-- headboard -->
+  <path d="M24 270 V104 C24 84 104 84 104 104 V270" fill="#fff" stroke="#000" stroke-width="7"/>
+  <path d="M40 120 V230 M56 114 V230 M72 114 V230 M88 120 V230" stroke="#000" stroke-width="3"/>
+  <path d="M30 230 H98" stroke="#000" stroke-width="5"/>
+  <circle cx="64" cy="98" r="6" fill="#ff0000" stroke="#000" stroke-width="3"/>
+  <!-- mattress / quilt -->
+  <path d="M60 196 H330 V250 H60 Z" fill="#fff" stroke="#000" stroke-width="6"/>
+  <!-- pillow -->
+  <path d="M74 170 C70 150 140 146 146 166 C150 184 80 192 74 170 Z" fill="#fff" stroke="#000" stroke-width="5"/>
+  <path d="M90 168 q20 -6 40 0" stroke="#000" stroke-width="2" fill="none"/>
+  <!-- sleeper's head -->
+  <circle cx="132" cy="168" r="18" fill="#fff" stroke="#000" stroke-width="5"/>
+  <path d="M118 160 C122 146 146 146 150 160 C140 154 128 154 118 160Z" fill="#000"/>
+  <path d="M124 172 q4 3 8 0 M138 172 q4 3 8 0" stroke="#000" stroke-width="2.5" fill="none"/>
+  <!-- quilt with red patchwork -->
+  <path d="M140 176 C200 160 300 168 336 184 L340 252 H140 Z" fill="#ff0000" stroke="#000" stroke-width="6" stroke-linejoin="round"/>
+  <g stroke="#000" stroke-width="3" fill="none"><path d="M140 212 H340 M200 172 V252 M270 170 V252"/></g>
+  <g fill="#fff"><rect x="148" y="218" width="46" height="28"/><rect x="276" y="180" width="58" height="26"/></g>
+  <g stroke="#000" stroke-width="2"><path d="M148 232 H194 M171 218 V246 M276 193 H334 M305 180 V206"/></g>
+  <path d="M206 216 H264 V248 H206Z" fill="rgb(128,0,0)"/>
+  <path d="M140 252 C140 230 136 200 140 176" stroke="#000" stroke-width="5" fill="none"/>
+  <!-- footboard -->
+  <path d="M330 270 V170 C330 156 376 156 376 170 V270" fill="#fff" stroke="#000" stroke-width="7"/>
+  <path d="M344 180 V240 M362 180 V240" stroke="#000" stroke-width="3"/>
+  <!-- legs + under-bed shadow -->
+  <rect x="60" y="250" width="270" height="18" fill="rgb(70,70,70)"/>
+  <!-- Zzz -->
+  <g fill="none" stroke="#000" stroke-width="5" stroke-linejoin="miter">
+    <path d="M150 128 h18 l-18 20 h18"/>
+    <path d="M176 100 h14 l-14 16 h14" stroke-width="4"/>
+    <path d="M196 76 h10 l-10 12 h10" stroke-width="3"/>
+  </g>
+  <!-- slippers -->
+  <path d="M176 270 c0 -10 30 -10 34 0Z M216 270 c0 -10 30 -10 34 0Z" fill="#000"/>
+</svg>

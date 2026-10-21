@@ -26,10 +26,10 @@ interface Category {
 }
 
 const CATEGORIES: readonly Category[] = [
-  { label: "Weather", types: ["weatherHero", "weatherWeek", "weather24h", "octopus", "sky"] },
+  { label: "Weather", types: ["weatherHero", "weatherCompact", "weatherWeek", "weather24h", "octopus", "sky"] },
   { label: "Time & calendar", types: ["calendarNext", "countdown", "timestamp"] },
   { label: "Text & notes", types: ["headline", "message", "list", "conditionalMessage"] },
-  { label: "Data & home", types: ["haSensor"] },
+  { label: "Data & home", types: ["haSensor", "homeSensors"] },
   { label: "Image", types: ["image"] },
 ];
 
@@ -151,6 +151,13 @@ function ModuleIcon({ type }: { type: string }) {
           <path d="M3.6 16a8.4 8.4 0 0 1 16.8 0" />
           <path d="M12 16l4.2-3.4" />
           <circle cx="12" cy="16" r="1.3" fill="currentColor" stroke="none" />
+        </Glyph>
+      );
+    case "homeSensors":
+      return (
+        <Glyph>
+          <path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a3.5 3.5 0 1 1-4 0z" />
+          <path d="M17 7h3M17 10.5h3M17 14h3" />
         </Glyph>
       );
     case "image":

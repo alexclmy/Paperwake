@@ -13,6 +13,8 @@
     "test:e2e": "playwright test",
     "mock-device": "tsx mock-device/main.ts",
     "screenshots": "tsx tools/screenshots.ts",
+    "showcase": "tsx tools/showcase.ts",
+    "screenshots:all": "npm run showcase && npm run screenshots",
     "snapshot": "tools/public-snapshot.sh"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "22.18.1",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",

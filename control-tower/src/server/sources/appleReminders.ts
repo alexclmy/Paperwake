@@ -191,6 +191,12 @@ export const spawnRemindctl: RemindctlRunner = (argv, timeoutMs) => {
     const timer = setTimeout(() => {
       timedOut = true;
       child.kill("SIGKILL");
+      // A grandchild (e.g. a wrapper script's own child) can outlive the kill
+      // and keep the pipes open, so "close" may not fire until it exits.
+      // The budget is the contract: stop reading and settle now.
+      child.stdout?.destroy();
+      child.stderr?.destroy();
+      finish(null);
     }, timeoutMs);
 
     const finish = (status: number | null): void => {
