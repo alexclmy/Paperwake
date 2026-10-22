@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 test("home shows the status strip and a gallery with one-click Show on panel", async ({ page }, info) => {
   const { id } = await createDashboard(page, `Home ${info.project.name}`);
   await page.goto("/overview");
-  await expect(page.getByTestId("home-status")).toBeVisible();
+  await expect(page.getByTestId("on-panel")).toBeVisible();
   await expect(page.getByTestId(`home-card-${id}`)).toBeVisible();
   await page.getByTestId(`home-show-${id}`).click();
   await expect(page.getByTestId("send-review")).toBeVisible();

@@ -86,7 +86,8 @@ test("Show on panel selects the composition and opens the review", async ({
   await expect(page.getByTestId(`dash-${id}`).locator('[data-badge="selected"]')).toBeVisible();
 
   await page.goto("/overview");
-  await expect(page.getByRole("link", { name: title, exact: true })).toBeVisible();
+  await expect(page.getByTestId("push-picker")).toHaveValue(id);
+  void title;
   await expect(page.getByTestId("push-button")).toBeEnabled();
 });
 

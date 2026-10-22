@@ -51,7 +51,7 @@ const FIRST_PAINT_BUDGET_MS = 1_000;
  */
 async function warm(page: Page): Promise<void> {
   await page.goto("/overview");
-  await expect(page.getByTestId("state-strip")).toBeVisible();
+  await expect(page.getByTestId("on-panel")).toBeVisible();
   await page.goto("/device");
   await expect(page.getByTestId("state-strip")).toBeVisible();
 }
@@ -87,13 +87,13 @@ test.describe("a device that never answers costs a badge, not a page", () => {
   }) => {
     await setMock(page, { stallMs: NEVER_ANSWERS_MS });
 
-    const ms = await timeToPaint(page, "/overview", "state-strip");
+    const ms = await timeToPaint(page, "/overview", "on-panel");
     expect(ms).toBeLessThan(FIRST_PAINT_BUDGET_MS);
 
     // Not a skeleton: the real page, with the parts that do not need a panel.
     await expect(page.getByTestId("page-loading")).toHaveCount(0);
     await expect(page.getByTestId("on-panel")).toBeVisible();
-    await expect(page.getByTestId("refresh")).toBeEnabled();
+    await expect(page.getByTestId("push-button")).toBeVisible();
 
     // And every block that would otherwise be asserting something says, in
     // its own words, that it has not asked yet. Each of these replaced a
@@ -101,11 +101,8 @@ test.describe("a device that never answers costs a badge, not a page", () => {
     // made, "Select a composition" to somebody who had selected one, and
     // "Nothing is stored on the device yet" about a panel nobody had asked.
     await expect(page.getByTestId("panel-not-read")).toBeVisible();
-    // Sources live under the Advanced disclosure on Home now.
-    await page.getByTestId("home-advanced").locator("summary").click();
-    await expect(page.getByTestId("sources-not-read")).toBeVisible();
-    await expect(page.getByTestId("panel-unread")).toBeVisible();
-    await expect(page.getByTestId("panel-label")).toHaveText("On the panel");
+    // Never a "nothing on the panel" claim before the device was asked.
+    await expect(page.getByTestId("on-panel")).not.toHaveAttribute("data-hero", "frame");
   });
 
   test("/device draws the last known state and its controls", async ({ page }) => {
@@ -149,7 +146,7 @@ test.describe("a device that never answers costs a badge, not a page", () => {
   }) => {
     await setMock(page, { stallMs: NEVER_ANSWERS_MS });
     await page.goto("/overview");
-    await expect(page.getByTestId("state-strip")).toBeVisible();
+    await expect(page.getByTestId("on-panel")).toBeVisible();
 
     // Four crossings while reads are piling up behind the device mutex. Each
     // one used to cost the reader a fresh pair of timeouts.
@@ -199,7 +196,7 @@ test.describe("a device that never answers costs a badge, not a page", () => {
     await setMock(page, { stallMs: NEVER_ANSWERS_MS });
     const tick = setMock(page, { runDeviceTick: true }).catch(() => undefined);
 
-    const ms = await timeToPaint(page, "/overview", "state-strip");
+    const ms = await timeToPaint(page, "/overview", "on-panel");
     expect(ms).toBeLessThan(FIRST_PAINT_BUDGET_MS);
     await expect(page.getByTestId("page-loading")).toHaveCount(0);
 
@@ -230,7 +227,7 @@ test.describe("the reading replaces the record when it lands", () => {
     page,
   }) => {
     await page.goto("/overview");
-    await expect(page.getByTestId("state-strip")).toBeVisible();
+    await expect(page.getByTestId("on-panel")).toBeVisible();
 
     // No click, no reload: the page asked again by itself because the payload
     // it got said the server was still reading. Well inside the sixty-second
@@ -238,8 +235,9 @@ test.describe("the reading replaces the record when it lands", () => {
     await expect(page.getByTestId("panel-not-read")).toHaveCount(0, {
       timeout: 15_000,
     });
-    await expect(page.getByTestId("panel-provenance")).toContainText(
-      "device-reported",
+    await expect(page.getByTestId("device-chip")).toHaveAttribute(
+      "data-device-state",
+      "awake",
     );
   });
 

@@ -2,38 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  DEVICE_ACTION_COPY,
-  INTERACTIVE_REQUEST_NOTE,
-  NO_REMOTE_WAKE_NOTE,
-  batteryUnavailableReason,
-  deriveDeviceState,
-  describeWhatHappensNext,
-  type DevicePower,
-} from "@/core/power";
-import { describeQueuedPush } from "@/core/pushQueue";
+import { assessAutoRefresh } from "@/core/autoRefresh";
+import { deriveDeviceState, type DevicePower } from "@/core/power";
 import { ApiError, apiGet, apiSend, relativeTime, usePolledResource } from "@/ui/api";
-import {
-  Badge,
-  Banner,
-  Button,
-  Card,
-  Cta,
-  Empty,
-  ErrorNote,
-  FreshnessStamp,
-  MonoLabel,
-  TechDetails,
-} from "@/ui/components";
-import { Disclosure } from "@/ui/Disclosure";
+import { Button, ErrorNote } from "@/ui/components";
 import { PageError, PageLoading } from "@/ui/PageState";
 import { useRegisterPageDeviceState } from "@/ui/pageDeviceState";
 import { ScaledPanel } from "@/ui/ScaledPanel";
 import { SendFlowDialog } from "@/ui/SendFlowDialog";
 import { HomeGallery } from "@/ui/HomeGallery";
+import {
+  AutoRefreshBanner,
+  AutoRefreshChip,
+  toAssessInput,
+  type AutoRefreshPayload,
+} from "@/ui/AutoRefresh";
 import { TemplatePicker } from "@/ui/TemplatePicker";
 import { useToast } from "@/ui/Toast";
+import { usePanelLang } from "@/ui/panelLang";
 import { publishDeviceStatus, toDeviceReading } from "@/ui/useDeviceState";
+import { PANEL_TIMEZONE } from "@/core/render/time";
 
 interface SourceRow {
   key: string;
@@ -46,7 +34,7 @@ interface SourceRow {
 interface PushRecord {
   pushId: string;
   state: string;
-  first: { at: string; dashboardTitle: string; version: number; sha256: string };
+  first: { at: string; dashboardId: string; dashboardTitle: string; version: number; sha256: string };
   latest: {
     at: string;
     detail: string | null;
@@ -105,12 +93,7 @@ interface OverviewPayload {
   storedMatch: { dashboardTitle: string; version: number } | null;
   storedEqualsDisplayed: boolean;
   selected: { id: string; title: string; latestVersion: number } | null;
-  autoRefresh: {
-    intervalMinutes: number | null;
-    lastAt: string | null;
-    lastDashboardId: string | null;
-    lastOutcome: string | null;
-  };
+  autoRefresh: AutoRefreshPayload;
   pending: { sha256: string; wouldDedup: boolean } | null;
   sources: SourceRow[];
   composer:
@@ -137,13 +120,6 @@ interface StatePayload {
   firstRunCompletedAt: string | null;
 }
 
-const SOURCE_WORD: Record<SourceRow["state"], string> = {
-  ok: "ok",
-  stale: "stale",
-  unavailable: "unavailable",
-  not_configured: "not configured",
-};
-
 /**
  * How often the tower is re-read while this tab is in front.
  *
@@ -162,15 +138,61 @@ const SOURCE_WORD: Record<SourceRow["state"], string> = {
  */
 const POLL_MS = 60_000;
 
+interface CompositionSummary {
+  id: string;
+  title: string;
+  status: "active" | "archived";
+}
+
+/** "~20:10" in the panel's time zone, or "in 40 min" when it is close. */
+function humanWake(iso: string, now = Date.now()): string | null {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  const diff = t - now;
+  if (diff < 0) return null;
+  if (diff < 60 * 60_000) return `in ${Math.max(1, Math.round(diff / 60_000))} min`;
+  const time = new Date(t).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: PANEL_TIMEZONE,
+  });
+  return `~${time}`;
+}
+
+function KeyIcon({ name }: { name: "battery" | "wake" | "update" | "sources" }) {
+  const common = { width: 14, height: 14, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.5, "aria-hidden": true } as const;
+  if (name === "battery")
+    return <svg {...common}><rect x="1.5" y="4.5" width="11" height="7" rx="1.5" /><path d="M14.5 7v2" strokeLinecap="round" /></svg>;
+  if (name === "wake")
+    return <svg {...common}><circle cx="8" cy="8" r="6" /><path d="M8 4.5V8l2.5 1.5" strokeLinecap="round" /></svg>;
+  if (name === "update")
+    return <svg {...common}><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.5h-2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  return <svg {...common}><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" strokeLinecap="round" /></svg>;
+}
+
+function PencilIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+      <path d="M11 2.5l2.5 2.5L5.5 13H3v-2.5L11 2.5z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/**
+ * Home: what is on the panel, and one way to change it.
+ *
+ * Deliberately nothing else. The device's state lives in the header chip
+ * (one place, every page); wake schedule, Check now, interactive mode,
+ * sources, sequence numbers and the send ledger live on Device and Advanced.
+ */
 export default function OverviewPage() {
   const overview = usePolledResource<OverviewPayload>("/api/overview", POLL_MS, {
-    // While the server is still reading the device and the sources behind its
-    // own response, come back in a second rather than at the next minute.
     settling: (payload) => !payload.observed,
     settleMs: 1_000,
   });
   const data = overview.data;
   const toast = useToast();
+  const { lang: panelLang } = usePanelLang();
 
   const [busy, setBusy] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
@@ -178,13 +200,10 @@ export default function OverviewPage() {
   const [actionError, setActionError] = useState("");
   const [frameStamp, setFrameStamp] = useState(() => Date.now());
   const [firstRun, setFirstRun] = useState<boolean | null>(null);
+  const [compositions, setCompositions] = useState<CompositionSummary[]>([]);
 
-  // This page carries the device state itself, so the shell knows not to
-  // duplicate anything that would stack with it. See src/ui/pageDeviceState.ts.
   useRegisterPageDeviceState();
 
-  // Share the device reading with the shell, so the chip in the header costs
-  // no second device read. See src/ui/useDeviceState.ts.
   useEffect(() => {
     if (!data) return;
     publishDeviceStatus({
@@ -199,14 +218,6 @@ export default function OverviewPage() {
       nextWake: data.nextWake ?? null,
       deviceLastSeenAt: data.deviceLastSeenAt ?? null,
       lastConfirmed: data.lastConfirmed ?? null,
-      // The device's own observation time, not this response's. Overview
-      // serves a snapshot that can be minutes old, and publishing it under
-      // `readAt` would let a cached reading outrank a fresh one the Device
-      // page had just taken. See publishDeviceStatus.
-      //
-      // Undefined when nothing has been observed, because there is no
-      // observation time to give. `observed: false` above is what stops that
-      // being read as "current" — see publishDeviceStatus.
       readAt: data.observedAt ?? undefined,
     });
   }, [data]);
@@ -217,20 +228,35 @@ export default function OverviewPage() {
         const state = await apiGet<StatePayload>("/api/state");
         setFirstRun(state.firstRunCompletedAt === null);
       } catch {
-        // The welcome card is a nicety. A tower that cannot answer has more
-        // pressing things to tell the user, and the page says those elsewhere.
         setFirstRun(false);
       }
     })();
   }, []);
+
+  const selectedKey = data?.selected?.id ?? null;
+  const countKey = data?.dashboardCount ?? 0;
+  useEffect(() => {
+    void apiGet<{ dashboards: CompositionSummary[] }>("/api/dashboards")
+      .then((payload) => setCompositions(payload.dashboards.filter((d) => d.status === "active")))
+      .catch(() => setCompositions([]));
+  }, [selectedKey, countKey]);
 
   async function dismissFirstRun(): Promise<void> {
     setFirstRun(false);
     try {
       await apiSend("/api/state", "PATCH", { firstRunCompleted: true });
     } catch {
-      // Dismissed locally either way: nagging about a failed dismissal is
-      // worse than showing the card again next session.
+      // Dismissed locally either way.
+    }
+  }
+
+  async function choose(id: string): Promise<void> {
+    setActionError("");
+    try {
+      await apiSend(`/api/dashboards/${id}`, "PATCH", { selected: true });
+      await overview.reload();
+    } catch (caught) {
+      setActionError(caught instanceof ApiError ? caught.message : "Selection failed");
     }
   }
 
@@ -248,15 +274,13 @@ export default function OverviewPage() {
       );
       toast(
         action === "cancel"
-          ? "Queued send withdrawn — nothing was sent"
+          ? "Send cancelled — nothing was sent"
           : action === "acknowledge"
-            ? "Recorded: you accepted an unknown outcome"
+            ? "Marked as resolved"
             : `${response.state.replace(/_/g, " ")} — ${response.detail}`,
       );
     } catch (caught) {
-      setActionError(
-        caught instanceof ApiError ? caught.message : "The tower did not answer",
-      );
+      setActionError(caught instanceof ApiError ? caught.message : "The tower did not answer");
     } finally {
       setBusy(false);
       setFrameStamp(Date.now());
@@ -264,41 +288,16 @@ export default function OverviewPage() {
     }
   }
 
-  async function requestInteractive(): Promise<void> {
-    setBusy(true);
-    try {
-      const result = await apiSend<{ applied?: boolean; pending?: boolean; detail?: string }>(
-        "/api/device/power",
-        "POST",
-        { action: "set-mode", mode: "interactive", minutes: 15 },
-      );
-      toast(
-        result.applied
-          ? "Interactive for 15 minutes: applied to the device."
-          : result.pending
-            ? "Interactive for 15 minutes: held until the device next wakes."
-            : (result.detail ?? "Request recorded."),
-      );
-      await overview.reload();
-    } catch (caught) {
-      setActionError(
-        caught instanceof ApiError ? caught.message : "The tower did not answer",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (!data) {
     return (
       <>
         <div className="page-head">
-          <h1>Overview</h1>
+          <h1>Home</h1>
         </div>
         {overview.error ? (
           <PageError message={overview.error} onRetry={() => void overview.reload()} />
         ) : (
-          <PageLoading label="Reading the device and the sources." />
+          <PageLoading label="Loading your panel." />
         )}
       </>
     );
@@ -323,577 +322,274 @@ export default function OverviewPage() {
   const state = deriveDeviceState(reading.input);
 
   const queued = data.blocking?.state === "queued" ? data.blocking : null;
-  /*
-   * An unresolved send, which is not the same thing as an unreachable device.
-   *
-   * `pending`, `sent` and `uncertain` all mean the tower put a frame on the
-   * wire and cannot say what became of it. Until a human resolves one of them
-   * no new push may go out, and the picture above is therefore the last frame
-   * the device *confirmed* rather than the current one — which is why the
-   * label over the panel changes when this is set.
-   */
-  const unresolved =
-    data.blocking && data.blocking.state !== "queued" ? data.blocking : null;
+  const unresolved = data.blocking && data.blocking.state !== "queued" ? data.blocking : null;
 
-  const battery = data.power?.battery ?? null;
-  const batteryLine =
-    battery && battery.percent !== null
-      ? `battery ${battery.percent}%${reachable ? " · just measured" : " · at last contact"}`
-      : "battery not reported";
-
-  /*
-   * What the picture below is, said in the heading.
-   *
-   * "CONFIRMED" is a claim about a reading, so it is only made when there has
-   * been one. On the first paint the device has not been asked and the heading
-   * says only what the block is about.
-   */
-  const panelLabel = !data.device.observed
-    ? "On the panel"
-    : unresolved
-      ? "Last confirmed image"
-      : "On the panel · confirmed";
   const hasFrame = reachable && status?.displayed.present === true;
+  const lastSent = data.lastPush;
+
+  // What the hero shows, in order of truth: the device's own frame, else the
+  // last composition sent from here, else nothing yet.
+  type Hero =
+    | { kind: "frame"; title: string | null }
+    | { kind: "last-sent"; id: string; version: number; title: string }
+    | { kind: "empty" };
+  const hero: Hero = hasFrame
+    ? { kind: "frame", title: data.displayedMatch?.dashboardTitle ?? null }
+    : lastSent
+      ? {
+          kind: "last-sent",
+          id: lastSent.first.dashboardId,
+          version: lastSent.first.version,
+          title: lastSent.first.dashboardTitle,
+        }
+      : { kind: "empty" };
+
+  const updatedCandidates = [
+    lastSent?.state === "verified_displayed" ? lastSent.latest.at : null,
+    data.autoRefresh.lastOutcome === "verified_displayed" || data.autoRefresh.lastOutcome === "displayed"
+      ? data.autoRefresh.lastAt
+      : null,
+  ].filter((v): v is string => Boolean(v));
+  const updatedAt = updatedCandidates.sort().at(-1) ?? null;
+
+  const warning = assessAutoRefresh(
+    toAssessInput(data.autoRefresh, data.deviceMode === "real" ? "real" : "mock"),
+  );
+
+  const pickerValue = data.selected?.id ?? "";
+
+  // Which composition the Edit button opens: the one the hero names.
+  const editId =
+    hero.kind === "last-sent"
+      ? hero.id
+      : hero.kind === "frame"
+        ? data.displayedMatch?.dashboardId ?? null
+        : null;
+
+  // Key info: four quiet facts, humanized. Nothing here that needs a manual.
+  const batteryPct =
+    data.powerSupported !== false && data.power?.battery.percent != null ? data.power.battery.percent : null;
+  const wakeLabel = data.nextWake ? humanWake(data.nextWake.at) : null;
+  const lastFailed = lastSent ? ["failed", "uncertain"].includes(lastSent.state) : false;
+  const lastDisplayed = lastSent?.state === "verified_displayed";
+  const sourceIssues = data.sources.filter((src) => src.state === "stale" || src.state === "unavailable").length;
 
   return (
-    <>
-      <div className="page-title">
-        <div>
-          <h1>Home</h1>
-          <p>What your panel shows right now, and one click to change it.</p>
-        </div>
-        <Button variant="quiet" onClick={() => setTemplatesOpen(true)} testId="new-composition-top">
+    <div className="home">
+      <div className="home-head">
+        <h1>Home</h1>
+        <Button variant="quiet" onClick={() => setTemplatesOpen(true)} testId="new-composition">
           + New composition
         </Button>
-      </div>
-
-      {/* The day-to-day answer in one line: awake or asleep, battery, next
-          wake, what the panel shows. Everything technical is under Advanced. */}
-      <div className="home-status" data-testid="home-status" data-state={state.state}>
-        <span className={`home-status-badge dot-${state.state}`}>{state.label}</span>
-        <span>
-          {battery && battery.percent !== null ? `Battery ${battery.percent}%` : "Battery unknown"}
-        </span>
-        <span>
-          {reading.nextWakeLabel ? `Next wake ${reading.nextWakeLabel}` : "Next wake unknown"}
-        </span>
-        <span className="home-status-now">
-          {data.displayedMatch
-            ? `Showing “${data.displayedMatch.dashboardTitle}”`
-            : hasFrame
-              ? "Unknown image on screen"
-              : "Nothing known on screen"}
-        </span>
       </div>
 
       {overview.error && <ErrorNote>{overview.error}</ErrorNote>}
       {actionError && <ErrorNote>{actionError}</ErrorNote>}
 
-      {/*
-        The honest part of polling: when the tower itself has stopped answering
-        — a laptop that slept, a server that died — the page says so instead of
-        letting the numbers below age silently. This is about the POLL failing,
-        which is a different fact from the snapshot being stale: that one is
-        reported next to the panel, because the tower is answering perfectly
-        well and simply has not re-read the device yet.
-      */}
       {overview.stale && (
-        <Banner tone="pending" testId="stale-banner">
-          <Badge kind="pending" />
-          <span>
-            The tower has not answered for more than{" "}
-            {Math.round((POLL_MS * 2) / 60_000)} minutes, so everything below is
-            at least that old and may have moved on.
-          </span>
-          <Button onClick={() => void overview.reload()} disabled={busy} testId="stale-retry">
-            Read again
+        <div className="home-notice" data-testid="stale-banner">
+          <span>Connection lost — this page may be out of date.</span>
+          <Button className="btn-sm" onClick={() => void overview.reload()} disabled={busy} testId="stale-retry">
+            Retry
           </Button>
-        </Banner>
+        </div>
       )}
 
       {firstRun && (
-        // Three lines, not three paragraphs. This card sits directly above
-        // the panel — the picture the product is about — and the long version
-        // pushed that off the first screenful on a phone, so a new user's
-        // introduction to the tower was advice about something they could not
-        // see. Each step now says what to do and links to the page that
-        // explains it in place.
-        <Card title="Welcome to the control tower" testId="onboarding">
-          <div className="onboarding">
-            <ol>
-              <li>
-                <strong>Nothing here is hardware.</strong>
-                Every SIMULATED reading is the in-repo mock;{" "}
-                <Link href="/diagnostics">Advanced</Link> shows what the tower is
-                talking to.
-              </li>
-              <li>
-                <strong>Make your first composition.</strong>
-                <Link href="/dashboards">Compositions</Link> starts you with a
-                saved layout to show and edit.
-              </li>
-              <li>
-                <strong>Then the real panel, if you have one.</strong>
-                <Link href="/device">Device</Link> takes two confirmations, and
-                every send costs a full refresh cycle.
-              </li>
-            </ol>
-            <Button onClick={() => void dismissFirstRun()} testId="dismiss-onboarding">
-              Do not show this again
-            </Button>
-          </div>
-        </Card>
+        <div className="home-notice home-welcome" data-testid="onboarding">
+          <span>
+            <strong>Welcome.</strong> Pick a composition below and press <em>Show on panel</em>.
+            {data.simulated ? " Nothing here touches real hardware yet." : ""}{" "}
+            <Link href="/device">Set up your device</Link>
+          </span>
+          <Button className="btn-sm" onClick={() => void dismissFirstRun()} testId="dismiss-onboarding">
+            Got it
+          </Button>
+        </div>
       )}
 
-      <div className="home-hero">
-        {/* ------------------------------------------------- the panel -- */}
-        <section style={{ minWidth: 0 }}>
-          <div className="home-section-label">
-            <h2 data-testid="panel-label">{panelLabel}</h2>
-            <span className="mono-meta" data-testid="panel-provenance">
-              {/*
-                "device-reported", not "sent". The distinction is the whole
-                claim this line makes: the picture above is what the device
-                said it is displaying, read at this time, rather than what the
-                tower last tried to put there.
+      {queued && (
+        <div className="home-notice" data-testid="queued-banner">
+          <span data-testid="queued-detail">
+            “{queued.first.dashboardTitle}” will appear when the panel wakes
+            {reading.nextWakeLabel ? ` (around ${reading.nextWakeLabel})` : ""}.
+          </span>
+          <span className="home-notice-actions">
+            <Button className="btn-sm" onClick={() => void resolveBlocking("deliver")} disabled={busy} testId="deliver-queued">
+              Try now
+            </Button>
+            <Button className="btn-sm" variant="quiet" onClick={() => void resolveBlocking("cancel")} disabled={busy} testId="cancel-queued">
+              Cancel
+            </Button>
+          </span>
+        </div>
+      )}
 
-                And only when the device actually answered. This line sat above
-                a card whose body was a transport error and still read
-                "device-reported · just now", which claims a reading that never
-                happened — the same conflation of "we could not ask" with "the
-                device told us" that the badge underneath it was making.
-              */}
-              {!data.device.observed ? (
-                // Not a failed read, so not "no answer": nothing has been
-                // asked. The read that will answer it is already running
-                // behind the response this line came from.
-                <span data-testid="panel-not-read">reading the device…</span>
-              ) : (
-                <>
-                  {reachable ? "device-reported" : "no answer · last tried"} ·{" "}
-                  <FreshnessStamp iso={data.observedAt} />
-                  {data.observationStale && (
-                    <span className="gated" data-testid="observation-stale">
-                      {" "}
-                      · refreshing
-                    </span>
-                  )}
-                </>
-              )}
-            </span>
-          </div>
+      {unresolved && (
+        <div className="home-notice home-notice-alert" data-testid="blocking-banner">
+          <span data-testid="uncertain-note">
+            Not sure “{unresolved.first.dashboardTitle}” reached the panel. Sending is paused until this is resolved.
+          </span>
+          <span className="home-notice-actions">
+            <Button className="btn-sm" variant="dark" onClick={() => void resolveBlocking("recheck")} disabled={busy} testId="recheck">
+              Check the panel
+            </Button>
+            <Button className="btn-sm" variant="quiet" onClick={() => void resolveBlocking("acknowledge")} disabled={busy} testId="acknowledge">
+              Ignore
+            </Button>
+          </span>
+        </div>
+      )}
 
-          <div className="card card-lg" data-testid="on-panel">
-            <div className="card-body">
-              {hasFrame ? (
-                <>
-                  <ScaledPanel inset={36} max={1.45}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={`/api/device/frame?t=${frameStamp}`}
-                      alt="The frame the device reports it is displaying"
-                      width={400}
-                      height={300}
-                      style={{
-                        width: 400,
-                        height: 300,
-                        display: "block",
-                        imageRendering: "pixelated",
-                      }}
-                      data-testid="panel-frame"
-                    />
-                  </ScaledPanel>
-
-                  <div className="home-panel-caption">
-                    <strong>
-                      {data.displayedMatch ? (
-                        <>
-                          {data.displayedMatch.dashboardTitle} v
-                          {data.displayedMatch.version}
-                        </>
-                      ) : (
-                        <span data-testid="unknown-frame">
-                          An unknown frame — not sent from this tower
-                        </span>
-                      )}
-                    </strong>
-                    <span className="mono-meta">400 × 300 e-paper</span>
-                  </div>
-
-                  <TechDetails testId="panel-tech">
-                    frame digest {status.displayed.sha256.slice(0, 8)}…
-                    {status.displayed.sha256.slice(-4)} · device sequence{" "}
-                    {status.displayed.seq}
-                    {"\n"}
-                    {data.storedEqualsDisplayed
-                      ? "stored and displayed are the same frame"
-                      : "a newer frame is stored and the panel has not refreshed to it yet"}
-                    {"\n"}
-                    reported by the device itself, not inferred from the send
-                  </TechDetails>
-                </>
-              ) : !data.device.observed ? (
-                /*
-                  "Nothing is stored on the device" is a fact the device
-                  reports, and it has not been asked. Saying it here would be
-                  telling a reader their panel is blank on the strength of a
-                  read that had not happened — and it would be wrong for the
-                  overwhelmingly common case, a panel holding the image it was
-                  sent an hour ago.
-                */
-                <Empty>
-                  <span data-testid="panel-unread">
-                    The tower has not read the device yet, so it cannot say what
-                    the panel is showing. The panel itself is unaffected: it
-                    holds its last image whether or not anyone is looking.
-                  </span>
-                </Empty>
-              ) : (
-                <Empty>
-                  Nothing is stored on the device yet, so there is nothing to
-                  show.{" "}
-                  {!reachable && data.device.reachable === false
-                    ? data.device.detail
-                    : ""}
-                </Empty>
-              )}
-            </div>
-          </div>
-
-          {unresolved && (
-            <p
-              style={{
-                margin: "10px 2px 0",
-                fontWeight: 500,
-                fontSize: "var(--size-13)",
-                color: "var(--accent-red)",
-              }}
-              data-testid="uncertain-note"
-            >
-              A newer send is unconfirmed — this is the last image the device
-              confirmed.
-            </p>
-          )}
-
-          {/* ------------------------------------------- the quiet facts --
-              Under the picture, because they are all facts *about* it: which
-              sources fed it, and what happened the last time one was sent.
-              None of this is what somebody opened the page for, and none of it
-              was deleted to make room — it is simply below the fold now rather
-              than competing with the panel for the top of the screen. */}
-          <div className="stack" style={{ marginTop: "var(--pad-3)" }}>
-            <Card title="Last send" variant="plain">
-              {data.lastPush ? (
-                <>
-                  <p style={{ margin: 0 }}>
-                    <Badge
-                      kind={
-                        data.lastPush.state === "verified_displayed"
-                          ? "displayed"
-                          : data.lastPush.state === "failed"
-                            ? "failed"
-                            : data.lastPush.state === "uncertain"
-                              ? "uncertain"
-                              : "pending"
-                      }
-                    >
-                      {data.lastPush.state === "verified_displayed"
-                        ? "Displayed"
-                        : data.lastPush.state.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())}
-                    </Badge>{" "}
-                    {data.lastPush.first.dashboardTitle} v
-                    {data.lastPush.first.version},{" "}
-                    <FreshnessStamp iso={data.lastPush.latest.at} />
-                  </p>
-                  <p className="mono-note" style={{ marginTop: 6 }}>
-                    {data.lastPush.latest.detail ?? "no detail"}
-                  </p>
-                </>
-              ) : (
-                <Empty>Nothing has been sent from this tower yet.</Empty>
-              )}
-              {data.autoRefresh.intervalMinutes !== null && (
-                <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-                  automatic refresh every {data.autoRefresh.intervalMinutes} min
-                  {data.autoRefresh.lastAt && (
-                    <>
-                      {" "}
-                      · last <FreshnessStamp iso={data.autoRefresh.lastAt} />
-                      {data.autoRefresh.lastOutcome
-                        ? ` · ${data.autoRefresh.lastOutcome}`
-                        : ""}
-                    </>
-                  )}
-                </p>
-              )}
-            </Card>
-          </div>
-          <details className="fold tech-fold" style={{ marginTop: "var(--pad-3)" }} data-testid="home-advanced">
-          <summary>Advanced — sources</summary>
-          <div className="stack">
-            <Card title="Sources" variant="plain">
-              {!data.observed ? (
-                /*
-                  Empty because nothing has been read, not because nothing is
-                  configured. The sentence below it — "select a composition" —
-                  is the right answer to an empty list and the wrong answer to
-                  an unread one, and a reader who has selected a composition
-                  would be told to go and do what they had just done.
-                */
-                <Empty>
-                  <span data-testid="sources-not-read">
-                    Reading the sources. This card fills in as they answer.
-                  </span>
-                </Empty>
-              ) : data.sources.length === 0 ? (
-                <Empty>
-                  Select a composition to see which sources it actually reads.
-                  The tower fetches nothing a composition does not use.
-                </Empty>
-              ) : (
-                <div className="listing" style={{ border: "none" }}>
-                  {data.sources.map((row) => (
-                    <div className="listing-row" key={row.key}>
-                      <span className="listing-msg">{row.label}</span>
-                      <span className="mono-meta">
-                        <span className={row.state === "ok" ? "" : "gated"}>
-                          {SOURCE_WORD[row.state]}
-                        </span>{" "}
-                        {row.observedAt && <FreshnessStamp iso={row.observedAt} />}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* Only when an origin is configured. An installation that never
-                  set one has no second composer to report on, and a row saying
-                  so forever would be furniture. */}
-              {/*
-                Hidden until something has actually been read. `unread` reports
-                the composer as unreadable because it has not looked, and
-                rendering "Existing composer: Not read yet." next to a sentence
-                about a program this tower never writes to is noise about a
-                thing nobody asked after.
-              */}
-              {data.observed && data.composer.state !== "not_configured" && (
-                <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-                  Existing composer:{" "}
-                  {data.composer.state === "running"
-                    ? "running"
-                    : data.composer.detail}
-                  . A separate renderer this tower can read but never writes to.
-                </p>
-              )}
-            </Card>
-          </div>
-          </details>
-
-        </section>
-
-        {/* ------------------------------------------------ the device -- */}
-        <section className="stack">
-          {queued && (
-            <div className="pending-card" data-testid="queued-banner">
-              <MonoLabel>Queued for next wake</MonoLabel>
-              <p data-testid="queued-detail">
-                &ldquo;{queued.first.dashboardTitle} v{queued.first.version}
-                &rdquo; is rendered and waiting. Nothing has been sent to the
-                device.{" "}
-                {describeQueuedPush({
-                  queued: {
-                    queuedAt: queued.first.at,
-                    attempts: queued.latest.attempts ?? 0,
-                    lastAttemptAt: queued.latest.at,
-                    lastError: queued.latest.detail,
-                  },
-                  reachable,
-                  deviceMode: data.deviceMode,
-                  nextWakeLabel: reading.nextWakeLabel,
-                  noRemoteWakeNote: NO_REMOTE_WAKE_NOTE,
-                })}
-              </p>
-              <div className="card-actions">
-                <Button
-                  onClick={() => void resolveBlocking("deliver")}
-                  disabled={busy}
-                  testId="deliver-queued"
-                  title="Try to send it now. If the device is still asleep this changes nothing and says so."
-                >
-                  Try sending now
-                </Button>
-                <Button
-                  onClick={() => void resolveBlocking("cancel")}
-                  disabled={busy}
-                  testId="cancel-queued"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-          <div className="stack">
-            <Cta
-              glyph="→"
-              onClick={() => setSendOpen(true)}
-              disabled={busy || data.selected === null}
-              testId="push-button"
-            >
-              {data.selected ? `Show “${data.selected.title}”` : "Show on panel"}
-            </Cta>
-            <Cta
-              glyph="+"
-              variant="default"
-              onClick={() => setTemplatesOpen(true)}
-              testId="new-composition"
-            >
-              New composition
-            </Cta>
-            {data.selected === null && (
-              <p className="field-hint" data-testid="no-selection">
-                No composition is selected. Choose one on{" "}
-                <Link href="/dashboards">Compositions</Link>, or start a new one.
-              </p>
-            )}
-            {data.selected !== null && (
-              <p className="field-hint">
-                Sends{" "}
-                <Link href={`/dashboards/${data.selected.id}/edit`}>
-                  {data.selected.title}
-                </Link>{" "}
-                v{data.selected.latestVersion}
-                {data.pending?.wouldDedup && (
-                  <span data-testid="would-dedup">
-                    {" "}
-                    — unchanged since the last confirmed send, so it would be
-                    skipped.
-                  </span>
-                )}
-              </p>
-            )}
-          </div>
-
-          {/*
-            `data-state` on the wrapper, carrying the same word the header chip
-            shows. It is the hook the browser QA asserts against on both pages
-            that render the device's state, which is how "one reading, one
-            word" stops being a claim in a comment and becomes something a test
-            can fail on.
-          */}
-          <div data-testid="state-strip" data-device-state={state.state} data-state={state.state}>
-          <Card
-            title="Device"
-            variant="plain"
-            meta={batteryLine}
-            testId="device-narrative"
-          >
-            <div className="know-grid">
-              <div>
-                <MonoLabel>What we know</MonoLabel>
-                <p data-testid="know">
-                  <strong data-testid="state-strip-badge">{state.label}.</strong>{" "}
-                  {state.reason}
-                </p>
-              </div>
-              <div>
-                <MonoLabel>What you can do now</MonoLabel>
-                <p data-testid="can-do">{DEVICE_ACTION_COPY[state.state]}</p>
-              </div>
-              <div>
-                <MonoLabel>What happens next</MonoLabel>
-                <p data-testid="happens-next">
-                  {describeWhatHappensNext(state.state, reading.nextWakeLabel)}
-                </p>
-              </div>
-            </div>
-
-            {battery && battery.percent === null && (
-              <p className="mono-note" style={{ marginTop: "var(--pad-2)" }}>
-                {batteryUnavailableReason(data.power as DevicePower)}
-              </p>
-            )}
-
-            {/*
-              The two controls that belong with the state rather than with the
-              picture: read the device again, and ask it to stay awake. The
-              second carries its caveat in a disclosure rather than a `title`,
-              because what it does and does not do — applied now if the device
-              is awake, held if it is not, and never a wake — is the product's
-              own contract, and a `title` publishes it to a hovering mouse and
-              to nobody else. See INTERACTIVE_REQUEST_NOTE in src/core/power.ts.
-            */}
-            <div className="card-actions" style={{ marginTop: "var(--pad-3)" }}>
-              {/*
-                Its own button, and nothing else on the page.
-
-                Disabled on `reloading` rather than on `loading`: the second is
-                also true for the sixty-second poll and for the short follow-up
-                after a provisional answer, and a control that greys itself out
-                on a timer nobody triggered reads as a page that has seized up.
-                The label says what it is doing, because this read is allowed to
-                take real time — up to twenty-one seconds of read-only retries
-                when this machine is refusing connections to the panel out of
-                its own routing table — and a button that looks inert for
-                twenty seconds gets pressed four more times.
-              */}
-              <Button
-                onClick={() => void overview.reload()}
-                disabled={busy || overview.reloading}
-                testId="refresh"
-              >
-                {overview.reloading ? "Checking…" : "Check now"}
-              </Button>
-              <Button
-                onClick={() => void requestInteractive()}
-                disabled={busy}
-                testId="state-strip-interactive"
-              >
-                Interactive 15 min
-              </Button>
-              <Disclosure
-                text={INTERACTIVE_REQUEST_NOTE}
-                label="What asking for interactive does"
-                testId="state-strip-interactive-why"
+      <section className="home-hero-card" data-testid="on-panel" data-hero={hero.kind}>
+        <div className="home-hero-frame">
+          {hero.kind === "frame" ? (
+            <ScaledPanel inset={0} max={1.15}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/device/frame?t=${frameStamp}`}
+                alt="What the panel is showing"
+                width={400}
+                height={300}
+                style={{ width: 400, height: 300, display: "block", imageRendering: "pixelated" }}
+                data-testid="panel-frame"
               />
+            </ScaledPanel>
+          ) : hero.kind === "last-sent" ? (
+            <div className="home-hero-last">
+              <ScaledPanel inset={0} max={1.15}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/api/dashboards/${hero.id}/preview?version=${hero.version}&lang=${panelLang}&t=${frameStamp}`}
+                  alt={`Last sent: ${hero.title}`}
+                  width={400}
+                  height={300}
+                  style={{ width: 400, height: 300, display: "block", imageRendering: "pixelated" }}
+                  data-testid="last-sent-frame"
+                />
+              </ScaledPanel>
             </div>
+          ) : (
+            <div className="home-hero-empty" data-testid="panel-empty">
+              <p className="home-hero-empty-title">Your panel is waiting for its first picture</p>
+              <p className="home-hero-empty-sub">Choose a composition below, or start a new one.</p>
+              <Button variant="primary" onClick={() => setTemplatesOpen(true)} testId="empty-new-composition">
+                Create a composition
+              </Button>
+            </div>
+          )}
+        </div>
 
-            {unresolved && (
-              <div className="resolve-box" data-testid="blocking-banner">
-                <p>
-                  Sending is paused until this is resolved — that&rsquo;s what
-                  prevents accidental double refreshes.
-                </p>
-                <p className="mono-note" style={{ marginBottom: "var(--pad-2)" }}>
-                  {unresolved.first.dashboardTitle} v{unresolved.first.version} is{" "}
-                  {unresolved.state}. {unresolved.latest.detail}
-                </p>
-                <div className="resolve-actions">
-                  <Button
-                    variant="dark"
-                    onClick={() => void resolveBlocking("recheck")}
-                    disabled={busy}
-                    testId="recheck"
-                  >
-                    Re-check the device
-                  </Button>
-                  <Button
-                    onClick={() => void resolveBlocking("acknowledge")}
-                    disabled={busy}
-                    testId="acknowledge"
-                  >
-                    Accept unknown outcome
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Card>
-          </div>
+        <div className="home-hero-meta">
+          {hero.kind === "last-sent" && (
+            <span className="home-hero-tag" data-testid="panel-label">Last sent</span>
+          )}
+          <span className="home-hero-title" data-testid="panel-caption">
+            {hero.kind === "frame"
+              ? hero.title ?? <span data-testid="unknown-frame">Not sent from here</span>
+              : hero.kind === "last-sent"
+                ? hero.title
+                : "Nothing shown yet"}
+          </span>
+          {editId && (
+            <Link
+              href={`/dashboards/${editId}/edit`}
+              className="btn btn-sm btn-quiet home-hero-edit"
+              data-testid="edit-current"
+            >
+              <PencilIcon /> Edit
+            </Link>
+          )}
+          {updatedAt && !lastSent && (
+            <span className="home-hero-updated" data-testid="panel-updated">
+              Updated {relativeTime(updatedAt)}
+            </span>
+          )}
+          {!data.device.observed && (
+            <span className="home-hero-updated" data-testid="panel-not-read">Checking…</span>
+          )}
+          <span className="home-hero-spacer" />
+          <AutoRefreshChip auto={data.autoRefresh} onChanged={() => void overview.reload()} />
+        </div>
 
-        </section>
-      </div>
+        <div className="home-keyinfo" data-testid="key-info">
+          {batteryPct !== null && (
+            <span className={`home-key${batteryPct < 20 ? " home-key-alert" : ""}`} data-testid="key-battery">
+              <KeyIcon name="battery" /> Battery {batteryPct}%
+            </span>
+          )}
+          {wakeLabel && (
+            <span className="home-key" data-testid="key-wake">
+              <KeyIcon name="wake" /> Next wake {wakeLabel}
+            </span>
+          )}
+          {lastSent && (
+            lastFailed ? (
+              <Link href="/diagnostics" className="home-key home-key-alert" data-testid="key-last-update">
+                <KeyIcon name="update" /> Last update {relativeTime(lastSent.latest.at)} · Failed — details
+              </Link>
+            ) : (
+              <span className="home-key" data-testid="key-last-update">
+                <KeyIcon name="update" /> Last update {relativeTime(lastSent.latest.at)}
+                {lastDisplayed ? " ✓ Displayed" : ""}
+              </span>
+            )
+          )}
+          {data.sources.length > 0 && (
+            <Link
+              href="/diagnostics"
+              className={`home-key${sourceIssues > 0 ? " home-key-warn" : ""}`}
+              data-testid="key-sources"
+            >
+              <KeyIcon name="sources" />{" "}
+              {sourceIssues === 0 ? "Sources OK" : `${sourceIssues} source issue${sourceIssues > 1 ? "s" : ""}`}
+            </Link>
+          )}
+        </div>
+
+        {warning && (
+          <AutoRefreshBanner warning={warning} dashboardId={data.autoRefresh.selectedId} onFixed={() => void overview.reload()} />
+        )}
+
+        <div className="home-action" data-testid="state-summary" data-state={state.state}>
+          <label className="home-action-select">
+            <span className="visually-hidden">Composition to show</span>
+            <select
+              value={pickerValue}
+              disabled={busy || compositions.length === 0}
+              onChange={(event) => event.target.value && void choose(event.target.value)}
+              data-testid="push-picker"
+            >
+              {!pickerValue && <option value="">Choose a composition…</option>}
+              {compositions.map((c) => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+          </label>
+          <Button
+            variant="primary"
+            onClick={() => setSendOpen(true)}
+            disabled={busy || data.selected === null}
+            testId="push-button"
+          >
+            Show on panel →
+          </Button>
+        </div>
+        {data.selected === null && compositions.length > 0 && (
+          <p className="home-hint" data-testid="no-selection">
+            No composition is selected — choose one to show it.
+          </p>
+        )}
+        {data.selected !== null && data.pending?.wouldDedup && (
+          <p className="home-hint" data-testid="would-dedup">
+            Already on the panel.
+          </p>
+        )}
+      </section>
 
       <HomeGallery
         device={reading}
+        autoRefresh={data.autoRefresh}
         displayedId={data.displayedMatch?.dashboardId ?? null}
         stamp={frameStamp}
         onSettled={() => {
@@ -917,20 +613,14 @@ export default function OverviewPage() {
       <TemplatePicker
         open={templatesOpen}
         onClose={() => setTemplatesOpen(false)}
-        onCreated={(title) => toast(`Started from “${title}” — saved as v1`)}
+        onCreated={(title) => toast(`Created “${title}”`)}
       />
 
-      {/*
-        A hidden live line carrying how long ago the device was seen. The
-        relative stamps above update on their own timers; this is the one that
-        a screen reader is offered when the poll lands, so a reader who cannot
-        see the timestamps move is still told the page re-read.
-      */}
       <span className="visually-hidden" role="status">
         {reachable
           ? `Device answered ${relativeTime(data.deviceLastSeenAt)}.`
           : "Device did not answer the last read."}
       </span>
-    </>
+    </div>
   );
 }

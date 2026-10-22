@@ -21,13 +21,12 @@ test("a fresh tower explains itself, once", async ({ page }, info) => {
 
   const card = page.getByTestId("onboarding");
   await expect(card).toBeVisible();
-  await expect(card).toContainText("Nothing here is hardware");
-  await expect(card).toContainText("first composition");
+  await expect(card).toContainText("Welcome");
+  await expect(card).toContainText("Show on panel");
   await shot(page, "onboarding", info.project.name);
 
   // It links onward rather than trapping anybody in a wizard.
-  await expect(card.getByRole("link", { name: "Compositions" })).toBeVisible();
-  await expect(card.getByRole("link", { name: "Advanced" })).toBeVisible();
+  await expect(card.getByRole("link", { name: "Set up your device" })).toBeVisible();
 
   await page.getByTestId("dismiss-onboarding").click();
   await expect(card).toBeHidden();

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { DashboardDocSchema } from "@/core/model";
+import { DashboardDocSchema, RefreshIntervalSchema } from "@/core/model";
 import { appendAudit } from "@/server/audit";
 import { guarded, jsonError } from "@/server/auth/guard";
 import { hasBlockingPushFor } from "@/server/device/ledger";
@@ -51,6 +51,8 @@ export const PUT = guarded(
 const PatchSchema = z.object({
   status: z.enum(["active", "archived"]).optional(),
   selected: z.literal(true).optional(),
+  /** Auto-refresh interval, set without replacing the whole document. */
+  refreshIntervalMinutes: RefreshIntervalSchema.optional(),
 });
 
 export const PATCH = guarded(
@@ -66,6 +68,22 @@ export const PATCH = guarded(
         target: id,
         outcome: "ok",
         detail: `Status is now ${record.doc.status}`,
+      });
+    }
+
+    if (body.refreshIntervalMinutes !== undefined) {
+      const current = readRecord(id);
+      if (!current) return jsonError(404, "not_found", `No dashboard with id "${id}"`);
+      updateDashboard(id, { ...current.doc, refreshIntervalMinutes: body.refreshIntervalMinutes });
+      appendAudit({
+        action: "dashboard.refresh_interval",
+        target: id,
+        params: { refreshIntervalMinutes: body.refreshIntervalMinutes },
+        outcome: "ok",
+        detail:
+          body.refreshIntervalMinutes === null
+            ? "Auto-refresh turned off"
+            : `Auto-refresh every ${body.refreshIntervalMinutes} min`,
       });
     }
 

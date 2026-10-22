@@ -1,3 +1,4 @@
+import { DISABLED_SENTENCE, disabledReason, type DisabledReason } from "@/core/autoRefresh";
 import type { DashboardDoc } from "@/core/model";
 import type { DashboardSources } from "@/core/render/data";
 import { deviceContext } from "./device/context";
@@ -56,13 +57,47 @@ function supersedeAuto(pushId: string): void {
   );
 }
 
+let lastDisabledKey: string | null = null;
+
+/**
+ * Say once, in the server log, why automatic refresh is not running — and
+ * again only when the reason changes. Silent "disabled" every thirty seconds
+ * is how a panel showed day-old data for a day without anyone noticing.
+ */
+function noteDisabled(reason: DisabledReason, id: string | null): void {
+  const key = reason === null ? null : `${reason}:${id ?? ""}`;
+  if (key === lastDisabledKey) return;
+  lastDisabledKey = key;
+  if (reason !== null) {
+    console.warn(`[auto-refresh] disabled (${reason}${id ? ` · ${id}` : ""}): ${DISABLED_SENTENCE[reason]}`);
+  } else {
+    console.info("[auto-refresh] enabled again");
+  }
+}
+
+/** Test seam. */
+export function resetDisabledNoteForTests(): void {
+  lastDisabledKey = null;
+}
+
 /** One durable scheduler pass. It never pushes an unselected dashboard or a mock. */
 export async function runRefreshTick(deps: TickDependencies = {}): Promise<RefreshTickResult> {
   const state = readState();
-  if (!state.selectedDashboardId) return "disabled";
-  const record = readRecord(state.selectedDashboardId);
-  const interval = record?.doc.refreshIntervalMinutes ?? null;
-  if (!record || record.doc.status !== "active" || interval === null) return "disabled";
+  const record = state.selectedDashboardId ? readRecord(state.selectedDashboardId) : null;
+  const reason = disabledReason({
+    selectedId: state.selectedDashboardId,
+    selected: record
+      ? {
+          id: record.doc.id,
+          title: record.doc.title,
+          status: record.doc.status,
+          intervalMinutes: record.doc.refreshIntervalMinutes,
+        }
+      : null,
+  });
+  noteDisabled(reason, state.selectedDashboardId);
+  if (reason !== null || !record) return "disabled";
+  const interval = record.doc.refreshIntervalMinutes as number;
   if (state.deviceMode !== "real") return "not_real";
 
   const now = deps.now ?? new Date();

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { deviceSupportsPower, estimateNextWake } from "@/core/power";
+import { disabledReason } from "@/core/autoRefresh";
+import { DEFAULT_WAKE_INTERVAL_MIN, deviceSupportsPower, estimateNextWake } from "@/core/power";
 import { guarded } from "@/server/auth/guard";
 import {
   readLastConfirmed,
@@ -149,6 +150,22 @@ export const GET = guarded({}, async ({ request }) => {
         }
       : null,
     autoRefresh: {
+      selectedId: state.selectedDashboardId,
+      title: selected?.doc.title ?? null,
+      status: selected?.doc.status ?? null,
+      /** Why the scheduler is not running, or null. See src/core/autoRefresh.ts. */
+      disabledReason: disabledReason({
+        selectedId: state.selectedDashboardId,
+        selected: selected
+          ? {
+              id: selected.doc.id,
+              title: selected.doc.title,
+              status: selected.doc.status,
+              intervalMinutes: selected.doc.refreshIntervalMinutes,
+            }
+          : null,
+      }),
+      wakeIntervalMin: (power ?? lastConfirmed?.power ?? null)?.wake_interval_min ?? DEFAULT_WAKE_INTERVAL_MIN,
       intervalMinutes: selected?.doc.refreshIntervalMinutes ?? null,
       lastAt: state.lastAutoRefreshAt,
       lastDashboardId: state.lastAutoRefreshDashboardId,
