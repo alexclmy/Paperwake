@@ -28,8 +28,10 @@ export function HomeGallery({
   device,
   displayedId,
   stamp,
+  autoRefresh,
   onSettled,
 }: {
+  autoRefresh?: { selectedId: string | null; intervalMinutes: number | null; disabledReason: string | null };
   device: DeviceReading | null;
   displayedId: string | null;
   stamp: number;
@@ -125,6 +127,11 @@ export function HomeGallery({
                   loading="lazy"
                 />
                 {onPanel && <span className="home-flag">On panel</span>}
+                {autoRefresh?.selectedId === summary.id && autoRefresh.disabledReason === null && (
+                  <span className="home-auto-badge" data-testid={`auto-badge-${summary.id}`}>
+                    Auto · {autoRefresh.intervalMinutes} min
+                  </span>
+                )}
                 {!onPanel && selectedId === summary.id && <span className="home-flag home-flag-quiet">Selected</span>}
               </Link>
               <div className="home-card-foot">

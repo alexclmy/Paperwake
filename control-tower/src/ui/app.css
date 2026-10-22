@@ -3271,3 +3271,50 @@ pre.json {
 .ha-choice-name { font-weight: 500; }
 .ha-choice-meta { color: var(--muted, #6b6760); font-size: 0.85em; white-space: nowrap; }
 .ha-entity-id { flex-basis: 100%; font-family: ui-monospace, monospace; font-size: 0.8em; }
+
+/* Auto-refresh: visible, and loud when it is not going to run. */
+.auto-refresh-card {
+  margin-top: calc(var(--pad-4, 20px) * 1.5);
+  padding: 14px 16px;
+  background: var(--paper);
+  border: var(--border-2);
+  box-shadow: var(--shadow-card);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.auto-refresh-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.auto-refresh-line h2 { margin: 0; font-size: var(--size-17, 17px); }
+.auto-refresh-line span { font-size: var(--size-15); }
+.auto-refresh-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.auto-refresh-card { min-width: 0; }
+.auto-refresh-select { display: flex; align-items: center; gap: 8px; font-size: var(--size-13); font-weight: 600; min-width: 0; max-width: 100%; }
+.auto-refresh-select select {
+  min-width: 0; width: min(280px, 100%); max-width: 100%; min-height: 44px;
+  padding: 6px 10px; border: var(--border-2); background: var(--paper); font: inherit;
+}
+.auto-refresh-controls .segmented { flex-wrap: wrap; max-width: 100%; }
+.auto-refresh-line span, .auto-refresh-banner p { overflow-wrap: anywhere; min-width: 0; }
+@media (max-width: 760px) {
+  .auto-refresh-select { width: 100%; }
+  .auto-refresh-select select { flex: 1; width: auto; }
+}
+.auto-refresh-banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  padding: 10px 14px; margin-bottom: var(--pad-3, 14px);
+  background: var(--accent-yellow); border: var(--border-2); color: var(--ink);
+}
+.auto-refresh-card .auto-refresh-banner { margin-bottom: 0; }
+.auto-refresh-banner p { margin: 0; flex: 1 1 320px; font-size: var(--size-15); }
+.auto-refresh-banner-flag {
+  display: inline-grid; place-items: center; width: 24px; height: 24px;
+  background: var(--accent-red); color: #fff; font-weight: 800;
+}
+.home-auto-badge {
+  position: absolute; bottom: 8px; right: 8px;
+  background: var(--paper); color: var(--ink); border: var(--border-2);
+  font-size: var(--size-12); font-weight: 700; padding: 1px 7px;
+}
+.send-toast-keep {
+  margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--rule);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  font-size: var(--size-13);
+}

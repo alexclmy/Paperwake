@@ -7,6 +7,7 @@ import { NO_REMOTE_WAKE_NOTE, deriveDeviceState } from "@/core/power";
 import { ApiError, apiGet, apiSend, csrfToken } from "./api";
 import { Button } from "./components";
 import { Dialog } from "./Dialog";
+import { KeepUpToDate } from "./AutoRefresh";
 import { COMPACT_STAGES, SEND_STAGES, compactStageStates, stageIndexFor } from "./sendStages";
 import type { DeviceReading } from "./useDeviceState";
 
@@ -358,6 +359,7 @@ export function SendFlowDialog({
             </Button>
           </div>
         )}
+        {step === "done" && dashboardId && <KeepUpToDate dashboardId={dashboardId} />}
         {step === "progress" && (
           <details className="send-toast-more">
             <summary>Details</summary>

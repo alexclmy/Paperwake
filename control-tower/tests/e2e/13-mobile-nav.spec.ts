@@ -67,7 +67,7 @@ test("the gallery fits with long titles and many cards", async ({ page }, info) 
 });
 
 test("the interactive caveat can be opened rather than hovered", async ({ page }) => {
-  await page.goto("/overview");
+  await page.goto("/device");
   await expect(page.getByTestId("state-strip-interactive")).toBeVisible();
 
   const why = page.getByTestId("state-strip-interactive-why");
@@ -265,7 +265,8 @@ test("every shell affordance is reachable at every viewport", async ({ page }) =
 test("the state is shown everywhere, and the interactive request only once", async ({
   page,
 }) => {
-  for (const path of ["/overview", "/device"]) {
+  // Home is deliberately quiet: the header chip is its only device state.
+  for (const path of ["/device"]) {
     await page.goto(path);
     await expect(page.getByTestId("state-strip")).toBeVisible();
     await expect(page.getByTestId("device-chip")).toHaveCount(1);
@@ -278,7 +279,7 @@ test("the state is shown everywhere, and the interactive request only once", asy
   // The pages without one keep the chip, which on those pages is the only
   // reading of the device there is. Hiding it by route or by breakpoint would
   // take the device state away from three of the five pages.
-  for (const path of ["/dashboards", "/voice", "/diagnostics"]) {
+  for (const path of ["/overview", "/dashboards", "/voice", "/diagnostics"]) {
     await page.goto(path);
     await expect(page.getByTestId("device-chip")).toBeVisible();
     await expect(page.getByTestId("state-strip")).toHaveCount(0);

@@ -130,8 +130,7 @@ test("a push to a device that is not answering is queued, not lost", async ({
   // rendered, recorded, and waiting.
   const banner = page.getByTestId("queued-banner");
   await expect(banner).toBeVisible();
-  await expect(banner).toContainText("Nothing has been sent to the device");
-  await expect(banner).toContainText("held here");
+  await expect(banner).toContainText("will appear when the panel wakes");
   // No new send may stack on top of it. Pressing Show a composition reaches a
   // screen that says why and points at the one control that resolves it,
   // rather than a dead button with no account of itself.
@@ -181,7 +180,7 @@ test("the background pass delivers it exactly once when the device answers", asy
 
   await page.goto("/overview");
   await expect(page.getByTestId("queued-banner")).toBeHidden();
-  await expect(page.locator('[data-badge="displayed"]').first()).toBeVisible({
+  await expect(page.getByTestId("panel-frame")).toBeVisible({
     timeout: 40_000,
   });
   await expect(page.getByTestId("push-button")).toBeEnabled();
@@ -241,7 +240,11 @@ test("a device that answers and refuses fails the queued push, and stops", async
   await setMock(page, { unpair: false });
   await page.goto("/overview");
   await expect(page.getByTestId("queued-banner")).toBeHidden();
-  await expect(page.locator('[data-badge="failed"]').first()).toBeVisible();
+  // The failure's detail lives in Advanced → history; Home just stays usable.
+  await page.goto("/diagnostics");
+  await page.getByTestId("diag-tab-history").click();
+  await expect(page.getByTestId("ledger-table")).toContainText("failed");
+  await page.goto("/overview");
   // And the tower is usable again: a bounded failure, not a stuck queue.
   await expect(page.getByTestId("push-button")).toBeEnabled();
   await shot(page, "overview-queued-refused", info.project.name);

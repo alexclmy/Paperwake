@@ -38,11 +38,31 @@ test("pushes to the mock device and reaches DISPLAYED", async ({ page }, info) =
   // The device itself now reports the frame as displayed.
   // Overview waits on a live Open-Meteo read before it renders, so give the
   // first paint after a reload room for a slow external source.
-  await expect(page.locator('[data-badge="displayed"]').first()).toBeVisible({
+  await expect(page.getByTestId("panel-frame")).toBeVisible({
     timeout: 40_000,
   });
-  await expect(page.getByText(`${title} v${version}`).first()).toBeVisible();
+  await expect(page.getByTestId("panel-caption")).toHaveText(title);
+  void version;
   await shot(page, "overview-after-push", info.project.name);
+
+  // Key info: plain words, the confirmed send, nothing technical.
+  const keyInfo = page.getByTestId("key-info");
+  await expect(keyInfo).toBeVisible();
+  await expect(page.getByTestId("key-last-update")).toContainText("Last update");
+  await expect(page.getByTestId("key-last-update")).toContainText("Displayed");
+  await expect(keyInfo).not.toContainText(/seq|ms\b|sha/i);
+  const sources = page.getByTestId("key-sources");
+  if (await sources.count()) {
+    await expect(sources).toHaveText(/Sources OK|\d+ source issues?/);
+    await expect(sources).toHaveAttribute("href", "/diagnostics");
+  }
+
+  // Edit opens the composition on the panel in the designer.
+  const edit = page.getByTestId("edit-current");
+  await expect(edit).toHaveText(/Edit/);
+  await expect(edit).toHaveAttribute("href", `/dashboards/${id}/edit`);
+  await edit.click();
+  await expect(page).toHaveURL(new RegExp(`/dashboards/${id}/edit`));
 
   // And the library card carries the DISPLAYED badge, resolved through the
   // ledger's digest map rather than guessed.

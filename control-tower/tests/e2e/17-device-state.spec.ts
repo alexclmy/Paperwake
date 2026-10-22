@@ -23,8 +23,8 @@ test.afterEach(async ({ page }) => {
 
 test("an answering device reads AWAKE on Overview and on Device", async ({ page }) => {
   await page.goto("/overview");
-  await expect(page.getByTestId("state-strip")).toHaveAttribute(
-    "data-state",
+  await expect(page.getByTestId("device-chip")).toHaveAttribute(
+    "data-device-state",
     "awake",
   );
 
@@ -42,13 +42,12 @@ test("a silent mock is UNREACHABLE, because a mock has no sleep to be in", async
   await setMock(page, { asleep: true });
 
   await page.goto("/overview");
-  const strip = page.getByTestId("state-strip");
-  await expect(strip).toHaveAttribute("data-state", "unreachable");
-  // And it explains itself, rather than showing a colour with no account.
-  await expect(strip).toContainText("mock");
+  await expect(page.getByTestId("device-chip")).toHaveAttribute("data-device-state", "unreachable");
   await shot(page, "overview-unreachable", info.project.name);
 
   await page.goto("/device");
+  // And it explains itself on Device, rather than showing a colour with no account.
+  await expect(page.getByTestId("state-strip")).toContainText("mock");
   await expect(page.getByTestId("state-strip")).toHaveAttribute(
     "data-state",
     "unreachable",
@@ -72,7 +71,7 @@ test("a device that has not taken up its requested mode reads PENDING", async ({
 });
 
 test("the state strip carries the one-click interactive request", async ({ page }) => {
-  await page.goto("/overview");
+  await page.goto("/device");
   const button = page.getByTestId("state-strip-interactive");
   await expect(button).toBeVisible();
 
@@ -82,7 +81,7 @@ test("the state strip carries the one-click interactive request", async ({ page 
   // banner that stays until the next navigation, because the outcome is small,
   // reversible and about something that has already finished. Anything that
   // touched the panel gets a dialog instead.
-  await expect(page.getByTestId("toast")).toContainText(
+  await expect(page.getByTestId("apply-notice")).toContainText(
     /applied to the device|held until the device next wakes/,
   );
 });
@@ -92,7 +91,7 @@ test("Overview says when its reading has gone stale", async ({ page }) => {
   // twice the poll interval, which is two real minutes of nothing happening.
   await page.clock.install();
   await page.goto("/overview");
-  await expect(page.getByTestId("state-strip")).toBeVisible();
+  await expect(page.getByTestId("on-panel")).toBeVisible();
 
   // Far enough past 2x60 s that the staleness test cannot be a near miss, and
   // with the tab hidden so the poll itself does not refresh it away.
@@ -111,7 +110,7 @@ test("Overview says when its reading has gone stale", async ({ page }) => {
   // from the server's device snapshot being older than its TTL. The second is
   // reported next to the timestamp in the page head, because the tower is
   // answering perfectly well and simply has not re-read the panel yet.
-  await expect(banner).toContainText("has not answered for more than");
+  await expect(banner).toContainText("Connection lost");
 
   await page.getByTestId("stale-retry").click();
   await expect(page.getByTestId("stale-banner")).toBeHidden();

@@ -52,7 +52,7 @@ test("an unacknowledged panel makes the push uncertain and blocks the next one",
 
   const banner = page.getByTestId("blocking-banner");
   await expect(banner).toBeVisible();
-  await expect(banner).toContainText("uncertain");
+  await expect(banner).toContainText("Not sure");
   await expect(banner).toContainText("Sending is paused until this is resolved");
   await shot(page, "overview-uncertain", info.project.name);
 
@@ -145,7 +145,7 @@ test("a slow panel shows STORED before DISPLAYED", async ({ page }, info) => {
   await page.reload();
   // Overview waits on a live Open-Meteo read before it renders, so give the
   // first paint after a reload room for a slow external source.
-  await expect(page.locator('[data-badge="displayed"]').first()).toBeVisible({
+  await expect(page.getByTestId("panel-frame")).toBeVisible({
     timeout: 40_000,
   });
   await shot(page, "overview-displayed", info.project.name);

@@ -57,6 +57,9 @@ export function DeviceChip({ reading }: { reading: DeviceReading }) {
       break;
   }
 
+  const percent = reading.input.power?.battery?.percent ?? null;
+  const battery = percent === null ? null : `${percent}%`;
+
   return (
     <Link
       className="device-chip"
@@ -68,14 +71,21 @@ export function DeviceChip({ reading }: { reading: DeviceReading }) {
       // them. The label states what the chip is for as well as what it says,
       // because on its own "Awake, replied 1 min ago" does not announce that
       // pressing it goes anywhere.
-      aria-label={`Device: ${state.label}, ${sub}. Open the Device page.`}
+      aria-label={`Device: ${state.label}, ${sub}${battery ? `, battery ${battery}` : ""}. Open the Device page.`}
     >
       <span className="chip-dot" aria-hidden="true" />
       <span className="chip-text">
         <span className="chip-title" data-testid="device-chip-state">
           {state.label}
         </span>
-        <span className="chip-sub">{sub}</span>
+        {battery ? (
+          <span className="chip-sub chip-battery" title={sub} data-testid="device-chip-battery">
+            <span aria-hidden="true" className="chip-battery-icon" />
+            {battery}
+          </span>
+        ) : (
+          <span className="chip-sub">{sub}</span>
+        )}
       </span>
     </Link>
   );

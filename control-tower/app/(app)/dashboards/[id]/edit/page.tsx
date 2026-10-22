@@ -27,6 +27,7 @@ import { PanelLangSwitch, langCtx, usePanelLang } from "@/ui/panelLang";
 import { ModuleInspector } from "@/ui/ModuleInspector";
 import { ThemePanel } from "@/ui/ThemePanel";
 import { useToast } from "@/ui/Toast";
+import { EditorAutoRefreshBanner } from "@/ui/AutoRefresh";
 import { useDeviceState } from "@/ui/useDeviceState";
 import { useMediaQuery, SINGLE_COLUMN_QUERY } from "@/ui/useMediaQuery";
 import "@/ui/designer.css";
@@ -710,6 +711,17 @@ export default function DesignerPage() {
 
   return (
     <>
+      <EditorAutoRefreshBanner
+        dashboardId={id}
+        onFixed={(minutes) => {
+          // The server changed the working document; keep the draft and the
+          // saved baseline in step so a later save cannot switch it back off.
+          setDoc((current) => (current ? { ...current, refreshIntervalMinutes: minutes as 60 } : current));
+          setSaved((value) =>
+            value ? JSON.stringify({ ...JSON.parse(value), refreshIntervalMinutes: minutes }) : value,
+          );
+        }}
+      />
       {/* ------------------------------------------------------- header -- */}
       <div className="editor-head">
         <div className="editor-title">

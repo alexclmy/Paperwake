@@ -31,7 +31,9 @@ test("first run sets a passphrase and lands on Overview", async ({ page }, info)
   // The tower store is new, so give the simulated panel a matching blank slate.
   await setMock(page, { reset: true, failAck: false, panelDelayMs: 700 });
   await page.reload();
-  await expect(page.getByText("Nothing is stored on the device yet")).toBeVisible();
+  // A fresh tower has sent nothing: one friendly empty state, one CTA.
+  await expect(page.getByTestId("panel-empty")).toBeVisible();
+  await expect(page.getByTestId("empty-new-composition")).toBeVisible();
 });
 
 test("an unauthenticated visitor is redirected away from every page", async ({
