@@ -3,7 +3,7 @@
 **A calm, four-colour e-paper display for your home: designed on your own
 machine, delivered over your own network, running on a battery.**
 
-![Six Paperwake compositions on the panel, rendered by the real renderer](control-tower/docs/images/showcase/hero.png)
+![The "Good day" composition on the panel, rendered by the real renderer](control-tower/docs/images/showcase/hero.png)
 
 <sub>Every panel image on this page is a real render: the same code that packs
 the bytes for the device, run over made-up sample data. No mock-ups.</sub>
@@ -104,7 +104,7 @@ nearest-neighbour):
 
 | | | |
 | --- | --- | --- |
-| ![Morning briefing](control-tower/docs/images/showcase/morning-briefing@2x.png) **Morning briefing** | ![Home dashboard](control-tower/docs/images/showcase/home-dashboard@2x.png) **Home dashboard** | ![Welcome](control-tower/docs/images/showcase/welcome@2x.png) **Welcome** |
+| ![Home dashboard](control-tower/docs/images/showcase/home-dashboard@2x.png) **Home dashboard** | ![Good day](control-tower/docs/images/showcase/good-day@2x.png) **Good day** | ![Welcome](control-tower/docs/images/showcase/welcome@2x.png) **Welcome** |
 | ![Happy birthday](control-tower/docs/images/showcase/happy-birthday@2x.png) **Happy birthday** | ![Weekend](control-tower/docs/images/showcase/weekend@2x.png) **Weekend** | ![Focus](control-tower/docs/images/showcase/focus@2x.png) **Focus / Do not disturb** |
 | ![Kitchen](control-tower/docs/images/showcase/kitchen@2x.png) **Kitchen** | | |
 

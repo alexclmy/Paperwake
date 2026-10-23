@@ -82,8 +82,8 @@ const PAGES: Record<(typeof VIEWPORTS)[number]["name"], Shot[]> = {
     { slug: "compositions", path: () => "/dashboards" },
     {
       slug: "editor",
-      path: (ids) => `/dashboards/${ids["morning-briefing"]}/edit`,
-      prepare: (page) => selectBlock(page, "headline"),
+      path: (ids) => `/dashboards/${ids["home-dashboard"]}/edit`,
+      prepare: (page) => selectBlock(page, "weatherHero"),
     },
     {
       slug: "image-library",
@@ -103,7 +103,7 @@ const PAGES: Record<(typeof VIEWPORTS)[number]["name"], Shot[]> = {
     },
     {
       slug: "weather-formats",
-      path: (ids) => `/dashboards/${ids["morning-briefing"]}/edit`,
+      path: (ids) => `/dashboards/${ids["kitchen"]}/edit`,
       prepare: async (page) => {
         await selectBlock(page, "weatherCompact");
         await reveal(page, '[data-testid="inspector-card"] .visual-picker');
@@ -356,10 +356,11 @@ async function main(): Promise<void> {
             data: { doc: savedBody.record.doc, note: "Showcase composition" },
           });
         }
-        // The morning briefing is on the panel, so Home has a frame to show.
-        await page.request.patch(`${BASE}/api/dashboards/${ids["morning-briefing"]}`, {
+        // The home dashboard is on the panel, refreshed hourly, so Home has a
+        // frame to show and its chip reads "Auto · 60 min".
+        await page.request.patch(`${BASE}/api/dashboards/${ids["home-dashboard"]}`, {
           headers,
-          data: { selected: true },
+          data: { selected: true, refreshIntervalMinutes: 60 },
         });
         await page.request.post(`${BASE}/api/device/push`, { headers, data: { force: true } });
         await page.waitForTimeout(3000);
