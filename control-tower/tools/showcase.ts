@@ -10,9 +10,9 @@
  * byte-identical.
  *
  * Output per composition: `<key>.png` (400x300, the panel's own pixels) and
- * `<key>@2x.png` (nearest-neighbour 800x600), plus `hero.png`: six panels in
- * an illustrated device frame drawn in CSS (no photograph), composed and
- * captured by headless Chromium.
+ * `<key>@2x.png` (nearest-neighbour 800x600), plus `hero.png`: the "Good day"
+ * panel in an illustrated device frame drawn in CSS (no photograph), composed
+ * and captured by headless Chromium.
  */
 
 import fs from "node:fs";
@@ -28,6 +28,7 @@ import * as balloon from "@/core/library/art/balloon";
 import * as dnd from "@/core/library/art/dnd";
 import * as coffee from "@/core/library/art/coffee";
 import * as mountains from "@/core/library/art/mountains";
+import * as sunrise from "@/core/library/art/sunrise";
 import { framePng } from "@/server/png";
 
 import { SHOWCASE_NOW, SHOWCASE_SOURCES, SHOWCASE_TZ } from "@/server/sources/showcaseFixtures";
@@ -71,37 +72,28 @@ const sensors = (ids: Array<[string, string]>) =>
 
 export const SHOWCASE: Array<{ key: string; title: string; doc: DashboardDoc }> = [
   {
-    key: "morning-briefing",
-    title: "Morning briefing",
-    doc: board("Morning briefing", [
-      place("headline", 0, 0, 16, 4, {
-        variant: "underline",
-        kicker: t("THURSDAY 22 OCTOBER", { family: "plexmono", size: 13, weight: "bold" }),
-        headline: t("Good morning", { family: "poppins", size: 34, weight: "bold" }),
-        subline: t("Sunny spells, 23° by the afternoon", { size: 15 }),
-      }),
-      rule(place("weatherCompact", 0, 4, 16, 3, { format: "dayParts" }), ["bottom"], 1),
-      place("calendarNext", 0, 7, 16, 5, { variant: "list", maxEvents: 2, heading: t("TODAY", { size: 13, weight: "bold" }) }),
-    ]),
-  },
-  {
     key: "home-dashboard",
     title: "Home dashboard",
     doc: board("Home dashboard", [
-      rule(place("weatherHero", 0, 0, 8, 7), ["right"], 1),
-      place("homeSensors", 8, 0, 8, 7, {
-        format: "list",
-        entities: sensors([
-          ["sensor.living_room_temperature", "Living room"],
-          ["sensor.living_room_humidity", "Humidity"],
-          ["sensor.bedroom_temperature", "Bedroom"],
-          ["sensor.outdoor_temperature", "Outdoor"],
-          ["sensor.office_co2", "Office CO2"],
-        ]),
-      }),
-      rule(place("weatherWeek", 0, 7, 16, 3), ["top"], 2),
-      rule(place("calendarNext", 0, 10, 16, 2, { variant: "oneLine" }), ["top"], 1),
+      rule(place("weatherHero", 0, 0, 9, 9), ["right"], 1),
+      place("calendarNext", 9, 0, 7, 6, { variant: "list", maxEvents: 3, heading: t("TODAY", { size: 13, weight: "bold" }) }),
+      rule(place("homeSensors", 9, 6, 7, 3, {
+        format: "tiles",
+        entities: sensors([["sensor.living_room_temperature", "Indoor"], ["sensor.living_room_humidity", "Humidity"]]),
+      }), ["top"], 1),
+      rule(place("weatherWeek", 0, 9, 16, 3), ["top"], 2),
     ]),
+  },
+  {
+    key: "good-day",
+    title: "Good day",
+    doc: board("Good day", [
+      art("image", sunrise, "sunrise", 0, 0, 16, 10),
+      place("message", 0, 10, 16, 2, {
+        body: t("TODAY IS A GOOD DAY", { family: "poppins", size: 22, weight: "bold", align: "center", colour: "accent" }),
+        verticalAlign: "middle",
+      }),
+    ], "expressive"),
   },
   {
     key: "welcome",
@@ -189,10 +181,8 @@ export function renderShowcase(doc: DashboardDoc): Buffer {
 
 const PAPER = "#e9e4da";
 
-/** One framed device in the hero: an illustrated bezel, drawn in CSS. */
-function deviceHtml(dataUrl: string, label: string): string {
-  return `<figure><div class="device"><div class="screen"><img src="${dataUrl}"></div></div><figcaption>${label}</figcaption></figure>`;
-}
+/** The composition shown alone in hero.png. */
+const HERO_KEY = "good-day";
 
 const HERO_CSS = `
   *{box-sizing:border-box;margin:0}
@@ -203,6 +193,10 @@ const HERO_CSS = `
   .screen{padding:2px;background:#f7f4ee;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
   .screen img{display:block;width:400px;height:300px;image-rendering:pixelated}
   figcaption{letter-spacing:.02em}
+  #hero:has(.big){display:flex;justify-content:center;width:max-content;padding:56px 96px 64px}
+  .device.big{padding:28px 28px 44px;border-radius:22px}
+  .device.big .screen img{width:800px;height:600px}
+  .mark{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:700 13px/1 ui-sans-serif,-apple-system,"Helvetica Neue",Arial,sans-serif;letter-spacing:.32em;color:#9a958d}
   .twox{display:block;width:800px;height:600px;image-rendering:pixelated}
 `;
 
@@ -217,10 +211,12 @@ async function compose(outDir: string, files: Array<{ key: string; title: string
       await page.setContent(`<style>${HERO_CSS}</style><img class="twox" id="p" src="${urls[i]}">`);
       await page.locator("#p").screenshot({ path: path.join(outDir, `${f.key}@2x.png`) });
     }
-    // Hero: six framed panels, rendered at 2x for retina-crisp README display.
+    // Hero: the "Good day" panel alone in the white device frame, rendered
+    // at 2x for retina-crisp README display.
+    const heroIndex = Math.max(0, files.findIndex((f) => f.key === HERO_KEY));
     const hero = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1600, height: 1000 } });
     await hero.setContent(
-      `<style>${HERO_CSS}</style><div id="hero">${files.slice(0, 6).map((f, i) => deviceHtml(urls[i]!, f.title)).join("")}</div>`,
+      `<style>${HERO_CSS}</style><div id="hero"><div class="device big"><div class="screen"><img src="${urls[heroIndex]}"></div><div class="mark">NOTE4C</div></div></div>`,
     );
     await hero.locator("#hero").screenshot({ path: path.join(outDir, "hero.png") });
   } finally {

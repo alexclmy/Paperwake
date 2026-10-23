@@ -2,7 +2,7 @@
 
 **Design, push and verify dashboards for the NOTE4C 400×300 four-colour (black / white / red / yellow) e-paper panel, from a local, private web app.**
 
-![Six compositions rendered by the real panel renderer](docs/images/showcase/hero.png)
+![The "Good day" composition on a NOTE4C panel, rendered by the real panel renderer](docs/images/showcase/hero.png)
 
 NOTE4C Control Tower is the composer half of [Paperwake](../README.md), an open-source companion app for the NOTE4C e-paper
 devkit. It runs on your own machine. You lay out what the panel shows in a
@@ -98,7 +98,7 @@ pixels, and at 2× with nearest-neighbour scaling:
 
 | | | |
 | --- | --- | --- |
-| ![Morning briefing](docs/images/showcase/morning-briefing@2x.png) **Morning briefing**: headline, day summary, agenda | ![Home dashboard](docs/images/showcase/home-dashboard@2x.png) **Home dashboard**: weather hero, sensors, week | ![Welcome to NOTE4C](docs/images/showcase/welcome@2x.png) **Welcome**: the mascot |
+| ![Home dashboard](docs/images/showcase/home-dashboard@2x.png) **Home dashboard**: weather hero, agenda, sensors, week | ![Good day](docs/images/showcase/good-day@2x.png) **Good day**: library picture, one line | ![Welcome to NOTE4C](docs/images/showcase/welcome@2x.png) **Welcome**: the mascot |
 | ![Happy birthday](docs/images/showcase/happy-birthday@2x.png) **Happy birthday** | ![Weekend](docs/images/showcase/weekend@2x.png) **Weekend**: picture, week, checklist | ![Focus](docs/images/showcase/focus@2x.png) **Focus / Do not disturb** |
 | ![Kitchen](docs/images/showcase/kitchen@2x.png) **Kitchen**: weather, shopping list, sensors | | |
 
